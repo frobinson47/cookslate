@@ -102,6 +102,17 @@ export function useGrocery() {
     }
   }, []);
 
+  const deleteList = useCallback(async (id) => {
+    setError(null);
+    try {
+      await api.deleteGroceryList(id);
+      setLists(prev => prev.filter(l => l.id !== id));
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  }, []);
+
   const addRecipeToList = useCallback(async (listId, recipeId) => {
     setError(null);
     try {
@@ -123,6 +134,7 @@ export function useGrocery() {
     fetchLists,
     fetchList,
     createList,
+    deleteList,
     addItem,
     updateItem,
     removeItem,

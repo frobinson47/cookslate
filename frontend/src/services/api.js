@@ -142,6 +142,10 @@ export function deleteGroceryItem(listId, itemId) {
   return request(`/grocery/${listId}/items/${itemId}`, { method: 'DELETE' });
 }
 
+export function deleteGroceryList(id) {
+  return request(`/grocery/${id}`, { method: 'DELETE' });
+}
+
 export function addRecipeToGrocery(listId, recipeId) {
   return request(`/grocery/${listId}/recipes/${recipeId}`, { method: 'POST' });
 }

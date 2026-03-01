@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { ShoppingCart, ChevronRight, Calendar } from 'lucide-react';
+import React from 'react';
+import { ShoppingCart, ChevronRight, Calendar, Trash2 } from 'lucide-react';
 
-export default function GroceryList({ list, onClick }) {
+export default function GroceryList({ list, onClick, onDelete }) {
   const itemCount = list.item_count || list.items?.length || 0;
   const checkedCount = list.checked_count || 0;
   const createdDate = list.created_at
@@ -35,6 +35,18 @@ export default function GroceryList({ list, onClick }) {
         </div>
       </div>
 
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(list.id);
+          }}
+          className="shrink-0 p-2 rounded-lg text-warm-gray opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 transition-all duration-200 min-w-[36px] min-h-[36px] flex items-center justify-center"
+          aria-label="Delete list"
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
       <ChevronRight size={20} className="text-warm-gray shrink-0 group-hover:text-terracotta transition-colors duration-200" />
     </button>
   );

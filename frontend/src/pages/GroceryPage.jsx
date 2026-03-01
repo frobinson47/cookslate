@@ -11,7 +11,7 @@ import Spinner from '../components/ui/Spinner';
 export default function GroceryPage() {
   const {
     lists, currentList, isLoading,
-    fetchLists, fetchList, createList,
+    fetchLists, fetchList, createList, deleteList,
     addItem, updateItem, removeItem,
   } = useGrocery();
 
@@ -30,6 +30,15 @@ export default function GroceryPage() {
       await createList(newListName.trim());
       setNewListName('');
       setShowNewListModal(false);
+    } catch {
+      // Error handled in hook
+    }
+  };
+
+  const handleDeleteList = async (listId) => {
+    if (!window.confirm('Delete this grocery list? This cannot be undone.')) return;
+    try {
+      await deleteList(listId);
     } catch {
       // Error handled in hook
     }
@@ -154,6 +163,7 @@ export default function GroceryPage() {
               key={list.id}
               list={list}
               onClick={handleOpenList}
+              onDelete={handleDeleteList}
             />
           ))}
         </div>

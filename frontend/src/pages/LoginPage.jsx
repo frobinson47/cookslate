@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CookingPot, AlertCircle, Eye } from 'lucide-react';
+import { CookingPot, AlertCircle, Eye, Github } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -110,6 +110,19 @@ export default function LoginPage() {
               Browse recipes in read-only mode
             </p>
           </div>
+        </div>
+
+        <div className="flex items-center justify-center gap-1.5 mt-6 text-xs text-warm-gray">
+          <Github size={14} />
+          <span>Open source on</span>
+          <a
+            href="https://github.com/frobinson47/crumble"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-terracotta hover:underline"
+          >
+            GitHub
+          </a>
         </div>
       </div>
     </div>

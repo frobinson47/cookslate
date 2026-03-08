@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { Github } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -42,6 +43,20 @@ export default function Layout({ children }) {
             {typeof children === 'function' ? children({ searchQuery }) : children}
           </div>
         </main>
+
+        {/* Footer */}
+        <footer className="hidden md:flex items-center justify-center gap-1.5 py-3 text-xs text-warm-gray border-t border-cream-dark">
+          <Github size={14} />
+          <span>Open source on</span>
+          <a
+            href="https://github.com/frobinson47/crumble"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-terracotta hover:underline"
+          >
+            GitHub
+          </a>
+        </footer>
 
         {/* Mobile Bottom Nav */}
         <BottomNav />

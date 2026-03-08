@@ -52,9 +52,64 @@ class UserController {
             return ['error' => 'Username already exists', 'code' => 409];
         }
 
-        $user = $userModel->create($input['username'], $input['password'], $role);
+        $email = !empty($input['email']) ? trim($input['email']) : null;
+        $user = $userModel->create($input['username'], $input['password'], $role, $email);
         http_response_code(201);
         return $user;
+    }
+
+    /**
+     * PUT /users/{id}
+     * Admin only. Update a user's email and role.
+     */
+    public function update(int $id): array {
+        Auth::requireAdmin();
+
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        $userModel = new User();
+        $user = $userModel->findById($id);
+
+        if (!$user) {
+            http_response_code(404);
+            return ['error' => 'User not found', 'code' => 404];
+        }
+
+        $email = isset($input['email']) ? trim($input['email']) : $user['email'];
+        $role = $input['role'] ?? $user['role'];
+
+        if (!in_array($role, ['admin', 'member'])) {
+            http_response_code(400);
+            return ['error' => 'Role must be admin or member', 'code' => 400];
+        }
+
+        $userModel->update($id, $email ?: null, $role);
+        return $userModel->findById($id);
+    }
+
+    /**
+     * DELETE /users/{id}
+     * Admin only. Delete a user.
+     */
+    public function delete(int $id): array {
+        Auth::requireAdmin();
+
+        $userModel = new User();
+        $user = $userModel->findById($id);
+
+        if (!$user) {
+            http_response_code(404);
+            return ['error' => 'User not found', 'code' => 404];
+        }
+
+        // Prevent self-deletion
+        if ($id === (int) ($_SESSION['user_id'] ?? 0)) {
+            http_response_code(400);
+            return ['error' => 'Cannot delete your own account', 'code' => 400];
+        }
+
+        $userModel->delete($id);
+        return ['message' => 'User deleted successfully'];
     }
 
     /**

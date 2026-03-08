@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Key, AlertCircle } from 'lucide-react';
+import { Shield, Plus, Key, Trash2, Pencil, AlertCircle } from 'lucide-react';
 import * as api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
@@ -14,13 +14,20 @@ export default function AdminPage() {
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
   // Create user form
   const [newUsername, setNewUsername] = useState('');
+  const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState('member');
   const [createError, setCreateError] = useState(null);
+
+  // Edit user form
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState('member');
+  const [editError, setEditError] = useState(null);
 
   // Reset password form
   const [resetPassword, setResetPassword] = useState('');
@@ -50,14 +57,40 @@ export default function AdminPage() {
       return;
     }
     try {
-      await api.createUser(newUsername.trim(), newPassword, newRole);
+      await api.createUser(newUsername.trim(), newPassword, newRole, newEmail.trim() || undefined);
       setShowCreateModal(false);
       setNewUsername('');
+      setNewEmail('');
       setNewPassword('');
       setNewRole('member');
       fetchUsers();
     } catch (err) {
       setCreateError(err.message);
+    }
+  };
+
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    setEditError(null);
+    try {
+      await api.updateUser(selectedUser.id, { email: editEmail.trim(), role: editRole });
+      setShowEditModal(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (err) {
+      setEditError(err.message);
+    }
+  };
+
+  const handleDeleteUser = async (u) => {
+    if (!window.confirm(`Are you sure you want to delete user "${u.username}"? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await api.deleteUser(u.id);
+      fetchUsers();
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -87,7 +120,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield size={24} className="text-terracotta" />
@@ -113,6 +146,7 @@ export default function AdminPage() {
             <thead>
               <tr className="border-b border-cream-dark bg-cream/50">
                 <th className="text-left px-6 py-3 text-sm font-semibold text-brown">Username</th>
+                <th className="text-left px-6 py-3 text-sm font-semibold text-brown">Email</th>
                 <th className="text-left px-6 py-3 text-sm font-semibold text-brown">Role</th>
                 <th className="text-left px-6 py-3 text-sm font-semibold text-brown">Created</th>
                 <th className="text-right px-6 py-3 text-sm font-semibold text-brown">Actions</th>
@@ -126,6 +160,9 @@ export default function AdminPage() {
                     {u.id === user?.id && (
                       <span className="ml-2 text-xs text-warm-gray">(you)</span>
                     )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-warm-gray">
+                    {u.email || '-'}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`
@@ -145,6 +182,18 @@ export default function AdminPage() {
                     <button
                       onClick={() => {
                         setSelectedUser(u);
+                        setEditEmail(u.email || '');
+                        setEditRole(u.role);
+                        setShowEditModal(true);
+                      }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-warm-gray hover:text-brown rounded-lg hover:bg-cream-dark transition-colors min-h-[36px]"
+                    >
+                      <Pencil size={14} />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedUser(u);
                         setShowResetModal(true);
                       }}
                       className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-warm-gray hover:text-brown rounded-lg hover:bg-cream-dark transition-colors min-h-[36px]"
@@ -152,6 +201,15 @@ export default function AdminPage() {
                       <Key size={14} />
                       Reset Password
                     </button>
+                    {u.id !== user?.id && (
+                      <button
+                        onClick={() => handleDeleteUser(u)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-warm-gray hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors min-h-[36px]"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -178,6 +236,7 @@ export default function AdminPage() {
           setShowCreateModal(false);
           setCreateError(null);
           setNewUsername('');
+          setNewEmail('');
           setNewPassword('');
           setNewRole('member');
         }}
@@ -197,6 +256,13 @@ export default function AdminPage() {
             onChange={(e) => setNewUsername(e.target.value)}
             placeholder="Enter username"
             autoFocus
+          />
+          <Input
+            label="Email"
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="Enter email (optional)"
           />
           <Input
             label="Password"
@@ -222,6 +288,54 @@ export default function AdminPage() {
             </Button>
             <Button type="submit">
               Create User
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit user modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditError(null);
+          setSelectedUser(null);
+        }}
+        title={`Edit User: ${selectedUser?.username}`}
+        size="sm"
+      >
+        <form onSubmit={handleEditUser} className="space-y-4">
+          {editError && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
+              <AlertCircle size={16} />
+              <span>{editError}</span>
+            </div>
+          )}
+          <Input
+            label="Email"
+            type="email"
+            value={editEmail}
+            onChange={(e) => setEditEmail(e.target.value)}
+            placeholder="Enter email"
+            autoFocus
+          />
+          <div>
+            <label className="block text-sm font-semibold text-brown mb-1">Role</label>
+            <select
+              value={editRole}
+              onChange={(e) => setEditRole(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-cream-dark text-brown bg-white focus:outline-none focus:border-terracotta transition-colors duration-200 min-h-[44px]"
+            >
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div className="flex gap-3 justify-end pt-2">
+            <Button variant="ghost" type="button" onClick={() => setShowEditModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Save Changes
             </Button>
           </div>
         </form>

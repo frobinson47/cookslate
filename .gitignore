@@ -6,3 +6,6 @@ api/.env
 api/vendor/
 .env
 docs/plans/
+cookies.txt
+api/.phpunit.result.cache
+.claude/

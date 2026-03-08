@@ -13,7 +13,7 @@ class User {
      * Find a user by ID. Never returns password_hash.
      */
     public function findById(int $id): ?array {
-        $stmt = $this->db->prepare('SELECT id, username, role, is_demo, created_at FROM users WHERE id = ?');
+        $stmt = $this->db->prepare('SELECT id, username, email, role, is_demo, created_at FROM users WHERE id = ?');
         $stmt->execute([$id]);
         $user = $stmt->fetch();
         return $user ?: null;
@@ -23,8 +23,15 @@ class User {
      * Find a user by username. Includes password_hash for verification.
      */
     public function findByUsername(string $username): ?array {
-        $stmt = $this->db->prepare('SELECT id, username, password_hash, role, is_demo, failed_attempts, locked_until, created_at FROM users WHERE username = ?');
+        $stmt = $this->db->prepare('SELECT id, username, email, password_hash, role, is_demo, failed_attempts, locked_until, created_at FROM users WHERE username = ?');
         $stmt->execute([$username]);
+        $user = $stmt->fetch();
+        return $user ?: null;
+    }
+
+    public function findByEmail(string $email): ?array {
+        $stmt = $this->db->prepare('SELECT id, username, email, password_hash, role, is_demo, failed_attempts, locked_until, created_at FROM users WHERE email = ?');
+        $stmt->execute([$email]);
         $user = $stmt->fetch();
         return $user ?: null;
     }
@@ -40,20 +47,29 @@ class User {
      * Get all users (without password hashes).
      */
     public function getAll(): array {
-        $stmt = $this->db->query('SELECT id, username, role, created_at FROM users ORDER BY created_at DESC');
+        $stmt = $this->db->query('SELECT id, username, email, role, created_at FROM users ORDER BY created_at DESC');
         return $stmt->fetchAll();
     }
 
     /**
      * Create a new user.
      */
-    public function create(string $username, string $password, string $role = 'member'): array {
+    public function create(string $username, string $password, string $role = 'member', ?string $email = null): array {
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $this->db->prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)');
-        $stmt->execute([$username, $hash, $role]);
+        $stmt = $this->db->prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)');
+        $stmt->execute([$username, $email, $hash, $role]);
 
         $id = (int) $this->db->lastInsertId();
         return $this->findById($id);
+    }
+
+    /**
+     * Update a user's profile (email, role).
+     */
+    public function update(int $id, ?string $email, string $role): bool {
+        $stmt = $this->db->prepare('UPDATE users SET email = ?, role = ? WHERE id = ?');
+        $stmt->execute([$email, $role, $id]);
+        return $stmt->rowCount() >= 0;
     }
 
     /**

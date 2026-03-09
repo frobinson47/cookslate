@@ -25,9 +25,9 @@ export default function GroceryItem({ item, onToggle, onDelete }) {
           {item.unit && <span>{item.unit} </span>}
           {item.name}
         </span>
-        {item.recipe_name && (
+        {item.recipe_title && (
           <span className="text-xs text-warm-gray ml-2">
-            from {item.recipe_name}
+            from {item.recipe_title}
           </span>
         )}
       </div>

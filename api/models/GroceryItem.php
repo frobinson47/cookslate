@@ -121,7 +121,8 @@ class GroceryItem {
                 }
                 // If units don't match or amounts aren't numeric, skip combining (item already exists)
             } else {
-                $this->create($listId, $ingredient['name'], $ingredient['amount'], $ingredient['unit'], $recipeId);
+                $newItem = $this->create($listId, $ingredient['name'], $ingredient['amount'], $ingredient['unit'], $recipeId);
+                $existingByName[$key] = $newItem;
             }
         }
 

@@ -55,3 +55,41 @@ function getSessionLifetime(): int
 {
     return 7200;
 }
+
+/**
+ * Get the CA bundle path for cURL SSL verification.
+ * Checks: curl.cainfo php.ini → CURL_CA_BUNDLE env → common OS paths → Laragon fallback.
+ * Returns null if no CA bundle found (cURL will use its built-in default).
+ */
+function getCaBundlePath(): ?string
+{
+    // 1. PHP ini setting
+    $caInfo = ini_get('curl.cainfo');
+    if (!empty($caInfo) && file_exists($caInfo)) {
+        return $caInfo;
+    }
+
+    // 2. Environment variable (standard, works on all platforms)
+    $envCa = env('CURL_CA_BUNDLE');
+    if ($envCa && file_exists($envCa)) {
+        return $envCa;
+    }
+
+    // 3. Common locations
+    $commonPaths = [
+        '/etc/ssl/certs/ca-certificates.crt',     // Debian/Ubuntu
+        '/etc/pki/tls/certs/ca-bundle.crt',        // RHEL/CentOS
+        '/etc/ssl/ca-bundle.pem',                   // openSUSE
+        '/usr/local/etc/openssl/cert.pem',          // macOS Homebrew
+        'D:/laragon/etc/ssl/cacert.pem',            // Laragon on Windows
+        'C:/laragon/etc/ssl/cacert.pem',            // Laragon alternate drive
+    ];
+
+    foreach ($commonPaths as $path) {
+        if (file_exists($path)) {
+            return $path;
+        }
+    }
+
+    return null;
+}

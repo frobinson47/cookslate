@@ -118,18 +118,37 @@ class Recipe {
      * Get a single recipe by ID with all ingredients, tags, and prev/next IDs.
      */
     public function findById(int $id): ?array {
+        $userId = $_SESSION['user_id'] ?? null;
+
+        // Single query for recipe + author + all aggregates + prev/next navigation
         $stmt = $this->db->prepare('
-            SELECT r.*, u.username AS author
+            SELECT r.*, u.username AS author,
+                (SELECT ROUND(AVG(score), 1) FROM ratings WHERE recipe_id = r.id) AS avg_rating,
+                (SELECT COUNT(*) FROM favorites WHERE recipe_id = r.id) AS favorite_count,
+                (SELECT 1 FROM favorites WHERE user_id = ? AND recipe_id = r.id) AS is_favorited,
+                (SELECT score FROM ratings WHERE user_id = ? AND recipe_id = r.id) AS user_rating,
+                (SELECT COUNT(*) FROM cook_log WHERE user_id = ? AND recipe_id = r.id) AS cook_count,
+                (SELECT id FROM recipes WHERE id < r.id ORDER BY id DESC LIMIT 1) AS prev_id,
+                (SELECT id FROM recipes WHERE id > r.id ORDER BY id ASC LIMIT 1) AS next_id
             FROM recipes r
             LEFT JOIN users u ON r.created_by = u.id
             WHERE r.id = ?
         ');
-        $stmt->execute([$id]);
+        $stmt->execute([$userId, $userId, $userId, $id]);
         $recipe = $stmt->fetch();
 
         if (!$recipe) {
             return null;
         }
+
+        // Cast types
+        $recipe['avg_rating'] = $recipe['avg_rating'] !== null ? (float) $recipe['avg_rating'] : null;
+        $recipe['favorite_count'] = (int) $recipe['favorite_count'];
+        $recipe['is_favorited'] = (bool) $recipe['is_favorited'];
+        $recipe['user_rating'] = $recipe['user_rating'] !== null ? (int) $recipe['user_rating'] : null;
+        $recipe['cook_count'] = (int) $recipe['cook_count'];
+        $recipe['prev_id'] = $recipe['prev_id'] !== null ? (int) $recipe['prev_id'] : null;
+        $recipe['next_id'] = $recipe['next_id'] !== null ? (int) $recipe['next_id'] : null;
 
         // Decode instructions JSON
         if (is_string($recipe['instructions'])) {
@@ -156,48 +175,6 @@ class Recipe {
         ');
         $tagStmt->execute([$id]);
         $recipe['tags'] = $tagStmt->fetchAll();
-
-        // Get aggregates: avg rating, favorite count, cook count
-        $ratingStmt = $this->db->prepare('SELECT ROUND(AVG(score), 1) FROM ratings WHERE recipe_id = ?');
-        $ratingStmt->execute([$id]);
-        $avgRating = $ratingStmt->fetchColumn();
-        $recipe['avg_rating'] = $avgRating !== false && $avgRating !== null ? (float) $avgRating : null;
-
-        $favCountStmt = $this->db->prepare('SELECT COUNT(*) FROM favorites WHERE recipe_id = ?');
-        $favCountStmt->execute([$id]);
-        $recipe['favorite_count'] = (int) $favCountStmt->fetchColumn();
-
-        // User-specific data
-        $userId = $_SESSION['user_id'] ?? null;
-        if ($userId) {
-            $favStmt = $this->db->prepare('SELECT 1 FROM favorites WHERE user_id = ? AND recipe_id = ?');
-            $favStmt->execute([$userId, $id]);
-            $recipe['is_favorited'] = (bool) $favStmt->fetch();
-
-            $userRatingStmt = $this->db->prepare('SELECT score FROM ratings WHERE user_id = ? AND recipe_id = ?');
-            $userRatingStmt->execute([$userId, $id]);
-            $ur = $userRatingStmt->fetchColumn();
-            $recipe['user_rating'] = $ur !== false ? (int) $ur : null;
-
-            $cookCountStmt = $this->db->prepare('SELECT COUNT(*) FROM cook_log WHERE user_id = ? AND recipe_id = ?');
-            $cookCountStmt->execute([$userId, $id]);
-            $recipe['cook_count'] = (int) $cookCountStmt->fetchColumn();
-        } else {
-            $recipe['is_favorited'] = false;
-            $recipe['user_rating'] = null;
-            $recipe['cook_count'] = 0;
-        }
-
-        // Get prev/next recipe IDs for navigation
-        $prevStmt = $this->db->prepare('SELECT id FROM recipes WHERE id < ? ORDER BY id DESC LIMIT 1');
-        $prevStmt->execute([$id]);
-        $prev = $prevStmt->fetchColumn();
-        $recipe['prev_id'] = $prev !== false ? (int) $prev : null;
-
-        $nextStmt = $this->db->prepare('SELECT id FROM recipes WHERE id > ? ORDER BY id ASC LIMIT 1');
-        $nextStmt->execute([$id]);
-        $next = $nextStmt->fetchColumn();
-        $recipe['next_id'] = $next !== false ? (int) $next : null;
 
         // Remove password_hash from response (should not be in the join, but safety)
         unset($recipe['password_hash']);

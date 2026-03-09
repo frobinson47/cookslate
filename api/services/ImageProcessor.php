@@ -130,13 +130,10 @@ class ImageProcessor {
                 CURLOPT_SSL_VERIFYPEER => true,
             ]);
 
-            // Use Laragon's CA bundle if curl.cainfo is not configured
-            $caInfo = ini_get('curl.cainfo');
-            if (empty($caInfo)) {
-                $laragonCa = 'D:/laragon/etc/ssl/cacert.pem';
-                if (file_exists($laragonCa)) {
-                    curl_setopt($ch, CURLOPT_CAINFO, $laragonCa);
-                }
+            // Use CA bundle for SSL verification if not configured in php.ini
+            $caBundle = getCaBundlePath();
+            if ($caBundle) {
+                curl_setopt($ch, CURLOPT_CAINFO, $caBundle);
             }
 
             $imageData = curl_exec($ch);

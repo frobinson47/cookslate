@@ -4,6 +4,7 @@ import { migrateLocalStorage } from './utils/storageMigration';
 
 migrateLocalStorage();
 import { AuthProvider } from './hooks/useAuth';
+import { LicenseProvider } from './pro/hooks/useLicense';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
@@ -20,11 +21,13 @@ import FavoritesPage from './pages/FavoritesPage';
 import MealPlanPage from './pages/MealPlanPage';
 import StatsPage from './pages/StatsPage';
 import SharedRecipePage from './pages/SharedRecipePage';
+import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <LicenseProvider>
         <ErrorBoundary>
         <Routes>
           {/* Public routes */}
@@ -142,11 +145,22 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SettingsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </ErrorBoundary>
+        </LicenseProvider>
       </AuthProvider>
     </BrowserRouter>
   );

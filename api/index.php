@@ -513,6 +513,50 @@ try {
             }
             break;
 
+        // ── License Routes ──────────────────────────────────────────────
+        case 'license':
+            require_once __DIR__ . '/config/license.php';
+
+            if ($id === 'status' && $method === 'GET') {
+                // GET /license/status — returns license tier info
+                $license = License::getInstance();
+                $response = $license->status();
+            } elseif ($id === 'activate' && $method === 'POST') {
+                // POST /license/activate — writes key and validates
+                require_once __DIR__ . '/middleware/Auth.php';
+                Auth::requireAdmin();
+
+                $data = json_decode(file_get_contents('php://input'), true);
+                $key = trim($data['key'] ?? '');
+                if (empty($key)) {
+                    http_response_code(400);
+                    $response = ['error' => 'License key is required'];
+                } else {
+                    $keyFile = __DIR__ . '/config/license.key';
+                    file_put_contents($keyFile, $key);
+                    $license = new License($keyFile);
+                    if ($license->isActive()) {
+                        $response = ['message' => 'License activated', 'status' => $license->status()];
+                    } else {
+                        unlink($keyFile);
+                        http_response_code(400);
+                        $response = ['error' => 'Invalid license key'];
+                    }
+                }
+            } elseif ($id === 'deactivate' && $method === 'POST') {
+                // POST /license/deactivate — removes key
+                require_once __DIR__ . '/middleware/Auth.php';
+                Auth::requireAdmin();
+
+                $keyFile = __DIR__ . '/config/license.key';
+                if (file_exists($keyFile)) {
+                    unlink($keyFile);
+                }
+                License::reset();
+                $response = ['message' => 'License deactivated'];
+            }
+            break;
+
         // ── Root / Health Check ─────────────────────────────────────────
         case '':
             $response = [

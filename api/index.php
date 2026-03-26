@@ -246,29 +246,35 @@ try {
                     $response = $controller->related($recipeId);
                 } elseif ($subResource === 'annotations') {
                     // /recipes/{id}/annotations
-                    require_once __DIR__ . '/models/RecipeAnnotation.php';
-                    $annotationModel = new RecipeAnnotation();
-                    if ($method === 'GET') {
-                        $userId = Auth::requireAuth();
-                        $response = ['annotations' => $annotationModel->getForRecipe($recipeId, $userId)];
-                    } elseif ($method === 'PUT' || $method === 'POST') {
-                        $userId = Auth::requireAuth();
-                        $data = json_decode(file_get_contents('php://input'), true);
-                        if (empty($data['target_type']) || !isset($data['target_index']) || empty($data['note'])) {
-                            http_response_code(400);
-                            $response = ['error' => 'target_type, target_index, and note are required'];
-                        } else {
-                            $response = $annotationModel->upsert($recipeId, $userId, $data['target_type'], (int)$data['target_index'], $data['note']);
-                        }
-                    } elseif ($method === 'DELETE') {
-                        $userId = Auth::requireAuth();
-                        $data = json_decode(file_get_contents('php://input'), true);
-                        if (empty($data['target_type']) || !isset($data['target_index'])) {
-                            http_response_code(400);
-                            $response = ['error' => 'target_type and target_index are required'];
-                        } else {
-                            $annotationModel->delete($recipeId, $userId, $data['target_type'], (int)$data['target_index']);
-                            $response = ['message' => 'Annotation deleted'];
+                    require_once __DIR__ . '/config/license.php';
+                    if (!License::checkActive()) {
+                        http_response_code(403);
+                        $response = ['error' => 'Pro license required', 'code' => 403, 'upgrade' => true];
+                    } else {
+                        require_once __DIR__ . '/pro/models/RecipeAnnotation.php';
+                        $annotationModel = new RecipeAnnotation();
+                        if ($method === 'GET') {
+                            $userId = Auth::requireAuth();
+                            $response = ['annotations' => $annotationModel->getForRecipe($recipeId, $userId)];
+                        } elseif ($method === 'PUT' || $method === 'POST') {
+                            $userId = Auth::requireAuth();
+                            $data = json_decode(file_get_contents('php://input'), true);
+                            if (empty($data['target_type']) || !isset($data['target_index']) || empty($data['note'])) {
+                                http_response_code(400);
+                                $response = ['error' => 'target_type, target_index, and note are required'];
+                            } else {
+                                $response = $annotationModel->upsert($recipeId, $userId, $data['target_type'], (int)$data['target_index'], $data['note']);
+                            }
+                        } elseif ($method === 'DELETE') {
+                            $userId = Auth::requireAuth();
+                            $data = json_decode(file_get_contents('php://input'), true);
+                            if (empty($data['target_type']) || !isset($data['target_index'])) {
+                                http_response_code(400);
+                                $response = ['error' => 'target_type and target_index are required'];
+                            } else {
+                                $annotationModel->delete($recipeId, $userId, $data['target_type'], (int)$data['target_index']);
+                                $response = ['message' => 'Annotation deleted'];
+                            }
                         }
                     }
                 } elseif ($subResource === null) {
@@ -314,7 +320,13 @@ try {
 
         // ── Stats Routes ───────────────────────────────────────────────
         case 'stats':
-            require_once __DIR__ . '/controllers/StatsController.php';
+            require_once __DIR__ . '/config/license.php';
+            if (!License::checkActive()) {
+                http_response_code(403);
+                $response = ['error' => 'Pro license required', 'code' => 403, 'upgrade' => true];
+                break;
+            }
+            require_once __DIR__ . '/pro/controllers/StatsController.php';
             $statsController = new StatsController();
 
             if ($id === null && $method === 'GET') {
@@ -414,7 +426,13 @@ try {
 
         // ── Meal Plan Routes ────────────────────────────────────────────
         case 'meal-plan':
-            require_once __DIR__ . '/controllers/MealPlanController.php';
+            require_once __DIR__ . '/config/license.php';
+            if (!License::checkActive()) {
+                http_response_code(403);
+                $response = ['error' => 'Pro license required', 'code' => 403, 'upgrade' => true];
+                break;
+            }
+            require_once __DIR__ . '/pro/controllers/MealPlanController.php';
             $controller = new MealPlanController();
 
             if ($id === null && $method === 'GET') {

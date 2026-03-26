@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../models/MealPlan.php';
-require_once __DIR__ . '/../middleware/Auth.php';
+require_once __DIR__ . '/../../middleware/Auth.php';
 
 class MealPlanController {
 
@@ -15,6 +15,16 @@ class MealPlanController {
 
         $model = new MealPlan();
         return $model->getByWeek($userId, $week);
+    }
+
+    /**
+     * GET /meal-plan/today
+     * Returns today's planned meals for the current user.
+     */
+    public function getToday(): array {
+        $userId = Auth::requireAuth();
+        $model = new MealPlan();
+        return ['meals' => $model->getToday($userId)];
     }
 
     /**

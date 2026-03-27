@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { getLicenseStatus } from '../../services/api';
+import { getLicenseStatus } from '../services/api';
 
 const LicenseContext = createContext({ active: false, tier: 'free', email: '', loading: true });
 

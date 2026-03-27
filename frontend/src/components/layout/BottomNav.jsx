@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutGrid, Plus, Heart, ShoppingCart, CalendarDays } from 'lucide-react';
-import { useLicense } from '../../pro/hooks/useLicense';
+import { useLicense } from '../../hooks/useLicense';
 
 const baseNavItems = [
   { to: '/', icon: LayoutGrid, label: 'Home' },

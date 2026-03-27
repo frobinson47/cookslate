@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { KeyRound, Check, X } from 'lucide-react';
-import { useLicense } from '../pro/hooks/useLicense';
+import { useLicense } from '../hooks/useLicense';
 import { activateLicense, deactivateLicense } from '../services/api';
 
 export default function SettingsPage() {

@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { LayoutGrid, Plus, ShoppingCart, User, Shield, LogOut, CookingPot, Upload, BookOpen, Heart, CalendarDays, TrendingUp, Sun, Moon, Monitor, Download, Settings } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import useTheme from '../../hooks/useTheme';
-import { useLicense } from '../../pro/hooks/useLicense';
+import { useLicense } from '../../hooks/useLicense';
 
 export default function Sidebar() {
   const { user, isAdmin, logout } = useAuth();

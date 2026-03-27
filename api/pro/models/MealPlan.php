@@ -1,8 +1,9 @@
 <?php
 
-require_once __DIR__ . '/Database.php';
-require_once __DIR__ . '/GroceryList.php';
-require_once __DIR__ . '/GroceryItem.php';
+require_once __DIR__ . '/../../models/Database.php';
+require_once __DIR__ . '/../../models/GroceryList.php';
+require_once __DIR__ . '/../../models/GroceryItem.php';
+require_once __DIR__ . '/../../services/UnitConverter.php';
 
 class MealPlan {
     private PDO $db;
@@ -63,6 +64,46 @@ class MealPlan {
             'week_start' => $snappedDate,
             'items' => $items,
         ];
+    }
+
+    /**
+     * Get today's planned meals for a user.
+     */
+    public function getToday(int $userId): array {
+        $weekStart = date('Y-m-d', strtotime('monday this week'));
+        // day_of_week: 0=Mon, 1=Tue, ..., 6=Sun
+        $jsDay = (int) date('w'); // 0=Sun, 1=Mon, ...
+        $dayOfWeek = $jsDay === 0 ? 6 : $jsDay - 1;
+
+        $stmt = $this->db->prepare('
+            SELECT mpi.id, mpi.recipe_id, mpi.day_of_week,
+                   r.id AS r_id, r.title, r.image_path, r.servings, r.prep_time, r.cook_time
+            FROM meal_plan_items mpi
+            INNER JOIN meal_plans mp ON mpi.plan_id = mp.id
+            INNER JOIN recipes r ON mpi.recipe_id = r.id
+            WHERE mp.user_id = ? AND mp.week_start = ? AND mpi.day_of_week = ?
+            ORDER BY mpi.sort_order ASC, mpi.id ASC
+        ');
+        $stmt->execute([$userId, $weekStart, $dayOfWeek]);
+        $rows = $stmt->fetchAll();
+
+        $items = [];
+        foreach ($rows as $row) {
+            $items[] = [
+                'id' => (int) $row['id'],
+                'recipe_id' => (int) $row['recipe_id'],
+                'recipe' => [
+                    'id' => (int) $row['r_id'],
+                    'title' => $row['title'],
+                    'image_path' => $row['image_path'],
+                    'servings' => $row['servings'] !== null ? (int) $row['servings'] : null,
+                    'prep_time' => $row['prep_time'] !== null ? (int) $row['prep_time'] : null,
+                    'cook_time' => $row['cook_time'] !== null ? (int) $row['cook_time'] : null,
+                ],
+            ];
+        }
+
+        return $items;
     }
 
     /**
@@ -192,6 +233,7 @@ class MealPlan {
 
     /**
      * Generate a grocery list from all items in a meal plan.
+     * Consolidates duplicate ingredients (same name) by combining amounts with unit conversion.
      * Returns the new grocery list ID, or null if unauthorized.
      */
     public function generateGroceryList(int $planId, string $listName, int $userId): ?int {
@@ -222,8 +264,9 @@ class MealPlan {
         $list = $groceryListModel->create($listName, $userId);
         $listId = (int) $list['id'];
 
-        // Add each ingredient to the grocery list
+        // Scale amounts first, then consolidate by name
         $groceryItemModel = new GroceryItem();
+        $consolidated = []; // key: lowercase name → ['name' => ..., 'amount' => float|null, 'unit' => ..., 'recipe_id' => ...]
 
         foreach ($ingredients as $ingredient) {
             $amount = $ingredient['amount'];
@@ -234,104 +277,65 @@ class MealPlan {
                 && (int) $ingredient['recipe_servings'] > 0
                 && (int) $ingredient['servings_override'] !== (int) $ingredient['recipe_servings']
             ) {
-                $parsedAmount = $this->parseAmount($amount);
+                $parsedAmount = UnitConverter::parseAmount($amount);
                 if ($parsedAmount !== null) {
                     $scale = (int) $ingredient['servings_override'] / (int) $ingredient['recipe_servings'];
-                    $scaledAmount = $parsedAmount * $scale;
-                    $amount = $this->formatAmount($scaledAmount);
+                    $amount = UnitConverter::formatAmount($parsedAmount * $scale);
                 }
             }
 
+            $key = strtolower(trim($ingredient['name']));
+            $newVal = UnitConverter::parseAmount($amount);
+
+            if (!isset($consolidated[$key])) {
+                $consolidated[$key] = [
+                    'name' => $ingredient['name'],
+                    'amount' => $amount,
+                    'unit' => $ingredient['unit'],
+                    'recipe_id' => (int) $ingredient['recipe_id'],
+                    'parsed' => $newVal,
+                ];
+                continue;
+            }
+
+            // Consolidate: combine amounts when possible
+            $existing = &$consolidated[$key];
+            $existingVal = $existing['parsed'];
+
+            if ($existingVal !== null && $newVal !== null) {
+                if ($existing['unit'] === $ingredient['unit']) {
+                    // Same unit — simple addition
+                    $existing['parsed'] = $existingVal + $newVal;
+                    $existing['amount'] = UnitConverter::formatAmount($existing['parsed']);
+                } elseif (UnitConverter::canConvert($existing['unit'], $ingredient['unit'])) {
+                    // Compatible units — convert and add
+                    $convertedVal = UnitConverter::convert($newVal, $ingredient['unit'], $existing['unit']);
+                    if ($convertedVal !== null) {
+                        $total = $existingVal + $convertedVal;
+                        $measureType = UnitConverter::getMeasureType($existing['unit']);
+                        $baseAmount = UnitConverter::convert($total, $existing['unit'], $measureType === 'volume' ? 'tsp' : 'g');
+                        $best = UnitConverter::bestUnit($baseAmount, $existing['unit'], $measureType);
+                        $existing['parsed'] = $best['amount'];
+                        $existing['amount'] = UnitConverter::formatAmount($best['amount']);
+                        $existing['unit'] = $best['unit'];
+                    }
+                }
+                // If units aren't convertible, skip combining (first entry wins)
+            }
+            unset($existing);
+        }
+
+        // Insert consolidated items
+        foreach ($consolidated as $item) {
             $groceryItemModel->create(
                 $listId,
-                $ingredient['name'],
-                $amount,
-                $ingredient['unit'],
-                (int) $ingredient['recipe_id']
+                $item['name'],
+                $item['amount'],
+                $item['unit'],
+                $item['recipe_id']
             );
         }
 
         return $listId;
-    }
-
-    /**
-     * Parse an amount string to a float.
-     * Handles: "2", "1/2", "1 1/2", "2-3" (averages range).
-     * Returns null for empty, null, or non-numeric strings like "to taste".
-     */
-    private function parseAmount(?string $amount): ?float {
-        if ($amount === null || trim($amount) === '') {
-            return null;
-        }
-
-        $amount = trim($amount);
-
-        // Range: "2-3" → average
-        if (preg_match('/^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/', $amount, $matches)) {
-            return ((float) $matches[1] + (float) $matches[2]) / 2;
-        }
-
-        // Mixed number: "1 1/2"
-        if (preg_match('/^(\d+)\s+(\d+)\/(\d+)$/', $amount, $matches)) {
-            return (float) $matches[1] + (float) $matches[2] / (float) $matches[3];
-        }
-
-        // Fraction: "1/2"
-        if (preg_match('/^(\d+)\/(\d+)$/', $amount, $matches)) {
-            return (float) $matches[1] / (float) $matches[2];
-        }
-
-        // Simple number: "2" or "2.5"
-        if (is_numeric($amount)) {
-            return (float) $amount;
-        }
-
-        // Non-numeric (e.g., "to taste")
-        return null;
-    }
-
-    /**
-     * Format a float amount back to a human-readable string.
-     * 1.5 → "1 1/2", 0.5 → "1/2", 2.0 → "2", 0.333 → "1/3"
-     */
-    private function formatAmount(float $amount): string {
-        // Common fractions lookup
-        $fractions = [
-            1/8 => '1/8',
-            1/6 => '1/6',
-            1/4 => '1/4',
-            1/3 => '1/3',
-            3/8 => '3/8',
-            1/2 => '1/2',
-            5/8 => '5/8',
-            2/3 => '2/3',
-            3/4 => '3/4',
-            5/6 => '5/6',
-            7/8 => '7/8',
-        ];
-
-        // Whole number
-        if (abs($amount - round($amount)) < 0.001) {
-            return (string) (int) round($amount);
-        }
-
-        $whole = (int) floor($amount);
-        $decimal = $amount - $whole;
-
-        // Check if decimal part matches a common fraction
-        foreach ($fractions as $value => $display) {
-            if (abs($decimal - $value) < 0.01) {
-                if ($whole > 0) {
-                    return "$whole $display";
-                }
-                return $display;
-            }
-        }
-
-        // Fallback: round to 2 decimal places
-        if ($whole > 0) {
-            return (string) round($amount, 2);
-        }
-        return (string) round($amount, 2);
     }
 }

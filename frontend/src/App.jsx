@@ -4,7 +4,7 @@ import { migrateLocalStorage } from './utils/storageMigration';
 
 migrateLocalStorage();
 import { AuthProvider } from './hooks/useAuth';
-import { LicenseProvider, useLicense } from './pro/hooks/useLicense';
+import { LicenseProvider, useLicense } from './hooks/useLicense';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';

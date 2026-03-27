@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { migrateLocalStorage } from './utils/storageMigration';
+
+migrateLocalStorage();
 import { AuthProvider } from './hooks/useAuth';
+import { LicenseProvider, useLicense } from './hooks/useLicense';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
@@ -14,13 +18,23 @@ import AdminPage from './pages/AdminPage';
 import BulkImportPage from './pages/BulkImportPage';
 import CookHistoryPage from './pages/CookHistoryPage';
 import FavoritesPage from './pages/FavoritesPage';
-import MealPlanPage from './pages/MealPlanPage';
+const MealPlanPage = lazy(() => import('./pro/pages/MealPlanPage'));
+const StatsPage = lazy(() => import('./pro/pages/StatsPage'));
 import SharedRecipePage from './pages/SharedRecipePage';
+import SettingsPage from './pages/SettingsPage';
+
+function ProRoute({ children }) {
+  const { active, loading } = useLicense();
+  if (loading) return null;
+  if (!active) return <Navigate to="/settings" replace />;
+  return <Suspense fallback={null}>{children}</Suspense>;
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <LicenseProvider>
         <ErrorBoundary>
         <Routes>
           {/* Public routes */}
@@ -103,7 +117,7 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <MealPlanPage />
+                  <ProRoute><MealPlanPage /></ProRoute>
                 </Layout>
               </ProtectedRoute>
             }
@@ -119,6 +133,16 @@ export default function App() {
             }
           />
           <Route
+            path="/stats"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProRoute><StatsPage /></ProRoute>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin"
             element={
               <ProtectedRoute requireAdmin>
@@ -128,11 +152,22 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SettingsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </ErrorBoundary>
+        </LicenseProvider>
       </AuthProvider>
     </BrowserRouter>
   );

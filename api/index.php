@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Crumble API Router / Entry Point
+ * Cookslate API Router / Entry Point
  *
  * Routes all API requests to the appropriate controller methods.
  * Handles CORS, sessions, JSON responses, and error catching.
@@ -51,28 +51,6 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
 }
 $_SESSION['last_activity'] = time();
 
-// ─── Authentik Forward Auth Auto-Login ──────────────────────────────────
-// Caddy sets these headers after successful forward_auth with Authentik.
-// Caddy strips these from external requests, so they are trustworthy.
-$authentikUser = $_SERVER['HTTP_X_AUTHENTIK_USERNAME'] ?? null;
-$authentikEmail = $_SERVER['HTTP_X_AUTHENTIK_EMAIL'] ?? null;
-if ($authentikUser && empty($_SESSION['user_id'])) {
-    require_once __DIR__ . '/models/User.php';
-    $userModel = new User();
-    $user = $userModel->findByUsername($authentikUser);
-
-    if (!$user) {
-        // Auto-create user — password is random since auth is via Authentik
-        $user = $userModel->create($authentikUser, bin2hex(random_bytes(32)), 'member', $authentikEmail);
-    }
-
-    // Auto-login: set session
-    session_regenerate_id(true);
-    $_SESSION['user_id'] = (int) $user['id'];
-    $_SESSION['role'] = $user['role'];
-    $_SESSION['is_demo'] = false;
-}
-
 // ─── Load Config ────────────────────────────────────────────────────────────
 require_once __DIR__ . '/config/constants.php';
 require_once __DIR__ . '/middleware/RateLimiter.php';
@@ -86,8 +64,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 // Strip base path prefix
 $path = parse_url($requestUri, PHP_URL_PATH);
 
-// Try multiple base paths (Caddy proxy sends /api/*, direct access sends /crumble/api/*)
-$basePaths = ['/crumble/api', '/api'];
+// Try multiple base paths (Caddy proxy sends /api/*, direct access sends /cookslate/api/*)
+$basePaths = ['/cookslate/api', '/crumble/api', '/api'];
 foreach ($basePaths as $basePath) {
     if (str_starts_with($path, $basePath)) {
         $path = substr($path, strlen($basePath));
@@ -110,7 +88,7 @@ try {
     $subId = $segments[3] ?? null;
 
     // ── CSRF Protection (exempt login — user has no session yet) ────────
-    $csrfExempt = ($resource === 'auth' && $id === 'login');
+    $csrfExempt = ($resource === 'auth' && in_array($id, ['login', 'oauth', 'sso-config']));
     if (!$csrfExempt) {
         Csrf::enforce();
     }
@@ -160,6 +138,22 @@ try {
                         $response = $controller->me();
                     }
                     break;
+                case 'oauth':
+                    require_once __DIR__ . '/controllers/OAuthController.php';
+                    $oauthController = new OAuthController();
+                    if ($subResource === 'redirect' && $method === 'GET') {
+                        $oauthController->redirect();
+                    } elseif ($subResource === 'callback' && $method === 'GET') {
+                        $oauthController->callback();
+                    }
+                    break;
+                case 'sso-config':
+                    if ($method === 'GET') {
+                        require_once __DIR__ . '/controllers/OAuthController.php';
+                        $oauthController = new OAuthController();
+                        $response = $oauthController->config();
+                    }
+                    break;
             }
             break;
 
@@ -205,6 +199,15 @@ try {
                 }
             } elseif ($id === 'featured' && $method === 'GET') {
                 $response = $controller->featured();
+            } elseif ($id === 'export' && $method === 'GET') {
+                $response = $controller->export();
+            } elseif ($id === 'export-zip' && $method === 'GET') {
+                $controller->exportZip();
+                exit; // exportZip handles its own response
+            } elseif ($id === 'by-ingredients' && $method === 'GET') {
+                $response = $controller->byIngredients();
+            } elseif ($id === 'uncooked' && $method === 'GET') {
+                $response = $controller->uncooked();
             } elseif (is_numeric($id)) {
                 $recipeId = (int) $id;
 
@@ -223,6 +226,11 @@ try {
                     require_once __DIR__ . '/controllers/CookLogController.php';
                     $cookController = new CookLogController();
                     $response = $cookController->log($recipeId);
+                } elseif ($subResource === 'cook-log' && $method === 'GET') {
+                    // GET /recipes/{id}/cook-log
+                    require_once __DIR__ . '/controllers/CookLogController.php';
+                    $cookController = new CookLogController();
+                    $response = $cookController->recipeHistory($recipeId);
                 } elseif ($subResource === 'share' && $method === 'POST') {
                     // POST /recipes/{id}/share
                     require_once __DIR__ . '/controllers/RecipeShareController.php';
@@ -236,6 +244,39 @@ try {
                 } elseif ($subResource === 'related' && $method === 'GET') {
                     // /recipes/{id}/related
                     $response = $controller->related($recipeId);
+                } elseif ($subResource === 'annotations') {
+                    // /recipes/{id}/annotations
+                    require_once __DIR__ . '/config/license.php';
+                    if (!License::checkActive()) {
+                        http_response_code(403);
+                        $response = ['error' => 'Pro license required', 'code' => 403, 'upgrade' => true];
+                    } else {
+                        require_once __DIR__ . '/pro/models/RecipeAnnotation.php';
+                        $annotationModel = new RecipeAnnotation();
+                        if ($method === 'GET') {
+                            $userId = Auth::requireAuth();
+                            $response = ['annotations' => $annotationModel->getForRecipe($recipeId, $userId)];
+                        } elseif ($method === 'PUT' || $method === 'POST') {
+                            $userId = Auth::requireAuth();
+                            $data = json_decode(file_get_contents('php://input'), true);
+                            if (empty($data['target_type']) || !isset($data['target_index']) || empty($data['note'])) {
+                                http_response_code(400);
+                                $response = ['error' => 'target_type, target_index, and note are required'];
+                            } else {
+                                $response = $annotationModel->upsert($recipeId, $userId, $data['target_type'], (int)$data['target_index'], $data['note']);
+                            }
+                        } elseif ($method === 'DELETE') {
+                            $userId = Auth::requireAuth();
+                            $data = json_decode(file_get_contents('php://input'), true);
+                            if (empty($data['target_type']) || !isset($data['target_index'])) {
+                                http_response_code(400);
+                                $response = ['error' => 'target_type and target_index are required'];
+                            } else {
+                                $annotationModel->delete($recipeId, $userId, $data['target_type'], (int)$data['target_index']);
+                                $response = ['message' => 'Annotation deleted'];
+                            }
+                        }
+                    }
                 } elseif ($subResource === null) {
                     // /recipes/{id}
                     switch ($method) {
@@ -271,6 +312,25 @@ try {
 
             if ($id === null && $method === 'GET') {
                 $response = $cookController->history();
+            } elseif ($id === 'forgotten-favorites' && $method === 'GET') {
+                // GET /cook-log/forgotten-favorites
+                $response = $cookController->forgottenFavorites();
+            }
+            break;
+
+        // ── Stats Routes ───────────────────────────────────────────────
+        case 'stats':
+            require_once __DIR__ . '/config/license.php';
+            if (!License::checkActive()) {
+                http_response_code(403);
+                $response = ['error' => 'Pro license required', 'code' => 403, 'upgrade' => true];
+                break;
+            }
+            require_once __DIR__ . '/pro/controllers/StatsController.php';
+            $statsController = new StatsController();
+
+            if ($id === null && $method === 'GET') {
+                $response = $statsController->index();
             }
             break;
 
@@ -332,6 +392,9 @@ try {
                                 break;
                         }
                     }
+                } elseif ($subResource === 'checked' && $method === 'DELETE') {
+                    // /grocery/{id}/checked — clear all checked items
+                    $response = $controller->clearChecked($listId);
                 } elseif ($subResource === 'recipes' && is_numeric($subId)) {
                     // /grocery/{id}/recipes/{recipeId}
                     if ($method === 'POST') {
@@ -363,12 +426,21 @@ try {
 
         // ── Meal Plan Routes ────────────────────────────────────────────
         case 'meal-plan':
-            require_once __DIR__ . '/controllers/MealPlanController.php';
+            require_once __DIR__ . '/config/license.php';
+            if (!License::checkActive()) {
+                http_response_code(403);
+                $response = ['error' => 'Pro license required', 'code' => 403, 'upgrade' => true];
+                break;
+            }
+            require_once __DIR__ . '/pro/controllers/MealPlanController.php';
             $controller = new MealPlanController();
 
             if ($id === null && $method === 'GET') {
                 // GET /meal-plan
                 $response = $controller->getWeekPlan();
+            } elseif ($id === 'today' && $method === 'GET') {
+                // GET /meal-plan/today
+                $response = $controller->getToday();
             } elseif ($id === 'items' && $subResource === null && $method === 'POST') {
                 // POST /meal-plan/items
                 $response = $controller->addItem();
@@ -459,6 +531,50 @@ try {
             }
             break;
 
+        // ── License Routes ──────────────────────────────────────────────
+        case 'license':
+            require_once __DIR__ . '/config/license.php';
+
+            if ($id === 'status' && $method === 'GET') {
+                // GET /license/status — returns license tier info
+                $license = License::getInstance();
+                $response = $license->status();
+            } elseif ($id === 'activate' && $method === 'POST') {
+                // POST /license/activate — writes key and validates
+                require_once __DIR__ . '/middleware/Auth.php';
+                Auth::requireAdmin();
+
+                $data = json_decode(file_get_contents('php://input'), true);
+                $key = trim($data['key'] ?? '');
+                if (empty($key)) {
+                    http_response_code(400);
+                    $response = ['error' => 'License key is required'];
+                } else {
+                    $keyFile = __DIR__ . '/config/license.key';
+                    file_put_contents($keyFile, $key);
+                    $license = new License($keyFile);
+                    if ($license->isActive()) {
+                        $response = ['message' => 'License activated', 'status' => $license->status()];
+                    } else {
+                        unlink($keyFile);
+                        http_response_code(400);
+                        $response = ['error' => 'Invalid license key'];
+                    }
+                }
+            } elseif ($id === 'deactivate' && $method === 'POST') {
+                // POST /license/deactivate — removes key
+                require_once __DIR__ . '/middleware/Auth.php';
+                Auth::requireAdmin();
+
+                $keyFile = __DIR__ . '/config/license.key';
+                if (file_exists($keyFile)) {
+                    unlink($keyFile);
+                }
+                License::reset();
+                $response = ['message' => 'License deactivated'];
+            }
+            break;
+
         // ── Root / Health Check ─────────────────────────────────────────
         case '':
             $response = [
@@ -483,7 +599,7 @@ try {
         'error' => 'Database error',
         'code' => 500,
     ]);
-    error_log('Crumble DB Error: ' . $e->getMessage());
+    error_log('Cookslate DB Error: ' . $e->getMessage());
 
 } catch (\Exception $e) {
     http_response_code(500);
@@ -491,5 +607,5 @@ try {
         'error' => 'Internal server error',
         'code' => 500,
     ]);
-    error_log('Crumble Error: ' . $e->getMessage());
+    error_log('Cookslate Error: ' . $e->getMessage());
 }

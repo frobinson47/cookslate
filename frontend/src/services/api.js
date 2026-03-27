@@ -68,6 +68,11 @@ export async function getMe() {
   return user;
 }
 
+// SSO
+export function getSsoConfig() {
+  return request('/auth/sso-config');
+}
+
 // Recipes
 export function getRecipes(params = {}) {
   const query = new URLSearchParams();
@@ -169,6 +174,10 @@ export function addRecipeToGrocery(listId, recipeId) {
   return request(`/grocery/${listId}/recipes/${recipeId}`, { method: 'POST' });
 }
 
+export function clearCheckedItems(listId) {
+  return request(`/grocery/${listId}/checked`, { method: 'DELETE' });
+}
+
 // Favorites
 export function toggleFavorite(recipeId) {
   return request(`/recipes/${recipeId}/favorite`, { method: 'POST' });
@@ -190,6 +199,18 @@ export function logCook(recipeId, notes = null) {
 
 export function getCookLog() {
   return request('/cook-log');
+}
+
+export function getRecipeCookLog(recipeId) {
+  return request(`/recipes/${recipeId}/cook-log`);
+}
+
+export function getForgottenFavorites() {
+  return request('/cook-log/forgotten-favorites');
+}
+
+export function getUncookedRecipes() {
+  return request('/recipes/uncooked');
 }
 
 // Featured & Related
@@ -240,6 +261,10 @@ export function getMealPlan(weekStart) {
   return request(`/meal-plan?week=${weekStart}`);
 }
 
+export function getTodayMeals() {
+  return request('/meal-plan/today');
+}
+
 export function addMealPlanItem(recipeId, dayOfWeek, weekStart) {
   return request('/meal-plan/items', {
     method: 'POST',
@@ -263,4 +288,51 @@ export function generateGroceryFromPlan(weekStart, listName) {
     method: 'POST',
     body: { week_start: weekStart, list_name: listName },
   });
+}
+
+// Data Export
+export function exportRecipes() {
+  return request('/recipes/export');
+}
+
+// Ingredient-based search ("What can I make?")
+export function findByIngredients(ingredients) {
+  return request(`/recipes/by-ingredients?ingredients=${encodeURIComponent(ingredients.join(','))}`);
+}
+
+// Stats
+export function getStats() {
+  return request('/stats');
+}
+
+// Annotations
+export function getAnnotations(recipeId) {
+  return request(`/recipes/${recipeId}/annotations`);
+}
+
+export function saveAnnotation(recipeId, targetType, targetIndex, note) {
+  return request(`/recipes/${recipeId}/annotations`, {
+    method: 'PUT',
+    body: { target_type: targetType, target_index: targetIndex, note },
+  });
+}
+
+export function deleteAnnotation(recipeId, targetType, targetIndex) {
+  return request(`/recipes/${recipeId}/annotations`, {
+    method: 'DELETE',
+    body: { target_type: targetType, target_index: targetIndex },
+  });
+}
+
+// License
+export function getLicenseStatus() {
+  return request('/license/status');
+}
+
+export function activateLicense(key) {
+  return request('/license/activate', { method: 'POST', body: { key } });
+}
+
+export function deactivateLicense() {
+  return request('/license/deactivate', { method: 'POST' });
 }

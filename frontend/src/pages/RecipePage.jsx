@@ -18,8 +18,7 @@ import { RecipeDetailSkeleton } from '../components/ui/Skeleton';
 import Input from '../components/ui/Input';
 import ServingsAdjuster from '../components/ui/ServingsAdjuster';
 import { scaleIngredients } from '../utils/ingredientScaling';
-// Card sharing utils — commented out, may revisit as part of unified share modal
-// import { generateRecipeCard, recipeToText } from '../utils/recipeCardGenerator';
+import { fullImageUrl } from '../utils/imageUrl';
 import StarRating from '../components/ui/StarRating';
 import FavoriteButton from '../components/recipe/FavoriteButton';
 import CookButton from '../components/recipe/CookButton';
@@ -27,6 +26,10 @@ import * as api from '../services/api';
 import RelatedRecipes from '../components/recipe/RelatedRecipes';
 import NutritionFacts from '../components/recipe/NutritionFacts';
 import useRecentlyViewed from '../hooks/useRecentlyViewed';
+import useDocumentTitle from '../hooks/useDocumentTitle';
+import { estimateDifficulty, DIFFICULTY_COLORS } from '../utils/recipeDifficulty';
+import { timeAgo } from '../utils/timeAgo';
+import { buildRecipeJsonLd, injectJsonLd, removeJsonLd } from '../utils/recipeJsonLd';
 
 export default function RecipePage() {
   const { id } = useParams();
@@ -42,25 +45,43 @@ export default function RecipePage() {
   const [newListName, setNewListName] = useState('');
   const [groceryLoading, setGroceryLoading] = useState(false);
   const [adjustedServings, setAdjustedServings] = useState(null);
-  // Card sharing state — commented out, may revisit as part of unified share modal
-  // const [showShareModal, setShowShareModal] = useState(false);
-  // const [shareCardUrl, setShareCardUrl] = useState(null);
-  // const [shareCardBlob, setShareCardBlob] = useState(null);
-  // const [shareGenerating, setShareGenerating] = useState(false);
   const [showShareLinkModal, setShowShareLinkModal] = useState(false);
   const [shareLinkData, setShareLinkData] = useState(null);
   const [shareLinkError, setShareLinkError] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [cookNotes, setCookNotes] = useState([]);
+  const [annotations, setAnnotations] = useState({ ingredient: {}, instruction: {} });
+
+  useDocumentTitle(recipe?.title);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     fetchRecipe(id);
+    // Fetch cook notes for this recipe
+    api.getRecipeCookLog(id)
+      .then(data => setCookNotes(data.history || []))
+      .catch(() => setCookNotes([]));
+    // Fetch annotations
+    api.getAnnotations(id)
+      .then(data => {
+        const map = { ingredient: {}, instruction: {} };
+        (data || []).forEach(a => {
+          map[a.target_type] = map[a.target_type] || {};
+          map[a.target_type][a.target_index] = a.note;
+        });
+        setAnnotations(map);
+      })
+      .catch(() => setAnnotations({ ingredient: {}, instruction: {} }));
   }, [id, fetchRecipe]);
 
-  // Track recently viewed
+  // Track recently viewed + JSON-LD
   useEffect(() => {
     if (recipe) {
       addToRecentlyViewed(recipe);
+      const ld = buildRecipeJsonLd(recipe);
+      injectJsonLd(ld);
     }
+    return () => removeJsonLd();
   }, [recipe?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync adjustedServings when recipe loads or changes
@@ -112,52 +133,6 @@ export default function RecipePage() {
     }
   };
 
-  // Card sharing handlers — commented out, may revisit as part of unified share modal
-  // const handleShare = async () => {
-  //   setShowShareModal(true);
-  //   setShareGenerating(true);
-  //   try {
-  //     const imgUrl = recipe.image_path ? `/uploads/${recipe.image_path}` : null;
-  //     const { blob, dataUrl } = await generateRecipeCard(recipe, imgUrl);
-  //     setShareCardUrl(dataUrl);
-  //     setShareCardBlob(blob);
-  //   } catch {
-  //     // Card generation failed, will show text-only options
-  //   } finally {
-  //     setShareGenerating(false);
-  //   }
-  // };
-
-  // const handleShareEmail = () => {
-  //   const text = recipeToText(recipe);
-  //   const subject = encodeURIComponent(recipe.title);
-  //   const body = encodeURIComponent(text);
-  //   window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  //   setShowShareModal(false);
-  // };
-
-  // const handleShareDownload = () => {
-  //   if (!shareCardBlob) return;
-  //   const url = URL.createObjectURL(shareCardBlob);
-  //   const a = document.createElement('a');
-  //   a.href = url;
-  //   a.download = `${recipe.title.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
-  //   a.click();
-  //   URL.revokeObjectURL(url);
-  // };
-
-  // const handleShareCopy = async () => {
-  //   if (!shareCardBlob) return;
-  //   try {
-  //     await navigator.clipboard.write([
-  //       new ClipboardItem({ 'image/png': shareCardBlob }),
-  //     ]);
-  //   } catch {
-  //     // Fallback: download instead
-  //     handleShareDownload();
-  //   }
-  // };
-
   const handleShareLink = async () => {
     setShowShareLinkModal(true);
     setShareLinkData(null);
@@ -189,6 +164,31 @@ export default function RecipePage() {
     }
   };
 
+  const handleAnnotationSave = async (targetType, targetIndex, note) => {
+    try {
+      await api.saveAnnotation(id, targetType, targetIndex, note);
+      setAnnotations(prev => ({
+        ...prev,
+        [targetType]: { ...prev[targetType], [targetIndex]: note },
+      }));
+    } catch {
+      // silent fail
+    }
+  };
+
+  const handleAnnotationDelete = async (targetType, targetIndex) => {
+    try {
+      await api.deleteAnnotation(id, targetType, targetIndex);
+      setAnnotations(prev => {
+        const updated = { ...prev[targetType] };
+        delete updated[targetIndex];
+        return { ...prev, [targetType]: updated };
+      });
+    } catch {
+      // silent fail
+    }
+  };
+
   if (isLoading) {
     return <RecipeDetailSkeleton />;
   }
@@ -206,7 +206,7 @@ export default function RecipePage() {
 
   const canEdit = user && (user.id === recipe.created_by || isAdmin);
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
-  const imageUrl = recipe.image_path ? `/uploads/${recipe.image_path}` : null;
+  const imageUrl = fullImageUrl(recipe.image_path);
   const instructions = Array.isArray(recipe.instructions)
     ? recipe.instructions
     : typeof recipe.instructions === 'string'
@@ -226,7 +226,14 @@ export default function RecipePage() {
         <CookMode
           steps={instructions}
           ingredients={scaledIngredients}
+          recipeId={recipe.id}
+          annotations={annotations}
           onClose={() => setCookMode(false)}
+          onDone={() => {
+            api.getRecipeCookLog(id)
+              .then(data => setCookNotes(data.history || []))
+              .catch(() => {});
+          }}
         />
       )}
 
@@ -263,24 +270,13 @@ export default function RecipePage() {
               size="lg"
             />
           </div>
-          {recipe.avg_rating !== null && recipe.avg_rating !== undefined && (
-            <div className="mb-2">
-              <StarRating
-                value={recipe.user_rating || recipe.avg_rating || 0}
-                onChange={(score) => api.rateRecipe(recipe.id, score)}
-                size="md"
-              />
-            </div>
-          )}
-          {!recipe.avg_rating && (
-            <div className="mb-2">
-              <StarRating
-                value={0}
-                onChange={(score) => api.rateRecipe(recipe.id, score)}
-                size="md"
-              />
-            </div>
-          )}
+          <div className="mb-2">
+            <StarRating
+              value={recipe.user_rating || recipe.avg_rating || 0}
+              onChange={(score) => api.rateRecipe(recipe.id, score)}
+              size="md"
+            />
+          </div>
           {recipe.description && (
             <p className="text-brown-light text-lg leading-relaxed">
               {recipe.description}
@@ -340,7 +336,35 @@ export default function RecipePage() {
             onChange={setAdjustedServings}
           />
         )}
+        {(() => {
+          const difficulty = estimateDifficulty(recipe);
+          return (
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${DIFFICULTY_COLORS[difficulty]}`}>
+              {difficulty}
+            </span>
+          );
+        })()}
       </div>
+
+      {/* Scaling warning for significant adjustments */}
+      {recipe.servings && adjustedServings && (() => {
+        const factor = adjustedServings / recipe.servings;
+        if (factor <= 0.5 || factor >= 1.5) {
+          const isBaking = (recipe.tags || []).some(t =>
+            ['baking', 'dessert', 'bread', 'cake', 'cookies', 'pastry'].includes((t.name || t).toLowerCase())
+          );
+          return (
+            <div className="px-4 py-3 rounded-xl bg-terracotta/10 text-sm text-brown-light mb-4">
+              <span className="font-semibold text-terracotta">Scaling {factor < 1 ? 'down' : 'up'} {factor.toFixed(1)}x</span>
+              {' — '}
+              {isBaking
+                ? 'Leavening agents (baking soda/powder) scale at ~75% — use less than shown. Baking time may need adjustment.'
+                : 'Spices and seasonings may need fine-tuning — add gradually and taste as you go.'}
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       {/* Tags */}
       {recipe.tags && recipe.tags.length > 0 && (
@@ -359,7 +383,15 @@ export default function RecipePage() {
             Start Cooking
           </Button>
         )}
-        <CookButton recipeId={recipe.id} cookCount={recipe.cook_count || 0} />
+        <CookButton
+          recipeId={recipe.id}
+          cookCount={recipe.cook_count || 0}
+          onCook={() => {
+            api.getRecipeCookLog(id)
+              .then(data => setCookNotes(data.history || []))
+              .catch(() => {});
+          }}
+        />
         <Button
           variant="secondary"
           onClick={() => setShowGroceryModal(true)}
@@ -375,15 +407,6 @@ export default function RecipePage() {
           <Printer size={18} />
           Print
         </Button>
-        {/* Card sharing button — commented out, may revisit as part of unified share modal
-        <Button
-          variant="outline"
-          onClick={handleShare}
-          className="print:hidden"
-        >
-          <Share2 size={18} />
-          Share Card
-        </Button> */}
         <Button
           variant="outline"
           onClick={handleShareLink}
@@ -413,16 +436,26 @@ export default function RecipePage() {
       <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
         {/* Ingredients */}
         <div className="md:sticky md:top-20 md:self-start">
-          <div className="bg-white rounded-2xl shadow-md p-6">
+          <div className="bg-surface rounded-2xl shadow-md p-6">
             <h2 className="text-xl font-bold text-brown mb-4">Ingredients</h2>
-            <IngredientList ingredients={scaledIngredients} />
+            <IngredientList
+              ingredients={scaledIngredients}
+              annotations={annotations.ingredient}
+              onAnnotationSave={handleAnnotationSave}
+              onAnnotationDelete={handleAnnotationDelete}
+            />
           </div>
         </div>
 
         {/* Instructions */}
-        <div className="bg-white rounded-2xl shadow-md p-6">
+        <div className="bg-surface rounded-2xl shadow-md p-6">
           <h2 className="text-xl font-bold text-brown mb-4">Instructions</h2>
-          <StepList steps={instructions} />
+          <StepList
+            steps={instructions}
+            annotations={annotations.instruction}
+            onAnnotationSave={handleAnnotationSave}
+            onAnnotationDelete={handleAnnotationDelete}
+          />
         </div>
       </div>
 
@@ -435,6 +468,64 @@ export default function RecipePage() {
         fiber: recipe.fiber,
         sugar: recipe.sugar,
       }} />
+
+      {/* Your Cook History & Notes */}
+      {cookNotes.length > 0 && (() => {
+        const withNotes = cookNotes.filter(e => e.notes);
+        const cookCount = cookNotes.length;
+        const firstCook = cookNotes[cookNotes.length - 1];
+        const lastCook = cookNotes[0];
+        const firstDate = new Date(firstCook.cooked_at).toLocaleDateString(undefined, {
+          year: 'numeric', month: 'long', day: 'numeric',
+        });
+        const isOnlyOnce = cookCount === 1;
+
+        return (
+          <div className="mt-8">
+            {/* Recipe Memories */}
+            <div className="bg-cream/60 rounded-xl px-5 py-4 mb-5 border border-cream-dark/30">
+              <h2 className="text-lg font-bold text-brown font-serif mb-2">Your History</h2>
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm text-brown-light">
+                <span>
+                  First made <span className="font-semibold text-brown">{firstDate}</span>
+                </span>
+                {!isOnlyOnce && (
+                  <>
+                    <span className="text-warm-gray">·</span>
+                    <span>
+                      Last cooked <span className="font-semibold text-brown">{timeAgo(lastCook.cooked_at)}</span>
+                    </span>
+                    <span className="text-warm-gray">·</span>
+                    <span>
+                      Made <span className="font-semibold text-brown">{cookCount} times</span>
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Cook Notes */}
+            {withNotes.length > 0 && (
+              <div>
+                <h3 className="text-base font-bold text-brown font-serif mb-3">Cook Notes</h3>
+                <div className="space-y-2">
+                  {withNotes.map(entry => {
+                    const date = new Date(entry.cooked_at).toLocaleDateString(undefined, {
+                      year: 'numeric', month: 'short', day: 'numeric',
+                    });
+                    return (
+                      <div key={entry.id} className="flex gap-3 py-2 border-b border-cream-dark last:border-0">
+                        <span className="text-sm text-warm-gray shrink-0 w-24">{date}</span>
+                        <span className="text-sm text-brown-light">{entry.notes}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Related Recipes */}
       <RelatedRecipes recipeId={recipe.id} />
@@ -511,47 +602,6 @@ export default function RecipePage() {
           </div>
         )}
       </Modal>
-
-      {/* Card share modal — commented out, may revisit as part of unified share modal */}
-      {/* <Modal
-        isOpen={showShareModal}
-        onClose={() => { setShowShareModal(false); setShareCardUrl(null); setShareCardBlob(null); }}
-        title="Share Recipe"
-      >
-        <div className="space-y-4">
-          {shareGenerating ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-3">
-              <Spinner />
-              <p className="text-sm text-warm-gray">Generating recipe card...</p>
-            </div>
-          ) : shareCardUrl ? (
-            <div className="max-h-80 overflow-y-auto rounded-xl border border-cream-dark">
-              <img src={shareCardUrl} alt="Recipe card preview" className="w-full" />
-            </div>
-          ) : null}
-          <div className="space-y-2">
-            <Button className="w-full" onClick={handleShareEmail}>
-              <Mail size={18} />
-              Email Recipe
-            </Button>
-            {shareCardBlob && (
-              <>
-                <Button variant="secondary" className="w-full" onClick={handleShareDownload}>
-                  <Download size={18} />
-                  Download Card Image
-                </Button>
-                <Button variant="outline" className="w-full" onClick={handleShareCopy}>
-                  <Image size={18} />
-                  Copy Card to Clipboard
-                </Button>
-              </>
-            )}
-            <p className="text-xs text-warm-gray text-center pt-2">
-              Download or copy the recipe card image to share on Facebook, X, or anywhere.
-            </p>
-          </div>
-        </div>
-      </Modal> */}
 
       {/* Share link modal */}
       <Modal

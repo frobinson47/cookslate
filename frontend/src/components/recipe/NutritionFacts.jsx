@@ -10,16 +10,16 @@ export default function NutritionFacts({ nutrition }) {
   if (!hasData) return null;
 
   const rows = [
-    { label: 'Calories', value: calories, unit: '' },
-    { label: 'Protein', value: protein, unit: '' },
-    { label: 'Carbohydrates', value: carbs, unit: '' },
-    { label: 'Fat', value: fat, unit: '' },
-    { label: 'Fiber', value: fiber, unit: '' },
-    { label: 'Sugar', value: sugar, unit: '' },
+    { label: 'Calories', value: calories, unit: 'kcal' },
+    { label: 'Protein', value: protein, unit: 'g' },
+    { label: 'Carbohydrates', value: carbs, unit: 'g' },
+    { label: 'Fat', value: fat, unit: 'g' },
+    { label: 'Fiber', value: fiber, unit: 'g' },
+    { label: 'Sugar', value: sugar, unit: 'g' },
   ].filter(r => r.value !== null && r.value !== undefined && r.value !== '');
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6 mt-8">
+    <div className="bg-surface rounded-2xl shadow-md p-6 mt-8">
       <h2 className="text-xl font-bold text-brown mb-1 font-serif">Nutrition Facts</h2>
       <p className="text-xs text-warm-gray mb-3">Per serving</p>
       <div className="border-t-8 border-brown">

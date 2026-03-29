@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Rounded square background matching Crumble cream -->
+  <title>Cookslate</title>
+  <!-- Rounded square background matching Cookslate cream -->
   <rect width="512" height="512" rx="96" fill="#F5EDE3"/>
   <!-- Cooking pot icon in terracotta -->
   <g fill="none" stroke="#C75B39" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">

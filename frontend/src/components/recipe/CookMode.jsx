@@ -316,7 +316,7 @@ export default function CookMode({ steps, ingredients, onClose, recipeId, onDone
       {/* Step content */}
       <div className="flex-1 flex items-center justify-center px-6 md:px-16 py-8">
         <div className="max-w-2xl text-center">
-          <p className="text-[#FFF8F0] text-xl md:text-2xl lg:text-3xl leading-relaxed font-light">
+          <p aria-live="polite" className="text-[#FFF8F0] text-xl md:text-2xl lg:text-3xl leading-relaxed font-light">
             {highlightedText}
           </p>
 

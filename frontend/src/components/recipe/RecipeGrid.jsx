@@ -1,11 +1,12 @@
 import React from 'react';
 import RecipeCard from './RecipeCard';
 import { RecipeCardSkeleton } from '../ui/Skeleton';
+import { BookOpen } from 'lucide-react';
 
 export default function RecipeGrid({ recipes, isLoading, hasMore, onLoadMore }) {
   if (isLoading && recipes.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
         {[1, 2, 3, 4, 5, 6].map(i => (
           <RecipeCardSkeleton key={i} />
         ))}
@@ -16,7 +17,7 @@ export default function RecipeGrid({ recipes, isLoading, hasMore, onLoadMore }) 
   if (!isLoading && recipes.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-5xl mb-4">📖</p>
+        <BookOpen size={48} className="text-warm-gray mx-auto mb-4" />
         <p className="text-lg text-warm-gray">No recipes found</p>
         <p className="text-sm text-warm-gray mt-1">Try a different search or add a new recipe</p>
       </div>
@@ -25,7 +26,7 @@ export default function RecipeGrid({ recipes, isLoading, hasMore, onLoadMore }) 
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
         {recipes.map((recipe) => (
           <RecipeCard key={recipe.id} recipe={recipe} />
         ))}

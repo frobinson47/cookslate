@@ -1,5 +1,5 @@
-# Stage 1: Build frontend
-FROM node:18-alpine AS frontend-build
+# Stage 1: Build frontend (Debian-based for Tailwind CSS 4 native bindings)
+FROM node:18 AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json ./
 RUN npm install

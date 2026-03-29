@@ -12,7 +12,6 @@ FROM php:8.1-apache
 # Install PHP extensions and MySQL client
 RUN apt-get update && apt-get install -y \
         libpng-dev libjpeg-dev libwebp-dev libfreetype6-dev \
-        default-mysql-client \
     && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
     && docker-php-ext-install pdo_mysql gd \
     && a2enmod rewrite \

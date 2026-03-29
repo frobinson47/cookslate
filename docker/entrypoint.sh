@@ -3,16 +3,17 @@ set -e
 
 echo "Cookslate: Starting up..."
 
-# Wait for MySQL to be ready
+# Wait for MySQL to be ready (use PHP since mysqladmin may not be available)
 echo "Waiting for MySQL..."
-max_tries=30
+max_tries=60
 count=0
-until mysqladmin ping -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" --silent 2>/dev/null; do
+until php -r "new PDO('mysql:host=${DB_HOST};port=${DB_PORT}', '${DB_USER}', '${DB_PASS}');" 2>/dev/null; do
     count=$((count + 1))
     if [ $count -ge $max_tries ]; then
         echo "ERROR: MySQL not reachable after ${max_tries} seconds"
         exit 1
     fi
+    echo "  MySQL not ready yet (attempt $count/$max_tries)..."
     sleep 1
 done
 echo "MySQL is ready."
@@ -20,7 +21,7 @@ echo "MySQL is ready."
 # Generate .env if it doesn't exist
 if [ ! -f /var/www/html/api/.env ]; then
     echo "Generating api/.env..."
-    cat > /var/www/html/api/.env <<EOF
+    cat > /var/www/html/api/.env << ENVEOF
 DB_HOST=${DB_HOST:-db}
 DB_PORT=${DB_PORT:-3306}
 DB_NAME=${DB_NAME:-cookslate_db}
@@ -29,17 +30,24 @@ DB_PASS=${DB_PASS:-cookslate}
 CORS_ORIGINS=http://localhost:8080
 APP_ENV=production
 APP_URL=http://localhost:8080
-EOF
+ENVEOF
 fi
 
 # Apply schema on first boot (check if recipes table exists)
-table_exists=$(mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" -N -e \
-    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB_NAME' AND table_name='recipes';" 2>/dev/null)
+table_exists=$(php -r "
+\$pdo = new PDO('mysql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_NAME}', '${DB_USER}', '${DB_PASS}');
+\$stmt = \$pdo->query(\"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}' AND table_name='recipes'\");
+echo \$stmt->fetchColumn();
+" 2>/dev/null || echo "0")
 
 if [ "$table_exists" = "0" ]; then
-    echo "First boot — applying database schema..."
-    mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < /var/www/html/database/schema.sql
-    echo "Schema applied."
+    echo "First boot - applying database schema..."
+    php -r "
+    \$pdo = new PDO('mysql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_NAME}', '${DB_USER}', '${DB_PASS}');
+    \$sql = file_get_contents('/var/www/html/database/schema.sql');
+    \$pdo->exec(\$sql);
+    echo 'Schema applied.';
+    "
 else
     echo "Database already initialized."
 fi
@@ -47,9 +55,11 @@ fi
 # Apply any pending migrations
 for migration in /var/www/html/database/migrations/*.sql; do
     [ -f "$migration" ] || continue
-    migration_name=$(basename "$migration")
-    # Simple check: try to apply, ignore errors (already applied)
-    mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < "$migration" 2>/dev/null || true
+    php -r "
+    \$pdo = new PDO('mysql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_NAME}', '${DB_USER}', '${DB_PASS}');
+    \$sql = file_get_contents('$migration');
+    try { \$pdo->exec(\$sql); } catch (Exception \$e) {}
+    " 2>/dev/null || true
 done
 
 # Fix permissions

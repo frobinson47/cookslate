@@ -394,7 +394,6 @@ export default function HomePage({ searchQuery = '' }) {
           <div className="overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             <div className="flex gap-3 min-w-min">
               {forgottenFavorites.map(r => {
-                const totalTime = (r.prep_time || 0) + (r.cook_time || 0);
                 return (
                   <Link
                     key={r.id}
@@ -561,7 +560,7 @@ export default function HomePage({ searchQuery = '' }) {
             </Link>
 
             <Link
-              to="/import"
+              to="/bulk-import"
               className="flex flex-col items-center gap-3 p-6 bg-surface rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-200 group"
             >
               <div className="w-12 h-12 rounded-xl bg-brown/5 flex items-center justify-center group-hover:bg-brown/10 transition-colors">

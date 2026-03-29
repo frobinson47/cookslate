@@ -195,9 +195,12 @@ export default function RecipePage() {
 
   if (error || !recipe) {
     return (
-      <div className="text-center py-12">
-        <p className="text-lg text-warm-gray">{error || 'Recipe not found'}</p>
-        <Link to="/" className="text-terracotta hover:underline mt-2 inline-block">
+      <div className="max-w-md mx-auto text-center py-16">
+        <ChefHat size={48} className="text-warm-gray mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-brown mb-2">Recipe not found</h2>
+        <p className="text-warm-gray mb-6">This recipe may have been deleted or the link is incorrect.</p>
+        <Link to="/" className="inline-flex items-center gap-1.5 text-terracotta hover:text-terracotta-dark transition-colors">
+          <ArrowLeft size={16} />
           Back to recipes
         </Link>
       </div>

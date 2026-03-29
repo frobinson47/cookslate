@@ -11,7 +11,9 @@
   --color-sage: #7D9B76;
   --color-sage-light: #A8C5A0;
   --color-sage-dark: #5F7A58;
-  --color-warm-gray: #8D7B6E;
+  --color-warm-gray: #6E5D52;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FFFFFF;
   --font-family-display: 'Nunito', sans-serif;
   --font-family-body: 'Nunito', sans-serif;
   --font-family-serif: 'Playfair Display', Georgia, serif;
@@ -24,6 +26,84 @@ body {
   color: #3E2723;
   margin: 0;
   padding: 0;
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-cream: #1A1412;
+    --color-cream-dark: #231C17;
+    --color-surface: #2A221D;
+    --color-surface-raised: #342B25;
+    --color-brown: #F5EDE3;
+    --color-brown-light: #D4C4B5;
+    --color-warm-gray: #A89888;
+    --color-terracotta: #D4896F;
+    --color-terracotta-light: #E0A08A;
+    --color-terracotta-dark: #C1694F;
+    --color-sage: #A8C5A0;
+    --color-sage-light: #7D9B76;
+    --color-sage-dark: #C5DFC0;
+  }
+
+  body {
+    background-color: #1A1412;
+    color: #F5EDE3;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #231C17;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #5D4037;
+  }
+}
+
+/* Manual dark mode toggle */
+[data-theme="dark"] {
+  --color-cream: #1A1412;
+  --color-cream-dark: #231C17;
+  --color-surface: #2A221D;
+  --color-surface-raised: #342B25;
+  --color-brown: #F5EDE3;
+  --color-brown-light: #D4C4B5;
+  --color-warm-gray: #A89888;
+  --color-terracotta: #D4896F;
+  --color-terracotta-light: #E0A08A;
+  --color-terracotta-dark: #C1694F;
+  --color-sage: #A8C5A0;
+  --color-sage-light: #7D9B76;
+  --color-sage-dark: #C5DFC0;
+  background-color: #1A1412;
+  color: #F5EDE3;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track { background: #231C17; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #5D4037; }
+
+/* Fix Tailwind default colors in dark mode */
+@media (prefers-color-scheme: dark) {
+  .bg-red-50 { background-color: rgba(127, 29, 29, 0.15) !important; }
+}
+[data-theme="dark"] .bg-red-50 { background-color: rgba(127, 29, 29, 0.15) !important; }
+
+/* Force light mode when system prefers dark but user chose light */
+[data-theme="light"] {
+  --color-cream: #FFF8F0;
+  --color-cream-dark: #F5EDE3;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FFFFFF;
+  --color-brown: #3E2723;
+  --color-brown-light: #5D4037;
+  --color-warm-gray: #8D7B6E;
+  --color-terracotta: #C1694F;
+  --color-terracotta-light: #D4896F;
+  --color-terracotta-dark: #A8533A;
+  --color-sage: #7D9B76;
+  --color-sage-light: #A8C5A0;
+  --color-sage-dark: #5F7A58;
+  background-color: #FFF8F0;
+  color: #3E2723;
 }
 
 /* Scrollbar styling */

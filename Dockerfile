@@ -1,11 +1,10 @@
-# Stage 1: Build frontend
-FROM node:18 AS frontend-build
+# Stage 1: Build frontend (Node 22 required for Tailwind CSS 4 oxide bindings)
+FROM node:22 AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json ./
-RUN npm cache clean --force && npm install --prefer-offline=false
+RUN npm install
 COPY frontend/ ./
-# Reinstall to ensure native bindings match the container platform
-RUN rm -rf node_modules && npm install && npm run build
+RUN npm run build
 
 # Stage 2: PHP + Apache
 FROM php:8.1-apache

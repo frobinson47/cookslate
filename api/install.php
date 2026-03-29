@@ -91,10 +91,11 @@ if ($method === 'GET') {
 if ($method === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
 
-    $dbHost = $input['db_host'] ?? 'localhost';
-    $dbName = $input['db_name'] ?? 'cookslate_db';
-    $dbUser = $input['db_user'] ?? 'root';
-    $dbPass = $input['db_pass'] ?? '';
+    // Use .env values as defaults if available (Docker generates .env before install runs)
+    $dbHost = $input['db_host'] ?? ($_ENV['DB_HOST'] ?? 'localhost');
+    $dbName = $input['db_name'] ?? ($_ENV['DB_NAME'] ?? 'cookslate_db');
+    $dbUser = $input['db_user'] ?? ($_ENV['DB_USER'] ?? 'root');
+    $dbPass = $input['db_pass'] ?? ($_ENV['DB_PASS'] ?? '');
     $adminUsername = $input['admin_username'] ?? '';
     $adminPassword = $input['admin_password'] ?? '';
 
@@ -133,6 +134,9 @@ if ($method === 'POST') {
     }
 
     $schema = file_get_contents($schemaPath);
+    // Strip CREATE DATABASE and USE lines (DB already exists when connecting via PDO dbname)
+    $schema = preg_replace('/CREATE DATABASE.*?;/s', '', $schema);
+    $schema = preg_replace('/^USE\s+\w+;\s*/m', '', $schema);
     try {
         $pdo->exec($schema);
     } catch (PDOException $e) {

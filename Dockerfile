@@ -1,10 +1,11 @@
-# Stage 1: Build frontend (Debian-based for Tailwind CSS 4 native bindings)
+# Stage 1: Build frontend
 FROM node:18 AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json ./
-RUN npm install
+RUN npm cache clean --force && npm install --prefer-offline=false
 COPY frontend/ ./
-RUN npm run build
+# Reinstall to ensure native bindings match the container platform
+RUN rm -rf node_modules && npm install && npm run build
 
 # Stage 2: PHP + Apache
 FROM php:8.1-apache

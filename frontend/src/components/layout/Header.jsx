@@ -44,7 +44,7 @@ export default function Header({ onSearch }) {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-surface/95 backdrop-blur-sm shadow-sm border-b border-cream-dark">
+    <header className="sticky top-0 z-30 bg-surface shadow-sm border-b border-cream-dark">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">

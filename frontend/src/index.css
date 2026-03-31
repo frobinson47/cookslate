@@ -20,6 +20,11 @@
 }
 
 /* Base styles */
+html, body, #root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   font-family: 'Nunito', sans-serif;
   background-color: #FFF8F0;

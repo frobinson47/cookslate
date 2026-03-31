@@ -17,7 +17,7 @@ export default function RecipeCard({ recipe }) {
       className="group block bg-surface rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
     >
       {/* Image */}
-      <div className="relative aspect-square sm:aspect-[4/3] bg-cream-dark overflow-hidden">
+      <div className="relative aspect-[4/3] bg-cream-dark overflow-hidden">
         {imageUrl ? (
           <img
             src={imageUrl}

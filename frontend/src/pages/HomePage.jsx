@@ -351,7 +351,7 @@ export default function HomePage({ searchQuery = '' }) {
 
       {/* Quick filter chips */}
       {tags.length > 0 && (
-        <div className="overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+        <div className="overflow-x-auto scrollbar-hide pb-1">
           <div className="flex gap-2 min-w-min">
             <button
               onClick={() => setActiveTag('')}
@@ -387,7 +387,7 @@ export default function HomePage({ searchQuery = '' }) {
             <RotateCcw size={16} className="text-terracotta" />
             <h2 className="text-lg font-bold text-brown">It's Been a While</h2>
           </div>
-          <div className="overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          <div className="overflow-x-auto scrollbar-hide pb-1">
             <div className="flex gap-3 min-w-min">
               {forgottenFavorites.map(r => {
                 return (
@@ -434,7 +434,7 @@ export default function HomePage({ searchQuery = '' }) {
             <Sparkles size={16} className="text-sage" />
             <h2 className="text-lg font-bold text-brown">Something New?</h2>
           </div>
-          <div className="overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          <div className="overflow-x-auto scrollbar-hide pb-1">
             <div className="flex gap-3 min-w-min">
               {uncookedRecipes.map(r => {
                 const totalTime = (r.prep_time || 0) + (r.cook_time || 0);
@@ -479,7 +479,7 @@ export default function HomePage({ searchQuery = '' }) {
       {recent.length > 0 && !isFiltering && (
         <div>
           <h2 className="text-lg font-bold text-brown mb-3">Recently Viewed</h2>
-          <div className="overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          <div className="overflow-x-auto scrollbar-hide pb-1">
             <div className="flex gap-3 min-w-min">
               {recent.map(r => (
                 <Link

@@ -34,11 +34,11 @@ export default function RecipeGrid({ recipes, isLoading, hasMore, onLoadMore }) 
 
       {/* Load more */}
       {hasMore && (
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-8 mb-4">
           <button
             onClick={onLoadMore}
             disabled={isLoading}
-            className="px-6 py-3 bg-cream-dark text-brown-light font-semibold rounded-xl hover:bg-terracotta/10 hover:text-terracotta transition-colors duration-200 min-h-[44px] disabled:opacity-50"
+            className="px-8 py-4 bg-terracotta text-white font-bold rounded-xl hover:bg-terracotta-dark transition-colors duration-200 min-h-[48px] disabled:opacity-50 text-base"
           >
             {isLoading ? 'Loading...' : 'Load More Recipes'}
           </button>

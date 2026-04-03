@@ -204,6 +204,48 @@ try {
             } elseif ($id === 'export-zip' && $method === 'GET') {
                 $controller->exportZip();
                 exit; // exportZip handles its own response
+            } elseif ($id === 'export-cooklang' && $method === 'GET') {
+                Auth::requireAuth();
+                require_once __DIR__ . '/services/CooklangExporter.php';
+                $recipeModel = new Recipe();
+                $exporter = new CooklangExporter();
+                $allRecipes = $recipeModel->getAll(1, 1000)['recipes'] ?? [];
+                // Enrich with ingredients
+                foreach ($allRecipes as &$r) {
+                    $full = $recipeModel->getById($r['id']);
+                    $r['ingredients'] = $full['ingredients'] ?? [];
+                    $r['instructions'] = $full['instructions'] ?? [];
+                }
+                $files = $exporter->exportAll($allRecipes);
+                // Create ZIP
+                $tmpFile = tempnam(sys_get_temp_dir(), 'cookslate_cooklang_');
+                $zip = new ZipArchive();
+                $zip->open($tmpFile, ZipArchive::CREATE);
+                foreach ($files as $name => $content) {
+                    $zip->addFromString($name, $content);
+                }
+                $zip->close();
+                header('Content-Type: application/zip');
+                header('Content-Disposition: attachment; filename="cookslate-cooklang-export.zip"');
+                readfile($tmpFile);
+                unlink($tmpFile);
+                exit;
+            } elseif ($id === 'import-cooklang' && $method === 'POST') {
+                Auth::requireAuth();
+                require_once __DIR__ . '/services/CooklangImporter.php';
+                $importer = new CooklangImporter();
+                if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+                    http_response_code(400);
+                    $response = ['error' => 'No file uploaded'];
+                } else {
+                    $content = file_get_contents($_FILES['file']['tmp_name']);
+                    $parsed = $importer->parse($content);
+                    if (empty($parsed['title'])) {
+                        // Use filename as title
+                        $parsed['title'] = pathinfo($_FILES['file']['name'], PATHINFO_FILENAME);
+                    }
+                    $response = $controller->createFromData($parsed);
+                }
             } elseif ($id === 'by-ingredients' && $method === 'GET') {
                 $response = $controller->byIngredients();
             } elseif ($id === 'uncooked' && $method === 'GET') {

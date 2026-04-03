@@ -7,16 +7,25 @@ class License
     private string $email = '';
     private array $claims = [];
 
-    public function __construct(?string $keyFilePath = null, ?string $publicKey = null)
+    public function __construct(?string $jwtOverride = null, ?string $publicKey = null)
     {
-        $keyFile = $keyFilePath ?? __DIR__ . '/license.key';
         $pubKey = $publicKey ?? $this->bundledPublicKey();
 
-        if (!file_exists($keyFile)) {
-            return;
+        // Get JWT from override, database, or file (in that order)
+        $jwt = $jwtOverride;
+
+        if ($jwt === null) {
+            $jwt = $this->loadFromDatabase();
         }
 
-        $jwt = trim(file_get_contents($keyFile));
+        // Fallback to file for backwards compatibility
+        if ($jwt === null) {
+            $keyFile = __DIR__ . '/license.key';
+            if (file_exists($keyFile)) {
+                $jwt = trim(file_get_contents($keyFile));
+            }
+        }
+
         if (empty($jwt)) {
             return;
         }
@@ -48,6 +57,56 @@ class License
         ];
     }
 
+    /**
+     * Save a license key to the database.
+     */
+    public static function saveToDatabase(string $key): void
+    {
+        try {
+            require_once __DIR__ . '/../models/Database.php';
+            $db = Database::getInstance();
+            $db->exec("CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY DEFAULT 1, license_key TEXT DEFAULT NULL, CHECK (id = 1)) ENGINE=InnoDB");
+            $db->exec("INSERT IGNORE INTO settings (id) VALUES (1)");
+            $stmt = $db->prepare('UPDATE settings SET license_key = ? WHERE id = 1');
+            $stmt->execute([$key]);
+        } catch (\Exception $e) {
+            // Silently fail — DB might not be available during tests
+        }
+    }
+
+    /**
+     * Remove the license key from the database.
+     */
+    public static function removeFromDatabase(): void
+    {
+        try {
+            require_once __DIR__ . '/../models/Database.php';
+            $db = Database::getInstance();
+            $db->exec('UPDATE settings SET license_key = NULL WHERE id = 1');
+        } catch (\Exception $e) {
+            // Silently fail
+        }
+    }
+
+    /**
+     * Load the license key from the database.
+     */
+    private function loadFromDatabase(): ?string
+    {
+        try {
+            require_once __DIR__ . '/../models/Database.php';
+            $db = Database::getInstance();
+            $stmt = $db->query('SELECT license_key FROM settings WHERE id = 1');
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row && !empty($row['license_key'])) {
+                return trim($row['license_key']);
+            }
+        } catch (\Exception $e) {
+            // Table might not exist yet — fall back to file
+        }
+        return null;
+    }
+
     private function validateJwt(string $jwt, string $publicKey): array
     {
         $parts = explode('.', $jwt);
@@ -57,7 +116,6 @@ class License
 
         [$base64Header, $base64Payload, $base64Sig] = $parts;
 
-        // Verify signature
         $signingInput = "$base64Header.$base64Payload";
         $signature = base64_decode(strtr($base64Sig, '-_', '+/'));
         if ($signature === false) {
@@ -69,13 +127,11 @@ class License
             return [];
         }
 
-        // Decode payload
         $payload = json_decode(base64_decode(strtr($base64Payload, '-_', '+/')), true);
         if (!is_array($payload)) {
             return [];
         }
 
-        // Check expiration
         if (isset($payload['exp']) && $payload['exp'] < time()) {
             return [];
         }

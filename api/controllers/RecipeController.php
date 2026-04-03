@@ -114,6 +114,24 @@ class RecipeController {
     }
 
     /**
+     * Create a recipe from pre-parsed data (used by Cooklang import).
+     */
+    public function createFromData(array $data): array {
+        $userId = Auth::requireAuth();
+
+        if (empty($data['title'])) {
+            http_response_code(400);
+            return ['error' => 'Recipe title is required', 'code' => 400];
+        }
+
+        $recipeModel = new Recipe();
+        $recipe = $recipeModel->create($data, $userId);
+
+        http_response_code(201);
+        return $recipe;
+    }
+
+    /**
      * PUT /recipes/{id}
      * Expects JSON body or multipart form data.
      */

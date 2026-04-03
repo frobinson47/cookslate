@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  license_key TEXT DEFAULT NULL,
+  CHECK (id = 1)
+) ENGINE=InnoDB;
+
+INSERT IGNORE INTO settings (id) VALUES (1);

@@ -582,7 +582,7 @@ try {
                 $license = License::getInstance();
                 $response = $license->status();
             } elseif ($id === 'activate' && $method === 'POST') {
-                // POST /license/activate — writes key and validates
+                // POST /license/activate — saves key to database and validates
                 require_once __DIR__ . '/middleware/Auth.php';
                 Auth::requireAdmin();
 
@@ -592,26 +592,23 @@ try {
                     http_response_code(400);
                     $response = ['error' => 'License key is required'];
                 } else {
-                    $keyFile = __DIR__ . '/config/license.key';
-                    file_put_contents($keyFile, $key);
-                    $license = new License($keyFile);
+                    // Validate the key first
+                    $license = new License($key);
                     if ($license->isActive()) {
+                        License::saveToDatabase($key);
+                        License::reset();
                         $response = ['message' => 'License activated', 'status' => $license->status()];
                     } else {
-                        unlink($keyFile);
                         http_response_code(400);
                         $response = ['error' => 'Invalid license key'];
                     }
                 }
             } elseif ($id === 'deactivate' && $method === 'POST') {
-                // POST /license/deactivate — removes key
+                // POST /license/deactivate — removes key from database
                 require_once __DIR__ . '/middleware/Auth.php';
                 Auth::requireAdmin();
 
-                $keyFile = __DIR__ . '/config/license.key';
-                if (file_exists($keyFile)) {
-                    unlink($keyFile);
-                }
+                License::removeFromDatabase();
                 License::reset();
                 $response = ['message' => 'License deactivated'];
             }

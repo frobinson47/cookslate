@@ -346,6 +346,28 @@ export function deleteAnnotation(recipeId, targetType, targetIndex) {
   });
 }
 
+// Ingredient Database
+export function getIngredientData(search = '') {
+  const qs = search ? `?search=${encodeURIComponent(search)}` : '';
+  return request(`/ingredient-data${qs}`);
+}
+
+export function updateIngredientData(id, data) {
+  return request(`/ingredient-data/${id}`, { method: 'PUT', body: data });
+}
+
+export function createIngredientData(data) {
+  return request('/ingredient-data', { method: 'POST', body: data });
+}
+
+export function deleteIngredientData(id) {
+  return request(`/ingredient-data/${id}`, { method: 'DELETE' });
+}
+
+export function searchUsda(query) {
+  return request(`/ingredient-data/usda-search?q=${encodeURIComponent(query)}`);
+}
+
 // Recipe Analysis
 export function analyzeRecipe(recipeId) {
   return request(`/recipes/${recipeId}/analyze`);

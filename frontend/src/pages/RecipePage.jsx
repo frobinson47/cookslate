@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Clock, Edit, Trash2, ExternalLink, ChefHat, ShoppingCart,
-  ArrowLeft, Plus, Printer, Link2
+  ArrowLeft, Plus, Printer, Link2, QrCode
 } from 'lucide-react';
+import qrcode from 'qrcode-generator';
 import useRecipes from '../hooks/useRecipes';
 import { useAuth } from '../hooks/useAuth';
 import useGrocery from '../hooks/useGrocery';
@@ -415,7 +416,7 @@ export default function RecipePage() {
           onClick={handleShareLink}
           className="print:hidden"
         >
-          <Link2 size={18} />
+          <QrCode size={18} />
           Share
         </Button>
       </div>
@@ -618,6 +619,23 @@ export default function RecipePage() {
             <p className="text-sm text-brown-light">
               Anyone with this link can view this recipe.
             </p>
+
+            {/* QR Code */}
+            <div className="flex justify-center py-2">
+              <div
+                className="bg-white p-3 rounded-xl inline-block"
+                dangerouslySetInnerHTML={{
+                  __html: (() => {
+                    const qr = qrcode(0, 'M');
+                    qr.addData(shareLinkUrl);
+                    qr.make();
+                    return qr.createSvgTag({ cellSize: 4, margin: 0 });
+                  })(),
+                }}
+              />
+            </div>
+            <p className="text-xs text-warm-gray text-center">Scan to open this recipe</p>
+
             <div className="flex items-center gap-2">
               <input
                 type="text"

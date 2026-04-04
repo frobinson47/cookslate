@@ -346,6 +346,31 @@ export function deleteAnnotation(recipeId, targetType, targetIndex) {
   });
 }
 
+// Discover (TheMealDB)
+export function getDiscoverMeals() {
+  return request('/discover');
+}
+
+export function searchDiscoverMeals(query) {
+  return request(`/discover/search?q=${encodeURIComponent(query)}`);
+}
+
+export function getDiscoverCategories() {
+  return request('/discover/categories');
+}
+
+export function getDiscoverByCategory(name) {
+  return request(`/discover/category?name=${encodeURIComponent(name)}`);
+}
+
+export function getDiscoverMeal(mealdbId) {
+  return request(`/discover/${mealdbId}`);
+}
+
+export function importDiscoverMeal(mealdbId) {
+  return request('/discover/import', { method: 'POST', body: { mealdb_id: mealdbId } });
+}
+
 // Ingredient Database
 export function getIngredientData(search = '') {
   const qs = search ? `?search=${encodeURIComponent(search)}` : '';

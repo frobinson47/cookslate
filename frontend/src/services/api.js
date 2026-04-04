@@ -22,7 +22,29 @@ async function request(endpoint, options = {}) {
     config.body = body;
   }
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, config);
+  let response = await fetch(`${BASE_URL}${endpoint}`, config);
+
+  // Auto-retry on CSRF token expiry — refresh token and retry once
+  if (response.status === 403 && method !== 'GET') {
+    try {
+      const errorData = await response.clone().json();
+      if (errorData.error && errorData.error.toLowerCase().includes('csrf')) {
+        // Refresh the CSRF token
+        const me = await fetch(`${BASE_URL}/auth/me`, { credentials: 'include' });
+        if (me.ok) {
+          const meData = await me.json();
+          if (meData.csrf_token) {
+            csrfToken = meData.csrf_token;
+            config.headers['X-CSRF-Token'] = csrfToken;
+            // Retry the original request
+            response = await fetch(`${BASE_URL}${endpoint}`, config);
+          }
+        }
+      }
+    } catch {
+      // If refresh fails, fall through to normal error handling
+    }
+  }
 
   if (!response.ok) {
     let errorMessage = `Request failed with status ${response.status}`;

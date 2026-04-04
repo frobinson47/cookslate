@@ -707,9 +707,42 @@ try {
                 $response = ['ingredients' => $stmt->fetchAll(\PDO::FETCH_ASSOC)];
             } elseif ($id === 'auto-nutrition' && $method === 'POST') {
                 // POST /ingredient-data/auto-nutrition
-                // Takes full ingredients (name, amount, unit) for accurate gram-based calculation
+                // Uses Edamam if configured (accurate), falls back to USDA + gram estimation
                 Auth::requireAuth();
                 $data = json_decode(file_get_contents('php://input'), true);
+
+                // Try Edamam first (most accurate — understands "1 cup diced chicken")
+                require_once __DIR__ . '/services/EdamamClient.php';
+                if (EdamamClient::isConfigured()) {
+                    $edamam = new EdamamClient(env('EDAMAM_APP_ID'), env('EDAMAM_APP_KEY'));
+                    $ingredientStrings = [];
+                    foreach (($data['ingredients'] ?? []) as $ing) {
+                        if (is_string($ing)) {
+                            $ingredientStrings[] = $ing;
+                        } else {
+                            $parts = array_filter([$ing['amount'] ?? '', $ing['unit'] ?? '', $ing['name'] ?? '']);
+                            $ingredientStrings[] = implode(' ', $parts);
+                        }
+                    }
+                    $title = $data['title'] ?? 'Recipe';
+                    $servings = $data['servings'] ?? null;
+                    $edamamResult = $edamam->analyzeRecipe($title, $ingredientStrings, $servings ? (int) $servings : null);
+                    if ($edamamResult) {
+                        $response = [
+                            'total' => $edamamResult['total'],
+                            'per_serving' => $edamamResult['per_serving'],
+                            'source' => 'edamam',
+                            'diet_labels' => $edamamResult['diet_labels'],
+                            'health_labels' => $edamamResult['health_labels'],
+                            'cautions' => $edamamResult['cautions'],
+                            'matched' => count($ingredientStrings),
+                            'total_ingredients' => count($ingredientStrings),
+                            'unmatched' => [],
+                        ];
+                        break;
+                    }
+                    // Edamam failed — fall through to USDA
+                }
                 $ingredientList = $data['ingredients'] ?? [];
                 $servings = $data['servings'] ?? null;
 

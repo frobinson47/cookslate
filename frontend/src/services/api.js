@@ -324,6 +324,11 @@ export function deleteAnnotation(recipeId, targetType, targetIndex) {
   });
 }
 
+// Recipe Analysis
+export function analyzeRecipe(recipeId) {
+  return request(`/recipes/${recipeId}/analyze`);
+}
+
 // License
 export function getLicenseStatus() {
   return request('/license/status');

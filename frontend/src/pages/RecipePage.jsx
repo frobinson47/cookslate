@@ -26,6 +26,7 @@ import CookButton from '../components/recipe/CookButton';
 import * as api from '../services/api';
 import RelatedRecipes from '../components/recipe/RelatedRecipes';
 import NutritionFacts from '../components/recipe/NutritionFacts';
+import RecipeInsights from '../components/recipe/RecipeInsights';
 import useRecentlyViewed from '../hooks/useRecentlyViewed';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { estimateDifficulty, DIFFICULTY_COLORS } from '../utils/recipeDifficulty';
@@ -472,6 +473,9 @@ export default function RecipePage() {
         fiber: recipe.fiber,
         sugar: recipe.sugar,
       }} />
+
+      {/* Recipe Insights (Cost & Nutrition Analysis) */}
+      <RecipeInsights recipeId={recipe.id} />
 
       {/* Your Cook History & Notes */}
       {cookNotes.length > 0 && (() => {

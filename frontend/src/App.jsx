@@ -22,6 +22,7 @@ const MealPlanPage = lazy(() => import('./pro/pages/MealPlanPage'));
 const StatsPage = lazy(() => import('./pro/pages/StatsPage'));
 import SharedRecipePage from './pages/SharedRecipePage';
 import SettingsPage from './pages/SettingsPage';
+import IngredientDatabasePage from './pages/IngredientDatabasePage';
 import InstallPage from './pages/InstallPage';
 
 function ProRoute({ children }) {
@@ -150,6 +151,16 @@ export default function App() {
               <ProtectedRoute requireAdmin>
                 <Layout>
                   <AdminPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ingredient-database"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Layout>
+                  <IngredientDatabasePage />
                 </Layout>
               </ProtectedRoute>
             }

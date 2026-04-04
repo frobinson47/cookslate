@@ -589,6 +589,94 @@ try {
             }
             break;
 
+        // ── Ingredient Data Routes (admin) ──────────────────────────────
+        case 'ingredient-data':
+            require_once __DIR__ . '/middleware/Auth.php';
+            require_once __DIR__ . '/models/Database.php';
+
+            if ($id === null && $method === 'GET') {
+                // GET /ingredient-data — list all with optional search
+                Auth::requireAuth();
+                $db = Database::getInstance();
+                $search = $_GET['search'] ?? '';
+                if ($search) {
+                    $stmt = $db->prepare('SELECT * FROM ingredient_data WHERE name LIKE ? ORDER BY name');
+                    $stmt->execute(["%$search%"]);
+                } else {
+                    $stmt = $db->query('SELECT * FROM ingredient_data ORDER BY category, name');
+                }
+                $response = ['ingredients' => $stmt->fetchAll(\PDO::FETCH_ASSOC)];
+            } elseif ($id === 'usda-search' && $method === 'GET') {
+                // GET /ingredient-data/usda-search?q=chicken
+                Auth::requireAdmin();
+                $query = $_GET['q'] ?? '';
+                if (empty($query)) {
+                    http_response_code(400);
+                    $response = ['error' => 'Search query required'];
+                } else {
+                    require_once __DIR__ . '/services/UsdaLookup.php';
+                    $usda = new UsdaLookup(env('USDA_API_KEY', ''));
+                    $response = ['results' => $usda->search($query)];
+                }
+            } elseif (is_numeric($id) && $method === 'PUT') {
+                // PUT /ingredient-data/{id} — update an ingredient
+                Auth::requireAdmin();
+                $data = json_decode(file_get_contents('php://input'), true);
+                $db = Database::getInstance();
+                $fields = [];
+                $params = [];
+                foreach (['name', 'category', 'avg_price', 'price_unit', 'calories_per_100g', 'protein_per_100g', 'carbs_per_100g', 'fat_per_100g', 'fiber_per_100g'] as $field) {
+                    if (array_key_exists($field, $data)) {
+                        $fields[] = "$field = ?";
+                        $params[] = $data[$field];
+                    }
+                }
+                if (empty($fields)) {
+                    http_response_code(400);
+                    $response = ['error' => 'No fields to update'];
+                } else {
+                    $params[] = (int) $id;
+                    $db->prepare('UPDATE ingredient_data SET ' . implode(', ', $fields) . ' WHERE id = ?')->execute($params);
+                    $stmt = $db->prepare('SELECT * FROM ingredient_data WHERE id = ?');
+                    $stmt->execute([(int) $id]);
+                    $response = $stmt->fetch(\PDO::FETCH_ASSOC);
+                }
+            } elseif ($id === null && $method === 'POST') {
+                // POST /ingredient-data — create a new ingredient
+                Auth::requireAdmin();
+                $data = json_decode(file_get_contents('php://input'), true);
+                if (empty($data['name'])) {
+                    http_response_code(400);
+                    $response = ['error' => 'Name is required'];
+                } else {
+                    $db = Database::getInstance();
+                    $stmt = $db->prepare('INSERT INTO ingredient_data (name, category, avg_price, price_unit, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                    $stmt->execute([
+                        $data['name'],
+                        $data['category'] ?? null,
+                        $data['avg_price'] ?? null,
+                        $data['price_unit'] ?? null,
+                        $data['calories_per_100g'] ?? null,
+                        $data['protein_per_100g'] ?? null,
+                        $data['carbs_per_100g'] ?? null,
+                        $data['fat_per_100g'] ?? null,
+                        $data['fiber_per_100g'] ?? null,
+                    ]);
+                    $newId = $db->lastInsertId();
+                    $stmt = $db->prepare('SELECT * FROM ingredient_data WHERE id = ?');
+                    $stmt->execute([$newId]);
+                    http_response_code(201);
+                    $response = $stmt->fetch(\PDO::FETCH_ASSOC);
+                }
+            } elseif (is_numeric($id) && $method === 'DELETE') {
+                // DELETE /ingredient-data/{id}
+                Auth::requireAdmin();
+                $db = Database::getInstance();
+                $db->prepare('DELETE FROM ingredient_data WHERE id = ?')->execute([(int) $id]);
+                $response = ['message' => 'Deleted'];
+            }
+            break;
+
         // ── License Routes ──────────────────────────────────────────────
         case 'license':
             require_once __DIR__ . '/config/license.php';

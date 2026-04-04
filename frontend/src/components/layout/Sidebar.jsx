@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Plus, ShoppingCart, User, Shield, LogOut, CookingPot, Upload, BookOpen, Heart, CalendarDays, TrendingUp, Sun, Moon, Monitor, Download, Settings } from 'lucide-react';
+import { LayoutGrid, Plus, ShoppingCart, User, Shield, LogOut, CookingPot, Upload, BookOpen, Heart, CalendarDays, TrendingUp, Sun, Moon, Monitor, Download, Settings, Database } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import useTheme from '../../hooks/useTheme';
 import { useLicense } from '../../hooks/useLicense';
@@ -25,6 +25,7 @@ export default function Sidebar() {
 
   if (isAdmin) {
     navItems.push({ to: '/admin', icon: Shield, label: 'Admin' });
+    navItems.push({ to: '/ingredient-database', icon: Database, label: 'Ingredients' });
   }
 
   navItems.push({ to: '/settings', icon: Settings, label: 'Settings' });

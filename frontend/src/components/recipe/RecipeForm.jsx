@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, X, GripVertical, ChevronUp, ChevronDown, Upload, Image, ChevronRight, ClipboardPaste } from 'lucide-react';
+import { Plus, X, GripVertical, ChevronUp, ChevronDown, Upload, Image, ChevronRight, ClipboardPaste, Zap, Loader2 } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Modal from '../ui/Modal';
@@ -43,6 +43,7 @@ export default function RecipeForm({ initialData, onSubmit, isLoading, submitLab
   const [fiber, setFiber] = useState('');
   const [sugar, setSugar] = useState('');
   const [pasteMode, setPasteMode] = useState(false);
+  const [autoNutritionLoading, setAutoNutritionLoading] = useState(false);
   const [pasteRecipeMode, setPasteRecipeMode] = useState(false);
   const [errors, setErrors] = useState({});
   const [showDraftPrompt, setShowDraftPrompt] = useState(false);
@@ -763,45 +764,72 @@ export default function RecipeForm({ initialData, onSubmit, isLoading, submitLab
         </button>
 
         {showNutrition && (
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-            <Input
-              label="Calories"
-              type="number"
-              value={calories}
-              onChange={(e) => setCalories(e.target.value)}
-              placeholder="250"
-              min="0"
-            />
-            <Input
-              label="Protein"
-              value={protein}
-              onChange={(e) => setProtein(e.target.value)}
-              placeholder="12g"
-            />
-            <Input
-              label="Carbs"
-              value={carbs}
-              onChange={(e) => setCarbs(e.target.value)}
-              placeholder="30g"
-            />
-            <Input
-              label="Fat"
-              value={fat}
-              onChange={(e) => setFat(e.target.value)}
-              placeholder="8g"
-            />
-            <Input
-              label="Fiber"
-              value={fiber}
-              onChange={(e) => setFiber(e.target.value)}
-              placeholder="4g"
-            />
-            <Input
-              label="Sugar"
-              value={sugar}
-              onChange={(e) => setSugar(e.target.value)}
-              placeholder="5g"
-            />
+          <div className="mt-3">
+            <button
+              type="button"
+              disabled={autoNutritionLoading || ingredients.filter(i => i.name?.trim()).length === 0}
+              onClick={async () => {
+                setAutoNutritionLoading(true);
+                try {
+                  const names = ingredients.filter(i => i.name?.trim()).map(i => i.name.trim());
+                  const srv = servings ? parseInt(servings) : null;
+                  const result = await api.autoNutrition(names, srv);
+                  const data = result.per_serving || result.total;
+                  if (data) {
+                    setCalories(String(data.calories || ''));
+                    setProtein(String(data.protein || ''));
+                    setCarbs(String(data.carbs || ''));
+                    setFat(String(data.fat || ''));
+                    setFiber(String(data.fiber || ''));
+                  }
+                } catch { }
+                setAutoNutritionLoading(false);
+              }}
+              className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-sage bg-sage/10 rounded-lg hover:bg-sage/20 transition-colors disabled:opacity-50"
+            >
+              {autoNutritionLoading ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+              Auto-fill from ingredients
+            </button>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <Input
+                label="Calories"
+                type="number"
+                value={calories}
+                onChange={(e) => setCalories(e.target.value)}
+                placeholder="250"
+                min="0"
+              />
+              <Input
+                label="Protein"
+                value={protein}
+                onChange={(e) => setProtein(e.target.value)}
+                placeholder="12g"
+              />
+              <Input
+                label="Carbs"
+                value={carbs}
+                onChange={(e) => setCarbs(e.target.value)}
+                placeholder="30g"
+              />
+              <Input
+                label="Fat"
+                value={fat}
+                onChange={(e) => setFat(e.target.value)}
+                placeholder="8g"
+              />
+              <Input
+                label="Fiber"
+                value={fiber}
+                onChange={(e) => setFiber(e.target.value)}
+                placeholder="4g"
+              />
+              <Input
+                label="Sugar"
+                value={sugar}
+                onChange={(e) => setSugar(e.target.value)}
+                placeholder="5g"
+              />
+            </div>
           </div>
         )}
       </div>

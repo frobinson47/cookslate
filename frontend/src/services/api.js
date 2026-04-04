@@ -364,6 +364,10 @@ export function deleteIngredientData(id) {
   return request(`/ingredient-data/${id}`, { method: 'DELETE' });
 }
 
+export function autoNutrition(ingredientNames, servings) {
+  return request('/ingredient-data/auto-nutrition', { method: 'POST', body: { ingredients: ingredientNames, servings } });
+}
+
 export function searchUsda(query) {
   return request(`/ingredient-data/usda-search?q=${encodeURIComponent(query)}`);
 }

@@ -23,6 +23,7 @@ const StatsPage = lazy(() => import('./pro/pages/StatsPage'));
 import SharedRecipePage from './pages/SharedRecipePage';
 import SettingsPage from './pages/SettingsPage';
 import IngredientDatabasePage from './pages/IngredientDatabasePage';
+import DiscoverPage from './pages/DiscoverPage';
 import InstallPage from './pages/InstallPage';
 
 function ProRoute({ children }) {
@@ -151,6 +152,16 @@ export default function App() {
               <ProtectedRoute requireAdmin>
                 <Layout>
                   <AdminPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/discover"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <DiscoverPage />
                 </Layout>
               </ProtectedRoute>
             }

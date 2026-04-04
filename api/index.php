@@ -589,6 +589,73 @@ try {
             }
             break;
 
+        // ── Discover Routes (TheMealDB) ─────────────────────────────────
+        case 'discover':
+            require_once __DIR__ . '/services/MealDbClient.php';
+            $mealDb = new MealDbClient();
+
+            if ($id === null && $method === 'GET') {
+                // GET /discover — random meals for inspiration
+                $meals = [];
+                for ($i = 0; $i < 6; $i++) {
+                    $meal = $mealDb->random();
+                    if ($meal) $meals[] = $meal;
+                }
+                $response = ['meals' => $meals];
+            } elseif ($id === 'search' && $method === 'GET') {
+                // GET /discover/search?q=chicken
+                $q = $_GET['q'] ?? '';
+                $response = ['meals' => $mealDb->search($q)];
+            } elseif ($id === 'categories' && $method === 'GET') {
+                $response = ['categories' => $mealDb->categories()];
+            } elseif ($id === 'areas' && $method === 'GET') {
+                $response = ['areas' => $mealDb->areas()];
+            } elseif ($id === 'category' && $method === 'GET') {
+                $cat = $_GET['name'] ?? '';
+                $response = ['meals' => $mealDb->byCategory($cat)];
+            } elseif ($id === 'area' && $method === 'GET') {
+                $area = $_GET['name'] ?? '';
+                $response = ['meals' => $mealDb->byArea($area)];
+            } elseif (is_numeric($id) && $method === 'GET') {
+                // GET /discover/{mealdb_id} — full meal details
+                $meal = $mealDb->getById($id);
+                $response = $meal ?: ['error' => 'Meal not found'];
+                if (!$meal) http_response_code(404);
+            } elseif ($id === 'import' && $method === 'POST') {
+                // POST /discover/import — import a TheMealDB recipe into Cookslate
+                require_once __DIR__ . '/middleware/Auth.php';
+                $userId = Auth::requireAuth();
+                $data = json_decode(file_get_contents('php://input'), true);
+                $mealdbId = $data['mealdb_id'] ?? '';
+                if (empty($mealdbId)) {
+                    http_response_code(400);
+                    $response = ['error' => 'mealdb_id required'];
+                } else {
+                    $meal = $mealDb->getById($mealdbId);
+                    if (!$meal) {
+                        http_response_code(404);
+                        $response = ['error' => 'Meal not found'];
+                    } else {
+                        $recipeData = $mealDb->toRecipeFormat($meal);
+                        require_once __DIR__ . '/controllers/RecipeController.php';
+                        $recipeModel = new Recipe();
+                        $recipe = $recipeModel->create($recipeData, $userId);
+                        // Download image if available
+                        if (!empty($recipeData['source_image_url'])) {
+                            require_once __DIR__ . '/services/ImageProcessor.php';
+                            $imgProcessor = new ImageProcessor();
+                            $imagePath = $imgProcessor->processFromUrl($recipeData['source_image_url'], $recipe['id']);
+                            if ($imagePath) {
+                                $recipe = $recipeModel->update($recipe['id'], ['image_path' => $imagePath]);
+                            }
+                        }
+                        http_response_code(201);
+                        $response = $recipe;
+                    }
+                }
+            }
+            break;
+
         // ── Ingredient Data Routes (admin) ──────────────────────────────
         case 'ingredient-data':
             require_once __DIR__ . '/middleware/Auth.php';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Users, UtensilsCrossed, ChefHat } from 'lucide-react';
+import { Clock, Users, UtensilsCrossed, ChefHat, Flame } from 'lucide-react';
 import TagBadge from '../ui/TagBadge';
 import StarRating from '../ui/StarRating';
 import FavoriteButton from './FavoriteButton';
@@ -71,6 +71,12 @@ export default function RecipeCard({ recipe }) {
             <span className="flex items-center gap-1 text-sage">
               <ChefHat size={14} />
               {recipe.cook_count}×
+            </span>
+          )}
+          {recipe.calories > 0 && (
+            <span className="flex items-center gap-1 text-terracotta">
+              <Flame size={14} />
+              {recipe.calories} cal
             </span>
           )}
           {(() => {

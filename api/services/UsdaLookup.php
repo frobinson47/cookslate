@@ -24,7 +24,6 @@ class UsdaLookup
             'api_key' => $this->apiKey,
             'query' => $query,
             'pageSize' => $limit,
-            'dataType' => 'Foundation,SR Legacy,Survey (FNDDS)',
         ]);
 
         $response = $this->fetch($url);

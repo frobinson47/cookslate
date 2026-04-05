@@ -119,18 +119,24 @@ export default function GroceryPage() {
     if (unchecked.length === 0) return;
 
     const formatItem = (item) => {
+      if (item.in_pantry) return null; // Skip pantry items
       const parts = [item.amount, item.unit, item.name].filter(Boolean);
-      return `☐ ${parts.join(' ')}`;
+      let line = `☐ ${parts.join(' ')}`;
+      if (item.package_display && item.package_suggestion !== 'pantry') {
+        line += ` → ${item.package_display}`;
+      }
+      return line;
     };
 
     let text;
     if (groupedView) {
       const groups = groupByCategory(unchecked);
-      text = groups.map(({ category, items }) =>
-        `${category.toUpperCase()}\n${items.map(formatItem).join('\n')}`
-      ).join('\n\n');
+      text = groups.map(({ category, items }) => {
+        const lines = items.map(formatItem).filter(Boolean);
+        return lines.length > 0 ? `${category.toUpperCase()}\n${lines.join('\n')}` : null;
+      }).filter(Boolean).join('\n\n');
     } else {
-      text = unchecked.map(formatItem).join('\n');
+      text = unchecked.map(formatItem).filter(Boolean).join('\n');
     }
 
     try {

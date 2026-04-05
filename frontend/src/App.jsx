@@ -169,7 +169,7 @@ export default function App() {
           <Route
             path="/ingredient-database"
             element={
-              <ProtectedRoute requireAdmin>
+              <ProtectedRoute>
                 <Layout>
                   <IngredientDatabasePage />
                 </Layout>

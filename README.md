@@ -7,17 +7,23 @@ A recipe manager that remembers how *you* cook — not just what you cook. Self-
 ## Features
 
 **Free (open source):**
-- Import recipes from any URL
+- Import recipes from any URL (auto-scrapes structured data)
 - Full-text search across titles, descriptions, and ingredients
 - Tags, favorites, and ratings
 - Cook Mode — step-by-step with timers, wake lock, and vibration alerts
-- Mobile-friendly responsive design
-- Dark mode
+- Grocery lists with smart ingredient consolidation
+- Pantry tracking — mark always-stocked items, auto-detected on future lists
+- Shoppable quantities — converts recipe amounts to store-buyable packages
+- Ingredient database with nutrition data and USDA lookup
+- Discover recipes from the web (search + import)
+- Cook logging and history
+- Calorie display on recipe cards
+- Dark mode & mobile responsive
 
 **Pro ($9.99 one-time):**
-- Meal planning with weekly view
+- Meal planning with weekly drag-and-drop calendar
 - Grocery list generation from meal plans
-- Cook tracking — journal, stats, forgotten favorites
+- Cook tracking stats, streaks, and forgotten favorites
 - Recipe annotations (margin notes)
 - Multi-user household support (up to 5)
 - Data export (JSON-LD, Cooklang)

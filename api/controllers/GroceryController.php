@@ -205,7 +205,7 @@ class GroceryController {
         }
 
         $itemModel = new GroceryItem();
-        $items = $itemModel->addFromRecipe($listId, $recipeId);
+        $items = $itemModel->addFromRecipe($listId, $recipeId, $userId);
 
         return ['items' => $items];
     }

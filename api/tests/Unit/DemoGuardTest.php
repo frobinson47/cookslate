@@ -11,32 +11,31 @@ class DemoGuardTest extends TestCase
         require_once __DIR__ . '/../../middleware/DemoGuard.php';
     }
 
-    public function testBlocksPostForDemoUser(): void
+    public function testAllowsPostForDemoUser(): void
     {
         $_SESSION = ['is_demo' => true];
         $_SERVER['REQUEST_METHOD'] = 'POST';
 
         $result = \DemoGuard::check();
-        $this->assertFalse($result['allowed']);
-        $this->assertEquals('Demo account is read-only', $result['error']);
+        $this->assertTrue($result['allowed']);
     }
 
-    public function testBlocksPutForDemoUser(): void
+    public function testAllowsPutForDemoUser(): void
     {
         $_SESSION = ['is_demo' => true];
         $_SERVER['REQUEST_METHOD'] = 'PUT';
 
         $result = \DemoGuard::check();
-        $this->assertFalse($result['allowed']);
+        $this->assertTrue($result['allowed']);
     }
 
-    public function testBlocksDeleteForDemoUser(): void
+    public function testAllowsDeleteForDemoUser(): void
     {
         $_SESSION = ['is_demo' => true];
         $_SERVER['REQUEST_METHOD'] = 'DELETE';
 
         $result = \DemoGuard::check();
-        $this->assertFalse($result['allowed']);
+        $this->assertTrue($result['allowed']);
     }
 
     public function testAllowsGetForDemoUser(): void
@@ -48,13 +47,22 @@ class DemoGuardTest extends TestCase
         $this->assertTrue($result['allowed']);
     }
 
-    public function testAllowsLogoutForDemoUser(): void
+    public function testBlocksPasswordChangeForDemoUser(): void
     {
         $_SESSION = ['is_demo' => true];
         $_SERVER['REQUEST_METHOD'] = 'POST';
 
-        $result = \DemoGuard::check('auth', 'logout');
-        $this->assertTrue($result['allowed']);
+        $result = \DemoGuard::check('auth', 'password');
+        $this->assertFalse($result['allowed']);
+    }
+
+    public function testBlocksAdminForDemoUser(): void
+    {
+        $_SESSION = ['is_demo' => true];
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
+        $result = \DemoGuard::check('admin');
+        $this->assertFalse($result['allowed']);
     }
 
     public function testAllowsPostForNonDemoUser(): void

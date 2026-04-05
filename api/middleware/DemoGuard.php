@@ -20,12 +20,15 @@ class DemoGuard
             return ['allowed' => true, 'error' => null];
         }
 
-        // Allow logout for demo users
-        if ($resource === 'auth' && $action === 'logout') {
-            return ['allowed' => true, 'error' => null];
+        // Block account-destructive operations only
+        if ($resource === 'auth' && $action === 'password') {
+            return ['allowed' => false, 'error' => 'Cannot change password on demo account'];
+        }
+        if ($resource === 'admin') {
+            return ['allowed' => false, 'error' => 'Admin operations are disabled in demo'];
         }
 
-        // Block all other state-changing requests
-        return ['allowed' => false, 'error' => 'Demo account is read-only'];
+        // Allow all other operations so demo users can try every feature
+        return ['allowed' => true, 'error' => null];
     }
 }

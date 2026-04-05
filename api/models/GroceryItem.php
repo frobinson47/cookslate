@@ -166,6 +166,28 @@ class GroceryItem {
     }
 
     /**
+     * Enrich grocery items with shoppable package info from ingredient_data.
+     */
+    public function enrichWithPackageInfo(array $items): array {
+        require_once __DIR__ . '/../services/ShoppableQuantity.php';
+        $service = new ShoppableQuantity();
+
+        return array_map(function ($item) use ($service) {
+            $result = $service->convert($item['amount'], $item['unit'], $item['name']);
+            if ($result) {
+                $item['package_display'] = $result['packages_needed'] . ' ' .
+                    $result['package_description'] .
+                    ' (' . $result['package_label'] . ')';
+                $item['package_info'] = $result;
+            } else {
+                $item['package_display'] = null;
+                $item['package_info'] = null;
+            }
+            return $item;
+        }, $items);
+    }
+
+    /**
      * Create a grocery item with pantry flag.
      */
     private function createWithPantry(int $listId, string $name, ?string $amount, ?string $unit, ?int $recipeId, bool $inPantry): array {

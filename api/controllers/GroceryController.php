@@ -55,7 +55,8 @@ class GroceryController {
         }
 
         $itemModel = new GroceryItem();
-        $list['items'] = $itemModel->getAllForList($id);
+        $items = $itemModel->getAllForList($id);
+        $list['items'] = $itemModel->enrichWithPackageInfo($items);
 
         return $list;
     }
@@ -207,6 +208,6 @@ class GroceryController {
         $itemModel = new GroceryItem();
         $items = $itemModel->addFromRecipe($listId, $recipeId, $userId);
 
-        return ['items' => $items];
+        return ['items' => $itemModel->enrichWithPackageInfo($items)];
     }
 }

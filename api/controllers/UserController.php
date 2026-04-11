@@ -35,6 +35,25 @@ class UserController {
             return ['error' => 'Role must be admin or member', 'code' => 400];
         }
 
+        // Enforce user limit based on license tier
+        require_once __DIR__ . '/../config/license.php';
+        $license = License::getInstance();
+        $userModel = new User();
+        $currentCount = $userModel->countReal();
+        $maxUsers = $license->maxUsers();
+
+        if ($currentCount >= $maxUsers) {
+            http_response_code(403);
+            $tierLabel = $license->tier() === 'household' ? 'Household' : 'Pro';
+            return [
+                'error' => "User limit reached ({$currentCount}/{$maxUsers}). Upgrade to " .
+                    ($license->tier() === 'household' ? 'add more users.' : 'Household to add up to 5 users.'),
+                'code' => 403,
+                'max_users' => $maxUsers,
+                'current_users' => $currentCount,
+            ];
+        }
+
         require_once __DIR__ . '/../services/PasswordValidator.php';
         $validator = new PasswordValidator();
         $passwordResult = $validator->validate($input['password']);
@@ -42,8 +61,6 @@ class UserController {
             http_response_code(400);
             return ['error' => implode('. ', $passwordResult['errors']), 'code' => 400];
         }
-
-        $userModel = new User();
 
         // Check if username already exists
         $existing = $userModel->findByUsername($input['username']);

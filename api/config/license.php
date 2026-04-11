@@ -48,12 +48,26 @@ class License
         return $this->tier;
     }
 
+    /**
+     * Maximum number of user accounts allowed by the license tier.
+     * free = 1, pro = 1, household = 5
+     */
+    public function maxUsers(): int
+    {
+        return match ($this->tier) {
+            'household' => 5,
+            'pro' => 1,
+            default => 1,
+        };
+    }
+
     public function status(): array
     {
         return [
             'active' => $this->active,
             'tier' => $this->tier,
             'email' => $this->email,
+            'max_users' => $this->maxUsers(),
         ];
     }
 

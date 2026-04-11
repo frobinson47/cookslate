@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Key, Trash2, Pencil, AlertCircle, Download } from 'lucide-react';
+import { Shield, Plus, Key, Trash2, Pencil, AlertCircle, Download, Users } from 'lucide-react';
 import * as api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import { useLicense } from '../hooks/useLicense';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
@@ -12,6 +13,7 @@ export default function AdminPage() {
   useDocumentTitle('Admin');
 
   const { user, logout } = useAuth();
+  const { tier, max_users: maxUsers } = useLicense();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -145,7 +147,18 @@ export default function AdminPage() {
             <Download size={16} />
             Export Recipes
           </Button>
-          <Button onClick={() => setShowCreateModal(true)} size="sm">
+          {maxUsers && (
+            <span className="flex items-center gap-1 text-sm text-warm-gray">
+              <Users size={14} />
+              {users.filter(u => !u.is_demo).length}/{maxUsers} users
+            </span>
+          )}
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            size="sm"
+            disabled={maxUsers && users.filter(u => !u.is_demo).length >= maxUsers}
+            title={maxUsers && users.filter(u => !u.is_demo).length >= maxUsers ? `User limit reached (${maxUsers}). Upgrade to Household for up to 5 users.` : undefined}
+          >
             <Plus size={16} />
             Add User
           </Button>

@@ -52,6 +52,14 @@ class User {
     }
 
     /**
+     * Count non-demo user accounts (for license enforcement).
+     */
+    public function countReal(): int {
+        $stmt = $this->db->query('SELECT COUNT(*) FROM users WHERE is_demo = 0 OR is_demo IS NULL');
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Create a new user.
      */
     public function create(string $username, string $password, string $role = 'member', ?string $email = null): array {

@@ -20,7 +20,7 @@ A recipe manager that remembers how *you* cook — not just what you cook. Self-
 - Calorie display on recipe cards
 - Dark mode & mobile responsive
 
-**Pro ($9.99 one-time):**
+**Pro ($29.99 one-time — launch special $9.99 until July 1, 2026):**
 - Meal planning with weekly drag-and-drop calendar
 - Grocery list generation from meal plans
 - Cook tracking stats, streaks, and forgotten favorites

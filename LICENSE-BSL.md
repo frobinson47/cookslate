@@ -2,7 +2,7 @@
 
 **Licensor:** Frank Robinson
 **Licensed Work:** Cookslate Pro (files in `api/pro/` and `frontend/src/pro/`)
-**Change Date:** 2029-03-24 (3 years from initial release)
+**Change Date:** 2031-03-24 (5 years from initial release)
 **Change License:** MIT
 
 ## Terms

@@ -404,6 +404,48 @@ try {
             }
             break;
 
+        // ── Collection Routes ────────────────────────────────────────────
+        case 'collections':
+            require_once __DIR__ . '/controllers/CollectionController.php';
+            $controller = new CollectionController();
+
+            if ($id === null) {
+                switch ($method) {
+                    case 'GET':
+                        $response = $controller->list();
+                        break;
+                    case 'POST':
+                        $response = $controller->create();
+                        break;
+                }
+            } elseif (is_numeric($id)) {
+                $collectionId = (int) $id;
+
+                if ($subResource === null) {
+                    switch ($method) {
+                        case 'GET':
+                            $response = $controller->get($collectionId);
+                            break;
+                        case 'PUT':
+                            $response = $controller->update($collectionId);
+                            break;
+                        case 'DELETE':
+                            $response = $controller->delete($collectionId);
+                            break;
+                    }
+                } elseif ($subResource === 'recipes' && is_numeric($subId)) {
+                    switch ($method) {
+                        case 'POST':
+                            $response = $controller->addRecipe($collectionId, (int) $subId);
+                            break;
+                        case 'DELETE':
+                            $response = $controller->removeRecipe($collectionId, (int) $subId);
+                            break;
+                    }
+                }
+            }
+            break;
+
         // ── Pantry Routes ────────────────────────────────────────────────
         case 'pantry':
             require_once __DIR__ . '/controllers/PantryController.php';

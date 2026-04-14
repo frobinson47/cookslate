@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * Cookslate branded logo — the pot SVG from cookslate.app.
- * Supports light and dark mode via currentColor or explicit props.
+ * Background uses CSS variable so it adapts to light/dark theme automatically.
  */
 export default function CookslateLogo({ size = 32, className = '' }) {
   return (
@@ -14,7 +14,7 @@ export default function CookslateLogo({ size = 32, className = '' }) {
       height={size}
       className={className}
     >
-      <rect width="512" height="512" rx="96" className="fill-cream-dark dark:fill-brown" />
+      <rect width="512" height="512" rx="96" style={{ fill: 'var(--color-cream-dark)' }} />
       <g stroke="currentColor" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round">
         <path d="M144 240h224v120c0 40-32 72-72 72H216c-40 0-72-32-72-72V240z" />
         <line x1="124" y1="240" x2="388" y2="240" />

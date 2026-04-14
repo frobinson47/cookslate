@@ -102,6 +102,59 @@ class MealPlanController {
     }
 
     /**
+     * GET /meal-plan/ical?week=YYYY-MM-DD
+     * Export meal plan as iCalendar (.ics) format.
+     */
+    public function exportICal(): void {
+        $userId = Auth::requireAuth();
+        $week = $_GET['week'] ?? date('Y-m-d');
+
+        $model = new MealPlan();
+        $plan = $model->getByWeek($userId, $week);
+
+        $items = $plan['items'] ?? [];
+        $monday = new \DateTime($plan['week_start']);
+
+        $dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+        $ical = "BEGIN:VCALENDAR\r\n";
+        $ical .= "VERSION:2.0\r\n";
+        $ical .= "PRODID:-//Cookslate//Meal Plan//EN\r\n";
+        $ical .= "CALSCALE:GREGORIAN\r\n";
+        $ical .= "X-WR-CALNAME:Cookslate Meal Plan\r\n";
+
+        foreach ($items as $item) {
+            $dayIndex = array_search($item['day_of_week'], $dayNames);
+            if ($dayIndex === false) continue;
+
+            $date = clone $monday;
+            $date->modify("+{$dayIndex} days");
+            $dateStr = $date->format('Ymd');
+
+            $title = $item['title'] ?? 'Meal';
+            $uid = 'cookslate-meal-' . $item['id'] . '@cookslate.app';
+
+            $ical .= "BEGIN:VEVENT\r\n";
+            $ical .= "UID:{$uid}\r\n";
+            $ical .= "DTSTART;VALUE=DATE:{$dateStr}\r\n";
+            $ical .= "DTEND;VALUE=DATE:{$dateStr}\r\n";
+            $ical .= "SUMMARY:" . $this->escapeIcal($title) . "\r\n";
+            $ical .= "DESCRIPTION:Planned in Cookslate\r\n";
+            $ical .= "END:VEVENT\r\n";
+        }
+
+        $ical .= "END:VCALENDAR\r\n";
+
+        header('Content-Type: text/calendar; charset=utf-8');
+        header('Content-Disposition: attachment; filename="cookslate-meal-plan.ics"');
+        echo $ical;
+    }
+
+    private function escapeIcal(string $text): string {
+        return str_replace([',', ';', "\n"], ['\\,', '\\;', '\\n'], $text);
+    }
+
+    /**
      * POST /meal-plan/grocery
      * Expects JSON: { week_start, list_name? }
      */

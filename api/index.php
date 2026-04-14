@@ -562,6 +562,10 @@ try {
             } elseif ($id === 'today' && $method === 'GET') {
                 // GET /meal-plan/today
                 $response = $controller->getToday();
+            } elseif ($id === 'ical' && $method === 'GET') {
+                // GET /meal-plan/ical
+                $controller->exportICal();
+                exit;
             } elseif ($id === 'items' && $subResource === null && $method === 'POST') {
                 // POST /meal-plan/items
                 $response = $controller->addItem();

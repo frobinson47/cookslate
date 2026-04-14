@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus, X, ShoppingCart, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, ShoppingCart, CalendarDays, Calendar } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Spinner from '../../components/ui/Spinner';
@@ -220,10 +220,20 @@ export default function MealPlanPage() {
           <CalendarDays size={28} className="text-terracotta shrink-0" />
           <h1 className="text-2xl md:text-3xl font-bold text-brown font-serif">Meal Plan</h1>
         </div>
-        <Button variant="secondary" onClick={handleOpenGrocery} disabled={!plan || !plan.items || plan.items.length === 0}>
-          <ShoppingCart size={18} />
-          Generate Grocery List
-        </Button>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/api/meal-plan/ical?week=${weekStart}`}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-warm-gray hover:text-brown hover:bg-cream-dark rounded-xl transition-colors min-h-[44px]"
+            title="Export to calendar"
+          >
+            <Calendar size={16} />
+            iCal
+          </a>
+          <Button variant="secondary" onClick={handleOpenGrocery} disabled={!plan || !plan.items || plan.items.length === 0}>
+            <ShoppingCart size={18} />
+            Generate Grocery List
+          </Button>
+        </div>
       </div>
 
       {/* Week navigation */}

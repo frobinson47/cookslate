@@ -728,27 +728,70 @@ try {
             require_once __DIR__ . '/models/Database.php';
             $db = Database::getInstance();
 
+            // Strip common prefixes/qualifiers to extract core ingredient
+            $stripSubstitutionName = function(string $name): array {
+                $name = strtolower(trim($name));
+                // Remove parenthetical info: "(with juice)", "(drained)"
+                $name = preg_replace('/\s*\([^)]*\)/', '', $name);
+                // Remove leading quantity: "14 oz", "2 lb", "1 can"
+                $name = preg_replace('/^\d+[\s\/\d.]*\s*(oz|lb|lbs|g|kg|ml|l|can|cans|cup|cups|tbsp|tsp|bunch|cloves?|stalks?|heads?|slices?|pieces?)\s+/i', '', $name);
+                // Remove common qualifiers
+                $qualifiers = ['canned', 'frozen', 'fresh', 'dried', 'diced', 'crushed', 'sliced', 'chopped',
+                    'minced', 'ground', 'shredded', 'grated', 'whole', 'peeled', 'cooked', 'raw',
+                    'boneless', 'skinless', 'smoked', 'roasted', 'toasted', 'melted', 'softened',
+                    'unsalted', 'salted', 'low-sodium', 'low sodium', 'reduced-fat', 'fat-free',
+                    'organic', 'large', 'small', 'medium', 'extra-large', 'thin', 'thick'];
+                foreach ($qualifiers as $q) {
+                    $name = preg_replace('/\b' . preg_quote($q, '/') . '\b\s*/i', '', $name);
+                }
+                $name = trim($name);
+
+                // Build search candidates: full stripped name, then progressively shorter
+                $candidates = [$name];
+                // Try last 2 words (e.g. "chili beans" from "hot chili beans")
+                $words = preg_split('/\s+/', $name);
+                if (count($words) > 2) {
+                    $candidates[] = implode(' ', array_slice($words, -2));
+                }
+                // Try last word (e.g. "beans")
+                if (count($words) > 1) {
+                    $candidates[] = end($words);
+                }
+                return array_unique(array_filter($candidates));
+            };
+
+            $findSubstitutions = function(string $rawName) use ($db, $stripSubstitutionName): array {
+                $candidates = $stripSubstitutionName($rawName);
+                foreach ($candidates as $term) {
+                    // Try exact match first, then LIKE in both directions
+                    $stmt = $db->prepare('
+                        SELECT substitute, ratio, notes FROM ingredient_substitutions
+                        WHERE LOWER(ingredient) = ? OR LOWER(ingredient) LIKE ? OR ? LIKE CONCAT(\'%\', LOWER(ingredient), \'%\')
+                        LIMIT 5
+                    ');
+                    $stmt->execute([$term, "%$term%", $term]);
+                    $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                    if (!empty($results)) return $results;
+                }
+                return [];
+            };
+
             if ($id === null && $method === 'GET') {
                 // GET /substitutions?ingredient=butter
-                $ingredient = strtolower(trim($_GET['ingredient'] ?? ''));
+                $ingredient = trim($_GET['ingredient'] ?? '');
                 if (empty($ingredient)) {
                     $response = ['substitutions' => []];
                 } else {
-                    $stmt = $db->prepare('SELECT substitute, ratio, notes FROM ingredient_substitutions WHERE LOWER(ingredient) = ? OR LOWER(ingredient) LIKE ?');
-                    $stmt->execute([$ingredient, "%$ingredient%"]);
-                    $response = ['substitutions' => $stmt->fetchAll(\PDO::FETCH_ASSOC)];
+                    $response = ['substitutions' => $findSubstitutions($ingredient)];
                 }
             } elseif ($id === 'for-recipe' && $method === 'GET') {
                 // GET /substitutions/for-recipe?ingredients=butter,egg,milk
                 $names = array_filter(array_map('trim', explode(',', $_GET['ingredients'] ?? '')));
                 $result = [];
                 foreach ($names as $name) {
-                    $name = strtolower($name);
-                    $stmt = $db->prepare('SELECT substitute, ratio, notes FROM ingredient_substitutions WHERE LOWER(ingredient) = ? OR ? LIKE CONCAT(\'%\', LOWER(ingredient), \'%\') LIMIT 3');
-                    $stmt->execute([$name, $name]);
-                    $subs = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                    $subs = $findSubstitutions($name);
                     if (!empty($subs)) {
-                        $result[$name] = $subs;
+                        $result[strtolower($name)] = array_slice($subs, 0, 3);
                     }
                 }
                 $response = ['substitutions' => $result];

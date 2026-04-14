@@ -45,7 +45,7 @@ export default function StepList({ steps, glossary = true, annotations = {}, onA
         const text = typeof step === 'string' ? step : step.text || step;
         const note = annotations[index];
         return (
-          <li key={index} className="flex gap-4 group">
+          <li key={index} className={`flex gap-4 group rounded-xl px-3 py-3 -mx-3 transition-colors ${index % 2 === 1 ? 'bg-cream-dark/40' : ''}`}>
             <div className="shrink-0 w-8 h-8 rounded-full bg-terracotta/10 text-terracotta font-bold flex items-center justify-center text-sm">
               {index + 1}
             </div>

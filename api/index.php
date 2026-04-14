@@ -187,6 +187,8 @@ try {
                 $response = $controller->importMealie();
             } elseif ($id === 'import-paprika' && $method === 'POST') {
                 $response = $controller->importPaprika();
+            } elseif ($id === 'import-tandoor' && $method === 'POST') {
+                $response = $controller->importTandoor();
             } elseif ($id === null) {
                 // /recipes
                 switch ($method) {

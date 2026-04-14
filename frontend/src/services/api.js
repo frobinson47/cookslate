@@ -154,6 +154,12 @@ export function importPaprika(file) {
   return request('/recipes/import-paprika', { method: 'POST', body: formData, isFormData: true });
 }
 
+export function importTandoor(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request('/recipes/import-tandoor', { method: 'POST', body: formData, isFormData: true });
+}
+
 // Tags
 export function getTags() {
   return request('/tags');

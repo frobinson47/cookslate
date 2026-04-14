@@ -319,6 +319,23 @@ class RecipeController {
     }
 
     /**
+     * POST /recipes/import-tandoor
+     * Accepts multipart upload of a Tandoor JSON-LD export .zip file.
+     */
+    public function importTandoor(): array {
+        Auth::requireAuth();
+
+        if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            return ['error' => 'A .zip file is required', 'code' => 400];
+        }
+
+        require_once __DIR__ . '/../services/TandoorImporter.php';
+        $importer = new TandoorImporter();
+        return $importer->import($_FILES['file']['tmp_name']);
+    }
+
+    /**
      * GET /recipes/featured
      */
     public function featured(): array {

@@ -45,6 +45,7 @@ export default function BulkImportPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [savingAll, setSavingAll] = useState(false);
   const [error, setError] = useState(null);
+  const [zipFormat, setZipFormat] = useState('mealie'); // 'mealie' or 'tandoor'
 
   const handleUrlImport = async () => {
     const urls = urlText
@@ -96,9 +97,13 @@ export default function BulkImportPage() {
       if (file.name.endsWith('.paprikarecipes')) {
         data = await api.importPaprika(file);
       } else if (file.name.endsWith('.zip')) {
-        data = await api.importMealie(file);
+        if (zipFormat === 'tandoor') {
+          data = await api.importTandoor(file);
+        } else {
+          data = await api.importMealie(file);
+        }
       } else {
-        setError('Unsupported file format. Use .zip (Mealie) or .paprikarecipes (Paprika).');
+        setError('Unsupported file format. Use .zip (Mealie or Tandoor) or .paprikarecipes (Paprika).');
         setIsProcessing(false);
         return;
       }
@@ -199,7 +204,7 @@ export default function BulkImportPage() {
             <div className="text-center">
               <h3 className="font-bold text-brown">From App Export</h3>
               <p className="text-sm text-warm-gray mt-1">
-                Upload a Mealie (.zip) or Paprika (.paprikarecipes) export
+                Upload a Mealie, Tandoor (.zip) or Paprika (.paprikarecipes) export
               </p>
             </div>
           </button>
@@ -277,8 +282,37 @@ export default function BulkImportPage() {
 
         <div className="bg-surface rounded-2xl shadow-md p-6 space-y-4">
           <p className="text-brown-light text-sm">
-            Upload an export file from Mealie (.zip) or Paprika (.paprikarecipes).
+            Upload an export file from Mealie (.zip), Tandoor (.zip), or Paprika (.paprikarecipes).
           </p>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-brown">ZIP file format</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="zipFormat"
+                  value="mealie"
+                  checked={zipFormat === 'mealie'}
+                  onChange={() => setZipFormat('mealie')}
+                  className="accent-terracotta"
+                />
+                <span className="text-sm text-brown">Mealie</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="zipFormat"
+                  value="tandoor"
+                  checked={zipFormat === 'tandoor'}
+                  onChange={() => setZipFormat('tandoor')}
+                  className="accent-terracotta"
+                />
+                <span className="text-sm text-brown">Tandoor</span>
+              </label>
+            </div>
+            <p className="text-xs text-warm-gray">Only applies to .zip files. Paprika files are detected automatically.</p>
+          </div>
 
           <label className="flex flex-col items-center gap-3 p-8 border-2 border-dashed border-cream-dark rounded-2xl cursor-pointer hover:border-terracotta/50 transition-colors">
             <FileUp size={32} className="text-warm-gray" />

@@ -953,7 +953,7 @@ try {
                 }
             } elseif (is_numeric($id) && $method === 'PUT') {
                 // PUT /ingredient-data/{id} — update an ingredient
-                Auth::requireAdmin();
+                Auth::requireAuth();
                 $data = json_decode(file_get_contents('php://input'), true);
                 $db = Database::getInstance();
                 $fields = [];
@@ -976,7 +976,7 @@ try {
                 }
             } elseif ($id === null && $method === 'POST') {
                 // POST /ingredient-data — create a new ingredient
-                Auth::requireAdmin();
+                Auth::requireAuth();
                 $data = json_decode(file_get_contents('php://input'), true);
                 if (empty($data['name'])) {
                     http_response_code(400);
@@ -1003,7 +1003,7 @@ try {
                 }
             } elseif (is_numeric($id) && $method === 'DELETE') {
                 // DELETE /ingredient-data/{id}
-                Auth::requireAdmin();
+                Auth::requireAuth();
                 $db = Database::getInstance();
                 $db->prepare('DELETE FROM ingredient_data WHERE id = ?')->execute([(int) $id]);
                 $response = ['message' => 'Deleted'];

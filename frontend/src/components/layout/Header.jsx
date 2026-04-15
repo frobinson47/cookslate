@@ -1,9 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Search, X, Sun, Moon, Monitor, Menu, BookOpen, TrendingUp, Upload, Shield, LogOut, User, Download, Compass, Database, Library } from 'lucide-react';
+import { Search, X, Sun, Moon, Monitor, Menu, BookOpen, TrendingUp, Upload, Shield, LogOut, User, Download, FileText, ChevronDown, Compass, Database, Library } from 'lucide-react';
 import CookslateLogo from '../ui/CookslateLogo';
 import { useAuth } from '../../hooks/useAuth';
 import useTheme from '../../hooks/useTheme';
+
+function DrawerExportMenu({ onNavigate }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-left text-brown-light hover:bg-cream-dark hover:text-brown transition-colors duration-200 min-h-[44px] font-medium"
+      >
+        <Download size={20} />
+        <span className="flex-1">Export Recipes</span>
+        <ChevronDown size={16} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="ml-8 space-y-1">
+          <a
+            href="/api/recipes/export-zip"
+            onClick={onNavigate}
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-brown-light hover:bg-cream-dark hover:text-brown transition-colors duration-200"
+          >
+            <Download size={16} />
+            <span>ZIP (Full Backup)</span>
+          </a>
+          <a
+            href="/api/recipes/export-cooklang"
+            onClick={onNavigate}
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-brown-light hover:bg-cream-dark hover:text-brown transition-colors duration-200"
+          >
+            <FileText size={16} />
+            <span>Cooklang (.cook)</span>
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Header({ onSearch }) {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -208,14 +244,7 @@ export default function Header({ onSearch }) {
 
           {/* Drawer footer */}
           <div className="p-3 border-t border-cream-dark space-y-1">
-            <a
-              href="/api/recipes/export-zip"
-              onClick={() => setDrawerOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-left text-brown-light hover:bg-cream-dark hover:text-brown transition-colors duration-200 min-h-[44px] font-medium"
-            >
-              <Download size={20} />
-              <span>Export Recipes</span>
-            </a>
+            <DrawerExportMenu onNavigate={() => setDrawerOpen(false)} />
             <button
               onClick={() => { cycle(); }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-left text-brown-light hover:bg-cream-dark hover:text-brown transition-colors duration-200 min-h-[44px] font-medium"

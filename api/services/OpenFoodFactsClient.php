@@ -16,7 +16,11 @@ class OpenFoodFactsClient
      */
     public function getByBarcode(string $barcode): ?array
     {
+        // Try as-is first, then with leading zero (UPC-A → EAN-13 conversion)
         $data = $this->fetch("/api/v2/product/{$barcode}.json");
+        if ((!$data || ($data['status'] ?? 0) !== 1) && strlen($barcode) === 12) {
+            $data = $this->fetch("/api/v2/product/0{$barcode}.json");
+        }
         if (!$data || ($data['status'] ?? 0) !== 1) {
             return null;
         }

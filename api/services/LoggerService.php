@@ -4,6 +4,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
+use Monolog\Handler\NullHandler;
 use Monolog\Formatter\LineFormatter;
 
 /**
@@ -30,6 +31,12 @@ class LoggerService
         $logDir = __DIR__ . '/../logs';
         if (!is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
+        }
+
+        // Fall back to NullHandler if logs directory isn't writable
+        if (!is_dir($logDir) || !is_writable($logDir)) {
+            $logger->pushHandler(new NullHandler());
+            return $logger;
         }
 
         // Rotate daily, keep 30 days of logs

@@ -36,9 +36,9 @@ WORKDIR /var/www/html
 # Copy built frontend from stage 1
 COPY --from=frontend-build /app/frontend/dist /var/www/html/frontend/dist
 
-# Create uploads directory
-RUN mkdir -p /var/www/html/uploads/recipes \
-    && chown -R www-data:www-data /var/www/html/uploads
+# Create uploads and logs directories
+RUN mkdir -p /var/www/html/uploads/recipes /var/www/html/api/logs \
+    && chown -R www-data:www-data /var/www/html/uploads /var/www/html/api/logs
 
 # Entrypoint
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh

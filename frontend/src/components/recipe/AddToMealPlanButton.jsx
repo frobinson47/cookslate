@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { CalendarPlus, Check, ChevronLeft } from 'lucide-react';
+import { CalendarPlus, Check, ChevronLeft, Sunrise, Sun, Moon, Cookie } from 'lucide-react';
 import { useLicense } from '../../hooks/useLicense';
 import * as api from '../../services/api';
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const MEAL_TYPES = [
-  { value: 'breakfast', label: 'Breakfast', icon: '🌅' },
-  { value: 'lunch', label: 'Lunch', icon: '☀️' },
-  { value: 'dinner', label: 'Dinner', icon: '🌙' },
-  { value: 'snack', label: 'Snack', icon: '🍿' },
+  { value: 'breakfast', label: 'Breakfast', Icon: Sunrise },
+  { value: 'lunch', label: 'Lunch', Icon: Sun },
+  { value: 'dinner', label: 'Dinner', Icon: Moon },
+  { value: 'snack', label: 'Snack', Icon: Cookie },
 ];
 
 function getMonday(date) {
@@ -136,7 +136,7 @@ export default function AddToMealPlanButton({ recipeId, variant = 'overlay', cla
                   disabled={adding}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-brown hover:bg-terracotta/10 hover:text-terracotta transition-colors text-left"
                 >
-                  <span>{meal.icon}</span>
+                  <meal.Icon size={16} />
                   <span className="font-medium">{meal.label}</span>
                 </button>
               ))}

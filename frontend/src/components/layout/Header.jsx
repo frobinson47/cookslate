@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Search, X, Sun, Moon, Monitor, Menu, BookOpen, TrendingUp, Upload, Shield, LogOut, User, Download, FileText, ChevronDown, Compass, Database, Library } from 'lucide-react';
+import { Search, X, Sun, Moon, Monitor, Menu, BookOpen, TrendingUp, Upload, Shield, LogOut, User, Download, FileText, ChevronDown, Compass, Database, Library, Settings } from 'lucide-react';
 import CookslateLogo from '../ui/CookslateLogo';
 import { useAuth } from '../../hooks/useAuth';
 import useTheme from '../../hooks/useTheme';
@@ -222,6 +222,7 @@ export default function Header({ onSearch }) {
               { to: '/stats', icon: TrendingUp, label: 'Kitchen Stats' },
               { to: '/bulk-import', icon: Upload, label: 'Bulk Import' },
               ...(isAdmin ? [{ to: '/admin', icon: Shield, label: 'Admin' }] : []),
+              { to: '/settings', icon: Settings, label: 'Settings' },
             ].map(({ to, icon: Icon, label }) => (
               <NavLink
                 key={to}
@@ -243,7 +244,7 @@ export default function Header({ onSearch }) {
           </nav>
 
           {/* Drawer footer */}
-          <div className="p-3 border-t border-cream-dark space-y-1">
+          <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] border-t border-cream-dark space-y-1">
             <DrawerExportMenu onNavigate={() => setDrawerOpen(false)} />
             <button
               onClick={() => { cycle(); }}

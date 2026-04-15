@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { KeyRound, Check, X } from 'lucide-react';
+import { KeyRound, Check, X, LogOut } from 'lucide-react';
 import { useLicense } from '../hooks/useLicense';
+import { useAuth } from '../hooks/useAuth';
 import { activateLicense, deactivateLicense } from '../services/api';
 import Input from '../components/ui/Input';
 
 export default function SettingsPage() {
   const { active, tier, email, refresh } = useLicense();
+  const { user, logout } = useAuth();
   const [key, setKey] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -108,6 +110,23 @@ export default function SettingsPage() {
           Get a license at cookslate.app
         </a>
       </p>
+
+      {/* Account section */}
+      <div className="mt-6 bg-surface rounded-2xl p-6 shadow-md border border-cream-dark">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-brown">{user?.username}</p>
+            <p className="text-xs text-warm-gray capitalize">{user?.role}</p>
+          </div>
+          <button
+            onClick={async () => { try { await logout(); } catch {} }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-brown-light hover:bg-red-50 hover:text-red-600 transition-colors duration-200 font-medium"
+          >
+            <LogOut size={18} />
+            <span>Log Out</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

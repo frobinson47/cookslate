@@ -214,7 +214,7 @@ try {
                 $allRecipes = $recipeModel->getAll(1, 1000)['recipes'] ?? [];
                 // Enrich with ingredients
                 foreach ($allRecipes as &$r) {
-                    $full = $recipeModel->getById($r['id']);
+                    $full = $recipeModel->findById($r['id']);
                     $r['ingredients'] = $full['ingredients'] ?? [];
                     $r['instructions'] = $full['instructions'] ?? [];
                 }

@@ -10,6 +10,7 @@ docs/plans/
 cookies.txt
 api/.phpunit.result.cache
 .claude/
+CLAUDE.md
 gitleaks-*.json
 docs/screenshots/
 api/config/license.key

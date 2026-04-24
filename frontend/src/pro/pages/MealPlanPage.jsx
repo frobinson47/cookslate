@@ -89,30 +89,18 @@ function SortableMealItem({ item, onRemove, onMoveToDay, showMoveMenu }) {
   const [moveOpen, setMoveOpen] = useState(false);
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-1.5 p-2 bg-cream rounded-xl group relative">
-      <button
-        {...attributes}
-        {...listeners}
-        className="p-0.5 rounded text-warm-gray/50 hover:text-warm-gray cursor-grab active:cursor-grabbing touch-none shrink-0"
-        aria-label="Drag to reorder"
-      >
-        <GripVertical size={14} />
-      </button>
-      {item.recipe.image_path && (
-        <img
-          src={thumbImageUrl(item.recipe.image_path)}
-          alt={item.recipe.title}
-          loading="lazy"
-          className="w-10 h-10 rounded-lg object-cover shrink-0"
-        />
-      )}
-      <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium text-brown truncate block">{item.recipe.title}</span>
-        {item.meal_type && (
-          <span className="text-[10px] text-warm-gray capitalize">{item.meal_type}</span>
-        )}
-      </div>
-      <div className="flex items-center gap-0.5 shrink-0">
+    <div ref={setNodeRef} style={style} className="bg-cream rounded-xl group relative overflow-hidden">
+      {/* Drag handle + action buttons bar */}
+      <div className="flex items-center justify-between px-1.5 pt-1.5">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-0.5 rounded text-warm-gray/50 hover:text-warm-gray cursor-grab active:cursor-grabbing touch-none shrink-0"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical size={14} />
+        </button>
+        <div className="flex items-center gap-0.5 shrink-0">
         {showMoveMenu && (
           <div className="relative">
             <button
@@ -149,6 +137,22 @@ function SortableMealItem({ item, onRemove, onMoveToDay, showMoveMenu }) {
         >
           <X size={16} />
         </button>
+        </div>
+      </div>
+      {/* Stacked image + text */}
+      {item.recipe.image_path && (
+        <img
+          src={thumbImageUrl(item.recipe.image_path)}
+          alt={item.recipe.title}
+          loading="lazy"
+          className="w-full aspect-[4/3] object-cover"
+        />
+      )}
+      <div className="px-2 py-1.5">
+        <span className="text-xs font-medium text-brown leading-tight line-clamp-2">{item.recipe.title}</span>
+        {item.meal_type && (
+          <span className="text-[10px] text-warm-gray capitalize block mt-0.5">{item.meal_type}</span>
+        )}
       </div>
     </div>
   );
@@ -157,16 +161,17 @@ function SortableMealItem({ item, onRemove, onMoveToDay, showMoveMenu }) {
 function DragOverlayCard({ item }) {
   if (!item) return null;
   return (
-    <div className="flex items-center gap-1.5 p-2 bg-cream rounded-xl shadow-lg border border-terracotta/30 w-[180px]">
-      <GripVertical size={14} className="text-warm-gray/50 shrink-0" />
+    <div className="bg-cream rounded-xl shadow-lg border border-terracotta/30 w-[160px] overflow-hidden">
       {item.recipe.image_path && (
         <img
           src={thumbImageUrl(item.recipe.image_path)}
           alt={item.recipe.title}
-          className="w-10 h-10 rounded-lg object-cover shrink-0"
+          className="w-full aspect-[4/3] object-cover"
         />
       )}
-      <span className="flex-1 text-sm font-medium text-brown truncate">{item.recipe.title}</span>
+      <div className="px-2 py-1.5">
+        <span className="text-xs font-medium text-brown line-clamp-2">{item.recipe.title}</span>
+      </div>
     </div>
   );
 }
@@ -572,7 +577,7 @@ export default function MealPlanPage() {
               return (
                 <div
                   key={dayIndex}
-                  className={`bg-surface rounded-2xl shadow-md p-3 flex flex-col min-h-[200px] ${isToday ? 'ring-2 ring-terracotta/30' : ''}`}
+                  className={`bg-surface rounded-2xl shadow-md p-3 flex flex-col min-h-[280px] ${isToday ? 'ring-2 ring-terracotta/30' : ''}`}
                 >
                   {/* Day header */}
                   <div className="text-center mb-3 pb-2 border-b border-cream-dark">

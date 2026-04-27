@@ -10,6 +10,7 @@
 | Target launch | 2026-07-01 |
 | Stack | PHP 8.1, React 18, Vite, Tailwind CSS 4, MySQL 8 |
 <!-- auto-docs:end:header -->
+<a href="https://builtbyindies.com/products/cookslate" target="_blank"><img src="https://images.builtbyindies.com/badges/featured-on-builtbyindies.svg" alt="Featured on BuiltByIndies" width="250" /></a>  <a href="https://builtbyindies.com/products/cookslate" target="_blank"><img src="https://images.builtbyindies.com/badges/winner-week-02-builtbyindies.svg" alt="#2 Product of the Week" width="250" /></a>
 
 <!-- auto-docs:preserved:start -->
 **Live demo:** [demo.cookslate.app](https://demo.cookslate.app) (login: demo / demo -- fully interactive, resets hourly)

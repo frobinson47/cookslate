@@ -171,6 +171,43 @@ class RecipeController {
             return ['error' => 'You do not have permission to edit this recipe', 'code' => 403];
         }
 
+        // PHP doesn't auto-parse multipart bodies on PUT, only POST. If we got
+        // a multipart PUT, parse the raw body manually into $_POST/$_FILES.
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (str_contains($contentType, 'multipart/form-data') && empty($_FILES) && empty($_POST)) {
+            preg_match('/boundary=([^\s;]+)/', $contentType, $bm);
+            $boundary = trim($bm[1] ?? '');
+            if ($boundary) {
+                $rawBody = file_get_contents('php://input');
+                $parts = array_slice(explode('--' . $boundary, $rawBody), 1, -1);
+                foreach ($parts as $part) {
+                    $headersEnd = strpos($part, "\r\n\r\n");
+                    if ($headersEnd === false) continue;
+                    $headerBlock = substr($part, 0, $headersEnd);
+                    $value = substr($part, $headersEnd + 4);
+                    $value = rtrim($value, "\r\n");
+                    preg_match('/name="([^"]+)"/', $headerBlock, $nm);
+                    $fieldName = $nm[1] ?? '';
+                    if ($fieldName === '') continue;
+                    if (str_contains($headerBlock, 'filename=')) {
+                        preg_match('/filename="([^"]+)"/', $headerBlock, $fm);
+                        preg_match('/Content-Type:\s*([^\r\n]+)/', $headerBlock, $cm);
+                        $tmpFile = tempnam(sys_get_temp_dir(), 'put_upload_');
+                        file_put_contents($tmpFile, $value);
+                        $_FILES[$fieldName] = [
+                            'name'     => $fm[1] ?? '',
+                            'type'     => trim($cm[1] ?? ''),
+                            'tmp_name' => $tmpFile,
+                            'error'    => UPLOAD_ERR_OK,
+                            'size'     => strlen($value),
+                        ];
+                    } else {
+                        $_POST[$fieldName] = $value;
+                    }
+                }
+            }
+        }
+
         // Handle multipart or JSON
         if (!empty($_FILES['image'])) {
             // Frontend may send all recipe data as a single JSON blob in $_POST['data']

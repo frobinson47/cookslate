@@ -1121,11 +1121,11 @@ try {
     ]);
     error_log('Cookslate DB Error: ' . $e->getMessage());
 
-} catch (\Exception $e) {
+} catch (\Throwable $e) {
     http_response_code(500);
     echo json_encode([
         'error' => 'Internal server error',
         'code' => 500,
     ]);
-    error_log('Cookslate Error: ' . $e->getMessage());
+    error_log('Cookslate Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
 }

@@ -314,7 +314,9 @@ class Recipe {
             foreach ($allowed as $field) {
                 if (array_key_exists($field, $data)) {
                     $sets[] = "$field = ?";
-                    $values[] = $data[$field];
+                    // is_private is an INT NOT NULL column; multipart form data
+                    // can deliver '' which MySQL strict mode rejects.
+                    $values[] = $field === 'is_private' ? (int)(bool)$data[$field] : $data[$field];
                 }
             }
 

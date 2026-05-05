@@ -31,6 +31,16 @@
         }
       })();
     </script>
+    <script>
+      // Plausible analytics — demo.cookslate.app only (home is private/family).
+      if (location.hostname === 'demo.cookslate.app') {
+        var s = document.createElement('script');
+        s.defer = true;
+        s.setAttribute('data-domain', 'demo.cookslate.app');
+        s.src = 'https://plausible.fmrdigital.dev/js/script.js';
+        document.head.appendChild(s);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

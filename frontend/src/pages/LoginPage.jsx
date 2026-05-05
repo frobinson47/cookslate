@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, Eye, Github, Shield } from 'lucide-react';
 import CookslateLogo from '../components/ui/CookslateLogo';
 import { useAuth } from '../hooks/useAuth';
@@ -146,6 +146,15 @@ export default function LoginPage() {
             >
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </Button>
+
+            <div className="text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-terracotta hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </form>
 
           <div className="mt-4 pt-4 border-t border-cream-dark">

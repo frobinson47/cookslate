@@ -271,6 +271,10 @@ export function consumeResetToken(token, newPassword) {
   return request('/auth/reset-password', { method: 'POST', body: { token, password: newPassword } });
 }
 
+export function forgotPassword(email) {
+  return request('/auth/forgot-password', { method: 'POST', body: { email } });
+}
+
 export function updateUser(id, data) {
   return request(`/users/${id}`, { method: 'PUT', body: data });
 }

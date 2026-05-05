@@ -88,7 +88,7 @@ try {
     $subId = $segments[3] ?? null;
 
     // ── CSRF Protection (exempt login — user has no session yet) ────────
-    $csrfExempt = ($resource === 'auth' && in_array($id, ['login', 'oauth', 'sso-config', 'reset-password']));
+    $csrfExempt = ($resource === 'auth' && in_array($id, ['login', 'oauth', 'sso-config', 'reset-password', 'forgot-password']));
     if (!$csrfExempt) {
         Csrf::enforce();
     }
@@ -152,6 +152,70 @@ try {
                         require_once __DIR__ . '/controllers/OAuthController.php';
                         $oauthController = new OAuthController();
                         $response = $oauthController->config();
+                    }
+                    break;
+                case 'forgot-password':
+                    // POST /auth/forgot-password — public, generates token + emails reset link
+                    if ($method === 'POST') {
+                        $rateLimiter = new RateLimiter();
+                        $clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+                        $rateResult = $rateLimiter->check($clientIp, 'forgot-password', 5, 600);
+                        if (!$rateResult['allowed']) {
+                            http_response_code(429);
+                            header('Retry-After: ' . $rateResult['retryAfter']);
+                            $response = [
+                                'error' => 'Too many reset requests. Try again later.',
+                                'code' => 429,
+                                'retryAfter' => $rateResult['retryAfter'],
+                            ];
+                            break;
+                        }
+
+                        $input = json_decode(file_get_contents('php://input'), true);
+                        $email = trim($input['email'] ?? '');
+                        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            http_response_code(400);
+                            $response = ['error' => 'Valid email is required', 'code' => 400];
+                            break;
+                        }
+
+                        require_once __DIR__ . '/models/User.php';
+                        require_once __DIR__ . '/services/EmailService.php';
+                        require_once __DIR__ . '/services/LoggerService.php';
+
+                        $userModel = new User();
+                        $user = $userModel->findByEmail($email);
+                        if ($user) {
+                            $token = $userModel->createResetToken((int) $user['id']);
+                            $appUrl = rtrim(env('APP_URL', 'https://home.cookslate.app'), '/');
+                            $resetUrl = $appUrl . '/reset-password/' . $token;
+
+                            $html = '<p>Hi ' . htmlspecialchars($user['username']) . ',</p>'
+                                . '<p>Someone (hopefully you) requested a password reset for your Cookslate account. '
+                                . 'Click the link below to set a new password. The link expires in 24 hours.</p>'
+                                . '<p><a href="' . htmlspecialchars($resetUrl) . '">Reset your password</a></p>'
+                                . '<p>If you did not request this, you can safely ignore this email.</p>'
+                                . '<p>— Cookslate</p>';
+                            $text = "Hi {$user['username']},\n\n"
+                                . "Someone (hopefully you) requested a password reset for your Cookslate account.\n"
+                                . "Open this link to set a new password (expires in 24 hours):\n\n"
+                                . $resetUrl . "\n\n"
+                                . "If you did not request this, you can safely ignore this email.\n\n"
+                                . "— Cookslate";
+
+                            $email_service = new EmailService();
+                            $sent = $email_service->send($user['email'], 'Reset your Cookslate password', $html, $text);
+                            LoggerService::channel('user')->info('Forgot-password requested', [
+                                'user_id' => $user['id'], 'email_sent' => $sent,
+                            ]);
+                        } else {
+                            LoggerService::channel('user')->info('Forgot-password requested for unknown email', [
+                                'email' => $email,
+                            ]);
+                        }
+
+                        // Always return success to avoid leaking which emails are registered
+                        $response = ['message' => 'If that email is registered, a reset link has been sent.'];
                     }
                     break;
                 case 'reset-password':

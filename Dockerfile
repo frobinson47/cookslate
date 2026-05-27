@@ -1,5 +1,5 @@
 # Stage 1: Build frontend (Node 22 required for Tailwind CSS 4 oxide bindings)
-FROM node:22 AS frontend-build
+FROM node:22.14.0 AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json ./
 RUN npm install
@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: PHP + Apache
-FROM php:8.1-apache
+FROM php:8.1.31-apache
 
 # Install PHP extensions and MySQL client
 RUN apt-get update && apt-get install -y \
@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
 # Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.8.4 /usr/bin/composer /usr/bin/composer
 
 # Copy application code
 COPY api/ /var/www/html/api/

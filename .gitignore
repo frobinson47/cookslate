@@ -16,3 +16,5 @@ docs/screenshots/
 api/config/license.key
 api/config/license.private.pem
 docs/
+*.sql
+crumble_db_backup.sql

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /$
+Allow: /login
+Allow: /register
+Disallow: /recipes
+Disallow: /grocery
+Disallow: /meal-plan
+Disallow: /collections
+Disallow: /settings
+Disallow: /api/
+
+Sitemap: https://home.cookslate.app/sitemap.xml

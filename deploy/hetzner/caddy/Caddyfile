@@ -1,11 +1,30 @@
+(security_headers) {
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(self), microphone=(), geolocation=(), interest-cohort=()"
+        -Server
+    }
+}
+
+(cookslate_csp) {
+    header Content-Security-Policy "default-src 'self'; script-src 'self' https://plausible.io; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://plausible.io; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+}
+
 hookhouse-pro.app, www.hookhouse-pro.app {
+    import security_headers
     reverse_proxy hookhouse-app-1:3002
 }
 
 home.cookslate.app {
+    import security_headers
+    import cookslate_csp
     reverse_proxy cookslate-app:80
 }
 
 demo.cookslate.app {
+    import security_headers
+    import cookslate_csp
     reverse_proxy cookslate-demo-app:80
 }

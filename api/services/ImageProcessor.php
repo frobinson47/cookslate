@@ -123,6 +123,8 @@ class ImageProcessor {
         // Use cURL for HTTPS support (PHP openssl ext may not be available)
         if (function_exists('curl_init')) {
             $ch = curl_init($url);
+            $downloaded = 0;
+            $tooLarge = false;
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_FOLLOWLOCATION => true,
@@ -131,6 +133,13 @@ class ImageProcessor {
                 CURLOPT_CONNECTTIMEOUT => 5,
                 CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_NOPROGRESS => false,
+                CURLOPT_PROGRESSFUNCTION => function ($ch, $dlTotal, $dlNow) {
+                    if ($dlTotal > MAX_UPLOAD_SIZE || $dlNow > MAX_UPLOAD_SIZE) {
+                        return 1; // abort
+                    }
+                    return 0;
+                },
             ]);
 
             // Use CA bundle for SSL verification if not configured in php.ini
@@ -141,15 +150,22 @@ class ImageProcessor {
 
             $imageData = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $contentLength = curl_getinfo($ch, CURLINFO_SIZE_DOWNLOAD);
             $curlError = curl_error($ch);
+            $errno = curl_errno($ch);
             curl_close($ch);
+
+            if ($errno === CURLE_ABORTED_BY_CALLBACK || $contentLength > MAX_UPLOAD_SIZE) {
+                LoggerService::channel('image')->warning('Image download aborted: exceeds size limit', ['url' => $url, 'downloaded' => $contentLength, 'limit' => MAX_UPLOAD_SIZE]);
+                return null;
+            }
 
             if ($imageData === false || $httpCode !== 200) {
                 LoggerService::channel('image')->error('Failed to download image', ['url' => $url, 'http_code' => $httpCode, 'curl_error' => $curlError]);
                 return null;
             }
         } else {
-            // Fallback to file_get_contents
+            // Fallback to file_get_contents with size cap
             $context = stream_context_create([
                 'http' => [
                     'method' => 'GET',
@@ -160,8 +176,13 @@ class ImageProcessor {
                 ],
             ]);
 
-            $imageData = @file_get_contents($url, false, $context);
+            // maxlen + 1 so we can detect overflow
+            $imageData = @file_get_contents($url, false, $context, 0, MAX_UPLOAD_SIZE + 1);
             if ($imageData === false) {
+                return null;
+            }
+            if (strlen($imageData) > MAX_UPLOAD_SIZE) {
+                LoggerService::channel('image')->warning('Image download exceeds size limit', ['url' => $url, 'size' => strlen($imageData), 'limit' => MAX_UPLOAD_SIZE]);
                 return null;
             }
         }

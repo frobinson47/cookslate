@@ -167,9 +167,11 @@ class UnitConverter {
      * Prefers fractions for common values: 0.25 → "1/4", 0.5 → "1/2", etc.
      */
     public static function formatAmount(float $amount): string {
+        // Array of [value, label] tuples — PHP casts float array keys to int,
+        // so we can't use them directly as keys.
         $fractions = [
-            0.125 => '1/8', 0.25 => '1/4', 0.333 => '1/3', 0.375 => '3/8',
-            0.5 => '1/2', 0.625 => '5/8', 0.667 => '2/3', 0.75 => '3/4', 0.875 => '7/8',
+            [0.125, '1/8'], [0.25, '1/4'], [0.333, '1/3'], [0.375, '3/8'],
+            [0.5, '1/2'], [0.625, '5/8'], [0.667, '2/3'], [0.75, '3/4'], [0.875, '7/8'],
         ];
 
         $whole = (int) floor($amount);
@@ -180,7 +182,7 @@ class UnitConverter {
         }
 
         $fracStr = null;
-        foreach ($fractions as $val => $str) {
+        foreach ($fractions as [$val, $str]) {
             if (abs($frac - $val) < 0.02) {
                 $fracStr = $str;
                 break;

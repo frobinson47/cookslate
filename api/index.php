@@ -19,6 +19,13 @@ if (file_exists($envPath)) {
     loadEnv($envPath);
 }
 
+// ─── Error tracking (Sentry, no-op without SENTRY_DSN) ──────────────────────
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+require_once __DIR__ . '/config/sentry.php';
+initSentry();
+
 // ─── CORS Headers ───────────────────────────────────────────────────────────
 $allowedOrigins = array_filter(array_map('trim', explode(',', env('CORS_ORIGINS', 'http://localhost:5176'))));
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -1184,6 +1191,7 @@ try {
         'code' => 500,
     ]);
     error_log('Cookslate DB Error: ' . $e->getMessage());
+    sentryCapture($e);
 
 } catch (\Throwable $e) {
     http_response_code(500);
@@ -1192,4 +1200,5 @@ try {
         'code' => 500,
     ]);
     error_log('Cookslate Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    sentryCapture($e);
 }

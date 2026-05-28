@@ -9,7 +9,7 @@
 }
 
 (cookslate_csp) {
-    header Content-Security-Policy "default-src 'self'; script-src 'self' https://plausible.io; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://plausible.io; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    header Content-Security-Policy "default-src 'self'; script-src 'self' https://plausible.io; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://plausible.io https://*.ingest.sentry.io; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
 }
 
 hookhouse-pro.app, www.hookhouse-pro.app {
@@ -27,4 +27,9 @@ demo.cookslate.app {
     import security_headers
     import cookslate_csp
     reverse_proxy cookslate-demo-app:80
+}
+
+status.cookslate.app {
+    import security_headers
+    reverse_proxy uptime-kuma:3001
 }

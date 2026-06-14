@@ -50,6 +50,15 @@ export default defineConfig({
         display: 'standalone',
         background_color: '#F5EDE3',
         theme_color: '#C75B39',
+        share_target: {
+          action: '/add',
+          method: 'GET',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url',
+          },
+        },
         icons: [
           {
             src: '/favicon.svg',

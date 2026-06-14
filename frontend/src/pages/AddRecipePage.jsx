@@ -15,8 +15,16 @@ export default function AddRecipePage() {
   const [mode, setMode] = useState('choose'); // 'choose', 'manual', 'import'
   const [importedData, setImportedData] = useState(null);
 
-  // Handle URL param for quick import (paste shortcut or direct link)
-  const urlParam = searchParams.get('url') || '';
+  // Handle URL param for quick import. When the app is the target of a
+  // system share, browsers may put the URL in `url`, or embed it in `text`
+  // (e.g. "Cool recipe https://example.com"), so fall back to a regex.
+  const urlParam = (() => {
+    const direct = searchParams.get('url');
+    if (direct) return direct;
+    const text = searchParams.get('text') || '';
+    const match = text.match(/https?:\/\/\S+/);
+    return match ? match[0] : '';
+  })();
 
   // Handle bulk import review redirect or URL param
   useEffect(() => {

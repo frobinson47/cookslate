@@ -416,6 +416,10 @@ try {
                 } elseif ($subResource === 'related' && $method === 'GET') {
                     // /recipes/{id}/related
                     $response = $controller->related($recipeId);
+                } elseif ($subResource === 'jsonld' && $method === 'GET') {
+                    // GET /recipes/{id}/jsonld — schema.org/Recipe JSON-LD export
+                    $controller->jsonLd($recipeId);
+                    exit;
                 } elseif ($subResource === 'annotations') {
                     // /recipes/{id}/annotations
                     require_once __DIR__ . '/config/license.php';

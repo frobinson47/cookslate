@@ -452,6 +452,29 @@ class RecipeController {
     }
 
     /**
+     * GET /recipes/{id}/jsonld
+     * Emit a single recipe as schema.org/Recipe JSON-LD. Sets the
+     * application/ld+json content type and exits — bypasses the router's
+     * default application/json header.
+     */
+    public function jsonLd(int $id): void {
+        Auth::requireAuth();
+        $model = new Recipe();
+        $recipe = $model->findById($id);
+        if (!$recipe) {
+            http_response_code(404);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'Recipe not found', 'code' => 404]);
+            return;
+        }
+        require_once __DIR__ . '/../services/JsonLdRecipeExporter.php';
+        $base = (env('APP_URL', '') ?: null);
+        $doc = JsonLdRecipeExporter::toJsonLd($recipe, $base);
+        header('Content-Type: application/ld+json; charset=utf-8');
+        echo json_encode($doc, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    /**
      * GET /recipes/export-zip
      * Download all recipes as a ZIP file including images and personal data.
      */

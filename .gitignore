@@ -18,3 +18,10 @@ api/config/license.private.pem
 docs/
 *.sql
 crumble_db_backup.sql
+
+# Autonomous Forge session files
+.forge/sessions/
+
+# Local tool caches/state
+.graymatter/
+.wrangler/

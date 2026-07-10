@@ -1,0 +1,216 @@
+{
+  "_meta": {
+    "description": "Cookslate design tokens — Loop 1 proposal",
+    "philosophy": "Warm, grounded, appetizing. Terracotta anchors the brand; sage signals freshness and success. The palette should feel like a well-loved kitchen — not sterile, not cluttered."
+  },
+
+  "color": {
+    "primitive": {
+      "cream": {
+        "50":  "#FFFCF8",
+        "100": "#FFF8F0",
+        "200": "#F5EDE3",
+        "300": "#E8DDD1",
+        "400": "#D4C4B5",
+        "500": "#B8A494",
+        "600": "#8D7B6E",
+        "700": "#6E5D52",
+        "800": "#5D4037",
+        "900": "#3E2723"
+      },
+      "terracotta": {
+        "50":  "#FEF3EE",
+        "100": "#FDDECF",
+        "200": "#F5B89A",
+        "300": "#E0A08A",
+        "400": "#D4896F",
+        "500": "#C1694F",
+        "600": "#A8533A",
+        "700": "#8B3F2A",
+        "800": "#6D2F1E",
+        "900": "#4A1F13"
+      },
+      "sage": {
+        "50":  "#F2F7F1",
+        "100": "#E0EDD E",
+        "200": "#C5DFC0",
+        "300": "#A8C5A0",
+        "400": "#8DAE85",
+        "500": "#7D9B76",
+        "600": "#5F7A58",
+        "700": "#4A6144",
+        "800": "#364832",
+        "900": "#233021"
+      },
+      "neutral": {
+        "0":   "#FFFFFF",
+        "50":  "#FAFAF9",
+        "100": "#F5F5F4",
+        "200": "#E7E5E4",
+        "300": "#D6D3D1",
+        "400": "#A8A29E",
+        "500": "#78716C",
+        "600": "#57534E",
+        "700": "#44403C",
+        "800": "#292524",
+        "900": "#1C1917"
+      }
+    },
+
+    "semantic": {
+      "surface": {
+        "base":    "cream.100",
+        "raised":  "neutral.0",
+        "sunken":  "cream.200",
+        "overlay":  "neutral.0"
+      },
+      "text": {
+        "primary":   "cream.900",
+        "secondary": "cream.700",
+        "muted":     "cream.600",
+        "inverse":   "neutral.0",
+        "on-accent": "neutral.0"
+      },
+      "border": {
+        "default":  "cream.300",
+        "subtle":   "cream.200",
+        "strong":   "cream.400"
+      },
+      "accent": {
+        "primary":       "terracotta.500",
+        "primary-hover": "terracotta.600",
+        "primary-soft":  "terracotta.50",
+        "secondary":       "sage.500",
+        "secondary-hover": "sage.600",
+        "secondary-soft":  "sage.50"
+      },
+      "feedback": {
+        "success":       "sage.500",
+        "success-soft":  "sage.50",
+        "warning":       "#D97706",
+        "warning-soft":  "#FFFBEB",
+        "error":         "#DC2626",
+        "error-soft":    "#FEF2F2",
+        "info":          "terracotta.400",
+        "info-soft":     "terracotta.50"
+      }
+    },
+
+    "dark": {
+      "surface": {
+        "base":    "neutral.900",
+        "raised":  "neutral.800",
+        "sunken":  "#151210",
+        "overlay":  "neutral.800"
+      },
+      "text": {
+        "primary":   "cream.200",
+        "secondary": "cream.400",
+        "muted":     "cream.500",
+        "inverse":   "neutral.900",
+        "on-accent": "neutral.0"
+      },
+      "border": {
+        "default":  "neutral.700",
+        "subtle":   "neutral.800",
+        "strong":   "neutral.600"
+      },
+      "accent": {
+        "primary":       "terracotta.400",
+        "primary-hover": "terracotta.300",
+        "primary-soft":  "terracotta.900",
+        "secondary":       "sage.400",
+        "secondary-hover": "sage.300",
+        "secondary-soft":  "sage.900"
+      }
+    }
+  },
+
+  "typography": {
+    "family": {
+      "display": "'Nunito', system-ui, sans-serif",
+      "body":    "'Nunito', system-ui, sans-serif",
+      "serif":   "'Playfair Display', Georgia, serif",
+      "_note": "Keep Nunito as workhorse — it has warmth without being childish. Use Playfair Display sparingly: recipe titles, hero headings, and the logo. Overuse makes it feel like a wedding invitation."
+    },
+    "scale": {
+      "xs":   { "size": "0.75rem",  "lineHeight": "1rem",    "letterSpacing": "0.01em" },
+      "sm":   { "size": "0.875rem", "lineHeight": "1.25rem", "letterSpacing": "0" },
+      "base": { "size": "1rem",     "lineHeight": "1.5rem",  "letterSpacing": "0" },
+      "lg":   { "size": "1.125rem", "lineHeight": "1.75rem", "letterSpacing": "-0.01em" },
+      "xl":   { "size": "1.25rem",  "lineHeight": "1.75rem", "letterSpacing": "-0.01em" },
+      "2xl":  { "size": "1.5rem",   "lineHeight": "2rem",    "letterSpacing": "-0.02em" },
+      "3xl":  { "size": "1.875rem", "lineHeight": "2.25rem", "letterSpacing": "-0.02em" },
+      "4xl":  { "size": "2.25rem",  "lineHeight": "2.5rem",  "letterSpacing": "-0.03em" }
+    },
+    "weight": {
+      "normal":   400,
+      "medium":   500,
+      "semibold": 600,
+      "bold":     700
+    }
+  },
+
+  "spacing": {
+    "_note": "4px base grid. Use multiples of 4 for all spacing.",
+    "0":  "0",
+    "1":  "0.25rem",
+    "2":  "0.5rem",
+    "3":  "0.75rem",
+    "4":  "1rem",
+    "5":  "1.25rem",
+    "6":  "1.5rem",
+    "8":  "2rem",
+    "10": "2.5rem",
+    "12": "3rem",
+    "16": "4rem",
+    "20": "5rem",
+    "24": "6rem"
+  },
+
+  "radius": {
+    "none": "0",
+    "sm":   "0.25rem",
+    "md":   "0.5rem",
+    "lg":   "0.75rem",
+    "xl":   "1rem",
+    "2xl":  "1.5rem",
+    "full": "9999px",
+    "_note": "Default interactive elements: lg. Cards: xl. Pills/badges: full. Avoid mixing too many radii on one screen."
+  },
+
+  "shadow": {
+    "sm":  "0 1px 2px rgba(62, 39, 35, 0.06)",
+    "md":  "0 2px 8px rgba(62, 39, 35, 0.08), 0 1px 2px rgba(62, 39, 35, 0.04)",
+    "lg":  "0 4px 16px rgba(62, 39, 35, 0.10), 0 2px 4px rgba(62, 39, 35, 0.06)",
+    "xl":  "0 8px 32px rgba(62, 39, 35, 0.12), 0 4px 8px rgba(62, 39, 35, 0.08)",
+    "_note": "Shadows use brown tint (not pure black) to match the warm palette. In dark mode, reduce opacity by 50% or use border emphasis instead."
+  },
+
+  "motion": {
+    "duration": {
+      "instant":  "75ms",
+      "fast":     "150ms",
+      "normal":   "200ms",
+      "slow":     "300ms",
+      "glacial":  "500ms"
+    },
+    "easing": {
+      "default":    "cubic-bezier(0.4, 0, 0.2, 1)",
+      "in":         "cubic-bezier(0.4, 0, 1, 1)",
+      "out":        "cubic-bezier(0, 0, 0.2, 1)",
+      "spring":     "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      "emphasize":  "cubic-bezier(0.2, 0, 0, 1)"
+    },
+    "_note": "Use 'fast' for micro-interactions (button press, toggle). 'normal' for reveals (dropdowns, tooltips). 'slow' for layout shifts (sidebar collapse, page transitions). 'spring' for playful emphasis (favorites heart, cook button). Never animate color alone — always pair with scale or opacity for perceivability."
+  },
+
+  "breakpoints": {
+    "sm":  "640px",
+    "md":  "768px",
+    "lg":  "1024px",
+    "xl":  "1280px",
+    "2xl": "1536px",
+    "_note": "Primary layout breakpoint: lg (1024px) — sidebar appears. md (768px) — two-column recipe grid. sm (640px) — single column, bottom nav."
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "project_path": "D:\\laragon\\www\\crumble",
+  "project_name": "crumble",
+  "stack": {
+    "php": [
+      "api/composer.json"
+    ],
+    "node": [
+      "frontend/package.json"
+    ]
+  },
+  "ui_framework": [],
+  "style_system": "undetected \u2014 inspect before proposing",
+  "project_type": "ecommerce",
+  "artifacts": {
+    "screenshots": [],
+    "component_dirs": [],
+    "style_files": []
+  },
+  "domain_hints": [
+    "admin",
+    "marketing",
+    "cli",
+    "editor",
+    "shop",
+    "product",
+    "store",
+    "inventory",
+    "video",
+    "synth"
+  ]
+}

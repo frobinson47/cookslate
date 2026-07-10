@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cookslate — Recipe Detail Mockup (Loop 2)</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   DESIGN TOKENS (from Loop 1)
+   ========================================================================== */
+:root {
+  /* Primitive: Cream */
+  --cream-50:  #FFFCF8;
+  --cream-100: #FFF8F0;
+  --cream-200: #F5EDE3;
+  --cream-300: #E8DDD1;
+  --cream-400: #D4C4B5;
+  --cream-500: #B8A494;
+  --cream-600: #8D7B6E;
+  --cream-700: #6E5D52;
+  --cream-800: #5D4037;
+  --cream-900: #3E2723;
+
+  /* Primitive: Terracotta */
+  --terracotta-50:  #FEF3EE;
+  --terracotta-100: #FDDECF;
+  --terracotta-200: #F5B89A;
+  --terracotta-300: #E0A08A;
+  --terracotta-400: #D4896F;
+  --terracotta-500: #C1694F;
+  --terracotta-600: #A8533A;
+  --terracotta-700: #8B3F2A;
+
+  /* Primitive: Sage */
+  --sage-50:  #F2F7F1;
+  --sage-100: #E0EDDE;
+  --sage-300: #A8C5A0;
+  --sage-400: #8DAE85;
+  --sage-500: #7D9B76;
+  --sage-600: #5F7A58;
+
+  /* Semantic: Surface */
+  --surface-base:   var(--cream-100);
+  --surface-raised: #FFFFFF;
+  --surface-sunken: var(--cream-200);
+
+  /* Semantic: Text */
+  --text-primary:   var(--cream-900);
+  --text-secondary: var(--cream-700);
+  --text-muted:     var(--cream-600);
+
+  /* Semantic: Border */
+  --border-default: var(--cream-300);
+  --border-subtle:  var(--cream-200);
+
+  /* Semantic: Accent */
+  --accent-primary:       var(--terracotta-500);
+  --accent-primary-hover: var(--terracotta-600);
+  --accent-primary-soft:  var(--terracotta-50);
+  --accent-secondary:       var(--sage-500);
+  --accent-secondary-soft:  var(--sage-50);
+
+  /* Shadow (warm-tinted) */
+  --shadow-sm: 0 1px 2px rgba(62, 39, 35, 0.06);
+  --shadow-md: 0 2px 8px rgba(62, 39, 35, 0.08), 0 1px 2px rgba(62, 39, 35, 0.04);
+  --shadow-lg: 0 4px 16px rgba(62, 39, 35, 0.10), 0 2px 4px rgba(62, 39, 35, 0.06);
+
+  /* Typography */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
+
+  /* Radius */
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+}
+
+/* ==========================================================================
+   RESET & BASE
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--surface-base);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   LAYOUT — Simulating collapsed sidebar rail (64px) from Loop 1 IA
+   ========================================================================== */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar-rail {
+  width: 64px;
+  background: var(--surface-raised);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  gap: 8px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 40;
+}
+
+.sidebar-rail .logo {
+  width: 36px;
+  height: 36px;
+  background: var(--accent-primary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.nav-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+  border: none;
+  background: none;
+  position: relative;
+}
+
+.nav-icon:hover {
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+}
+
+.nav-icon.active {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+}
+
+.nav-icon .tooltip {
+  position: absolute;
+  left: 56px;
+  background: var(--cream-900);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+.nav-icon:hover .tooltip {
+  opacity: 1;
+}
+
+.main-content {
+  margin-left: 64px;
+  flex: 1;
+  max-width: 960px;
+  margin-left: 64px;
+  margin-right: auto;
+  padding: 24px 32px 64px;
+}
+
+@media (min-width: 1280px) {
+  .main-content {
+    margin-left: calc(64px + (100vw - 64px - 960px) / 2);
+  }
+}
+
+/* ==========================================================================
+   BACK LINK
+   ========================================================================== */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 20px;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.back-link:hover {
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   HERO IMAGE
+   ========================================================================== */
+.hero-image {
+  position: relative;
+  aspect-ratio: 21 / 9;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  margin-bottom: 28px;
+  background: var(--surface-sunken);
+}
+
+.hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-image .overlay-actions {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.overlay-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all var(--duration-fast) var(--ease-default);
+  box-shadow: var(--shadow-sm);
+}
+
+.overlay-btn:hover {
+  background: white;
+  transform: scale(1.05);
+}
+
+.overlay-btn.favorited {
+  color: #E53E3E;
+}
+
+/* ==========================================================================
+   TITLE SECTION
+   ========================================================================== */
+.title-section {
+  margin-bottom: 20px;
+}
+
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.recipe-title {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-top: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: white;
+}
+.btn-primary:hover {
+  background: var(--accent-primary-hover);
+}
+
+.btn-secondary {
+  background: var(--accent-secondary-soft);
+  color: var(--accent-secondary);
+  border: 1px solid var(--sage-300);
+}
+.btn-secondary:hover {
+  background: var(--sage-100);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+.btn-outline:hover {
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+}
+
+.btn-lg {
+  padding: 12px 24px;
+  font-size: 15px;
+  border-radius: var(--radius-xl);
+}
+
+.star-rating {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.star {
+  color: #F6AD55;
+  font-size: 18px;
+}
+.star.empty {
+  color: var(--cream-300);
+}
+
+.description {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 640px;
+}
+
+/* ==========================================================================
+   METADATA BAR
+   ========================================================================== */
+.meta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.meta-item svg {
+  flex-shrink: 0;
+}
+
+.meta-item .label {
+  font-weight: 600;
+}
+
+.meta-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-default);
+}
+
+.servings-adjuster {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-sunken);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.servings-adjuster button {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-default);
+  background: var(--surface-raised);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.servings-adjuster button:hover {
+  background: var(--accent-primary-soft);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.servings-adjuster .count {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: center;
+}
+
+.difficulty-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.difficulty-easy {
+  background: var(--accent-secondary-soft);
+  color: var(--sage-600);
+}
+
+.difficulty-medium {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+/* ==========================================================================
+   TAGS
+   ========================================================================== */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.tag {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-default);
+  border: 1px solid transparent;
+}
+
+.tag:hover {
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  border-color: var(--terracotta-200);
+}
+
+/* ==========================================================================
+   ACTION BUTTONS
+   ========================================================================== */
+.action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+/* ==========================================================================
+   TWO-COLUMN CONTENT
+   ========================================================================== */
+.content-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 28px;
+  margin-bottom: 40px;
+}
+
+.ingredients-panel {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+}
+
+.card {
+  background: var(--surface-raised);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title svg {
+  color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   INGREDIENTS
+   ========================================================================== */
+.ingredient-list {
+  list-style: none;
+}
+
+.ingredient-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: var(--radius-md);
+}
+
+.ingredient-item:last-child {
+  border-bottom: none;
+}
+
+.ingredient-item:hover {
+  background: var(--cream-50);
+}
+
+.ingredient-item.checked {
+  opacity: 0.5;
+}
+
+.ingredient-item.checked .ingredient-name {
+  text-decoration: line-through;
+}
+
+.ingredient-check {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-default);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.ingredient-item.checked .ingredient-check {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  color: white;
+}
+
+.ingredient-qty {
+  font-weight: 700;
+  color: var(--accent-primary);
+  white-space: nowrap;
+  min-width: 50px;
+}
+
+.ingredient-name {
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   INSTRUCTIONS
+   ========================================================================== */
+.step-list {
+  counter-reset: step;
+}
+
+.step-item {
+  display: flex;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.step-item:last-child {
+  border-bottom: none;
+}
+
+.step-number {
+  counter-increment: step;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  padding-top: 4px;
+}
+
+/* ==========================================================================
+   NUTRITION CARD
+   ========================================================================== */
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.nutrition-item {
+  text-align: center;
+  padding: 16px 8px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-xl);
+}
+
+.nutrition-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.nutrition-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.nutrition-calories .nutrition-value {
+  color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   COOK HISTORY CARD
+   ========================================================================== */
+.history-card {
+  margin-top: 32px;
+  background: var(--cream-50);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl);
+  padding: 20px 24px;
+}
+
+.history-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.history-stats strong {
+  color: var(--text-primary);
+}
+
+.history-dot {
+  color: var(--cream-400);
+}
+
+/* ==========================================================================
+   SOURCE LINK
+   ========================================================================== */
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-primary);
+  font-size: 14px;
+  text-decoration: none;
+  margin-bottom: 24px;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.source-link:hover {
+  color: var(--accent-primary-hover);
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 768px) {
+  .sidebar-rail { display: none; }
+  .main-content {
+    margin-left: 0;
+    padding: 16px 16px 80px;
+  }
+  .hero-image { aspect-ratio: 16 / 9; border-radius: var(--radius-xl); }
+  .recipe-title { font-size: 1.75rem; }
+  .content-grid { grid-template-columns: 1fr; }
+  .ingredients-panel { position: static; }
+  .nutrition-grid { grid-template-columns: repeat(3, 1fr); }
+  .meta-bar { gap: 12px; }
+  .meta-divider { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- Collapsed sidebar rail (Loop 1 IA proposal) -->
+  <nav class="sidebar-rail" aria-label="Main navigation">
+    <div class="logo" aria-label="Cookslate">C</div>
+
+    <button class="nav-icon" aria-label="Recipes">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span class="tooltip">Recipes</span>
+    </button>
+
+    <button class="nav-icon" aria-label="Favorites">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+      <span class="tooltip">Favorites</span>
+    </button>
+
+    <button class="nav-icon" aria-label="Grocery">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+      <span class="tooltip">Grocery</span>
+    </button>
+
+    <button class="nav-icon" aria-label="Meal Plan">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+      <span class="tooltip">Meal Plan</span>
+    </button>
+
+    <button class="nav-icon" aria-label="Search" style="margin-top: auto;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+      <span class="tooltip">Search (⌘K)</span>
+    </button>
+
+    <button class="nav-icon" aria-label="Settings">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span class="tooltip">Settings</span>
+    </button>
+  </nav>
+
+  <!-- Main content area -->
+  <main class="main-content">
+    <!-- Back navigation -->
+    <a href="#" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </a>
+
+    <!-- Hero image -->
+    <div class="hero-image">
+      <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=960&h=411&fit=crop" alt="Thai Basil Chicken">
+      <div class="overlay-actions">
+        <button class="overlay-btn favorited" aria-label="Favorited">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        </button>
+        <button class="overlay-btn" aria-label="Share">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Title section -->
+    <div class="title-section">
+      <div class="title-row">
+        <h1 class="recipe-title">Thai Basil Chicken</h1>
+        <div class="edit-actions">
+          <button class="btn btn-outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            Edit
+          </button>
+        </div>
+      </div>
+
+      <div class="star-rating" aria-label="Rating: 4 out of 5 stars">
+        <span class="star">&#9733;</span>
+        <span class="star">&#9733;</span>
+        <span class="star">&#9733;</span>
+        <span class="star">&#9733;</span>
+        <span class="star empty">&#9733;</span>
+      </div>
+
+      <p class="description">A quick, punchy stir-fry with holy basil, bird's eye chili, and crispy garlic. The kind of weeknight meal that tastes like it took an hour but didn't.</p>
+    </div>
+
+    <!-- Metadata bar -->
+    <div class="meta-bar">
+      <div class="meta-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C1694F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span><span class="label">Prep:</span> 15 min</span>
+      </div>
+      <div class="meta-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C1694F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span><span class="label">Cook:</span> 10 min</span>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="meta-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7D9B76" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="label" style="color: var(--accent-secondary);">Total: 25 min</span>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="servings-adjuster">
+        <button aria-label="Decrease servings">&minus;</button>
+        <span class="count">4 servings</span>
+        <button aria-label="Increase servings">+</button>
+      </div>
+      <div class="meta-divider"></div>
+      <span class="difficulty-badge difficulty-easy">Easy</span>
+    </div>
+
+    <!-- Tags -->
+    <div class="tags">
+      <a href="#" class="tag">Thai</a>
+      <a href="#" class="tag">Chicken</a>
+      <a href="#" class="tag">Quick</a>
+      <a href="#" class="tag">Stir-Fry</a>
+      <a href="#" class="tag">Spicy</a>
+    </div>
+
+    <!-- Source link -->
+    <a href="#" class="source-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      View original recipe
+    </a>
+
+    <!-- Action buttons -->
+    <div class="action-bar">
+      <button class="btn btn-primary btn-lg">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+        Start Cooking
+      </button>
+      <button class="btn btn-secondary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        Grocery List
+      </button>
+      <button class="btn btn-outline">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        Meal Plan
+      </button>
+      <button class="btn btn-outline">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+        Print
+      </button>
+    </div>
+
+    <!-- Two-column content -->
+    <div class="content-grid">
+      <!-- Ingredients (sticky sidebar) -->
+      <div class="ingredients-panel">
+        <div class="card">
+          <h2 class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+            Ingredients
+          </h2>
+          <ul class="ingredient-list">
+            <li class="ingredient-item">
+              <div class="ingredient-check"></div>
+              <span class="ingredient-qty">1 lb</span>
+              <span class="ingredient-name">ground chicken</span>
+            </li>
+            <li class="ingredient-item checked">
+              <div class="ingredient-check">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span class="ingredient-qty">4 cloves</span>
+              <span class="ingredient-name">garlic, minced</span>
+            </li>
+            <li class="ingredient-item">
+              <div class="ingredient-check"></div>
+              <span class="ingredient-qty">3</span>
+              <span class="ingredient-name">Thai bird's eye chilis, sliced</span>
+            </li>
+            <li class="ingredient-item">
+              <div class="ingredient-check"></div>
+              <span class="ingredient-qty">2 cups</span>
+              <span class="ingredient-name">Thai holy basil leaves</span>
+            </li>
+            <li class="ingredient-item">
+              <div class="ingredient-check"></div>
+              <span class="ingredient-qty">2 tbsp</span>
+              <span class="ingredient-name">oyster sauce</span>
+            </li>
+            <li class="ingredient-item">
+              <div class="ingredient-check"></div>
+              <span class="ingredient-qty">1 tbsp</span>
+              <span class="ingredient-name">fish sauce</span>
+            </li>
+            <li class="ingredient-item">
+              <div class="ingredient-check"></div>
+              <span class="ingredient-qty">1 tbsp</span>
+              <span class="ingredient-name">soy sauce</span>
+            </li>
+            <li class="ingredient-item">
+              <div class="ingredient-check"></div>
+              <span class="ingredient-qty">1 tsp</span>
+              <span class="ingredient-name">sugar</span>
+            </li>
+            <li class="ingredient-item">
+              <div class="ingredient-check"></div>
+              <span class="ingredient-qty">2 tbsp</span>
+              <span class="ingredient-name">vegetable oil</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div>
+        <div class="card">
+          <h2 class="card-title">Instructions</h2>
+          <div class="step-list">
+            <div class="step-item">
+              <div class="step-number">1</div>
+              <div class="step-text">Heat oil in a wok or large skillet over high heat until smoking. Add garlic and chilis, stir-fry for 30 seconds until fragrant but not burned.</div>
+            </div>
+            <div class="step-item">
+              <div class="step-number">2</div>
+              <div class="step-text">Add ground chicken, breaking it apart with a spatula. Cook for 3-4 minutes until no longer pink, pressing it against the wok to get some crispy bits.</div>
+            </div>
+            <div class="step-item">
+              <div class="step-number">3</div>
+              <div class="step-text">Add oyster sauce, fish sauce, soy sauce, and sugar. Toss everything together for another minute until the chicken is well-coated and slightly caramelized.</div>
+            </div>
+            <div class="step-item">
+              <div class="step-number">4</div>
+              <div class="step-text">Kill the heat. Throw in the basil leaves and fold them through the chicken — they'll wilt in seconds from residual heat. Serve immediately over jasmine rice with a fried egg on top.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nutrition -->
+    <div class="nutrition-grid">
+      <div class="nutrition-item nutrition-calories">
+        <div class="nutrition-value">380</div>
+        <div class="nutrition-label">Calories</div>
+      </div>
+      <div class="nutrition-item">
+        <div class="nutrition-value">28g</div>
+        <div class="nutrition-label">Protein</div>
+      </div>
+      <div class="nutrition-item">
+        <div class="nutrition-value">12g</div>
+        <div class="nutrition-label">Carbs</div>
+      </div>
+      <div class="nutrition-item">
+        <div class="nutrition-value">22g</div>
+        <div class="nutrition-label">Fat</div>
+      </div>
+      <div class="nutrition-item">
+        <div class="nutrition-value">2g</div>
+        <div class="nutrition-label">Fiber</div>
+      </div>
+      <div class="nutrition-item">
+        <div class="nutrition-value">4g</div>
+        <div class="nutrition-label">Sugar</div>
+      </div>
+    </div>
+
+    <!-- Cook history -->
+    <div class="history-card">
+      <h2 class="card-title" style="margin-bottom: 8px; font-family: var(--font-display);">Your History</h2>
+      <div class="history-stats">
+        <span>First made <strong>January 12, 2026</strong></span>
+        <span class="history-dot">&middot;</span>
+        <span>Last cooked <strong>3 days ago</strong></span>
+        <span class="history-dot">&middot;</span>
+        <span>Made <strong>7 times</strong></span>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

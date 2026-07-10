@@ -25,3 +25,6 @@ crumble_db_backup.sql
 # Local tool caches/state
 .graymatter/
 .wrangler/
+
+# Local-only marketing assets (not shipped in the repo)
+marketing/

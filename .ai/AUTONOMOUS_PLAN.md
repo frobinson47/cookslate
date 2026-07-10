@@ -37,7 +37,7 @@ Notes: Root-level duplicates of `cookslate-icon-160.png`, `cookslate-icon-32.png
 
 ### AUTO-002 — Import from image (BYOK vision LLM recipe extraction)
 Priority: P2
-Status: TODO
+Status: DONE
 
 Goal: Let a user upload a photo (cookbook page, handwritten card, screenshot) and have a vision-capable LLM extract structured recipe data, returned for preview the same way URL import works today.
 Why it matters: Differentiating import path competitors (Tandoor/Mealie/Paprika) don't offer; broadens what recipes can be captured beyond scrapeable web pages.

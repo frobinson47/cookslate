@@ -160,6 +160,25 @@ export function importTandoor(file) {
   return request('/recipes/import-tandoor', { method: 'POST', body: formData, isFormData: true });
 }
 
+export function importRecipeFromImage(imageFile) {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  return request('/recipes/import-image', { method: 'POST', body: formData, isFormData: true });
+}
+
+// OpenAI API key (BYOK, used for Import from Photo)
+export function getOpenAiKeyStatus() {
+  return request('/users/me/openai-key');
+}
+
+export function saveOpenAiKey(apiKey) {
+  return request('/users/me/openai-key', { method: 'PUT', body: { api_key: apiKey } });
+}
+
+export function deleteOpenAiKey() {
+  return request('/users/me/openai-key', { method: 'DELETE' });
+}
+
 // Tags
 export function getTags() {
   return request('/tags');

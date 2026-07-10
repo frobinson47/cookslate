@@ -31,7 +31,14 @@ CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:8080}
 APP_ENV=${APP_ENV:-development}
 APP_URL=${APP_URL:-http://localhost:8080}
 USDA_API_KEY=${USDA_API_KEY:-}
+APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:-}
 ENVEOF
+fi
+
+# Backfill env vars added after initial deploy — .env only regenerates from
+# scratch on first boot, so existing deployments need new keys appended.
+if [ -f /var/www/html/api/.env ] && ! grep -q '^APP_ENCRYPTION_KEY=' /var/www/html/api/.env; then
+    echo "APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:-}" >> /var/www/html/api/.env
 fi
 
 # Apply schema on first boot (check if recipes table exists)

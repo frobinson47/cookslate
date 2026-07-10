@@ -293,6 +293,8 @@ try {
 
             if ($id === 'import' && $method === 'POST') {
                 $response = $controller->import();
+            } elseif ($id === 'import-image' && $method === 'POST') {
+                $response = $controller->importImage();
             } elseif ($id === 'import-batch' && $method === 'POST') {
                 $response = $controller->importBatch();
             } elseif ($id === 'import-mealie' && $method === 'POST') {
@@ -699,6 +701,24 @@ try {
 
         // ── User Routes (admin) ─────────────────────────────────────────
         case 'users':
+            if ($id === 'me' && $subResource === 'openai-key') {
+                // /users/me/openai-key — self-service BYOK key management
+                require_once __DIR__ . '/controllers/UserApiKeyController.php';
+                $keyController = new UserApiKeyController();
+                switch ($method) {
+                    case 'GET':
+                        $response = $keyController->status();
+                        break;
+                    case 'PUT':
+                        $response = $keyController->save();
+                        break;
+                    case 'DELETE':
+                        $response = $keyController->remove();
+                        break;
+                }
+                break;
+            }
+
             require_once __DIR__ . '/controllers/UserController.php';
             $controller = new UserController();
 

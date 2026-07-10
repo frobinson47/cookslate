@@ -11,9 +11,9 @@ FROM php:8.1.31-apache
 
 # Install PHP extensions and MySQL client
 RUN apt-get update && apt-get install -y \
-        libpng-dev libjpeg-dev libwebp-dev libfreetype6-dev libzip-dev \
+        libpng-dev libjpeg-dev libwebp-dev libfreetype6-dev libzip-dev libsodium-dev \
     && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
-    && docker-php-ext-install pdo_mysql gd zip \
+    && docker-php-ext-install pdo_mysql gd zip sodium \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 

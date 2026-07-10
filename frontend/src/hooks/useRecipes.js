@@ -101,6 +101,20 @@ export function useRecipes() {
     }
   }, []);
 
+  const importRecipeFromImage = useCallback(async (imageFile) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await api.importRecipeFromImage(imageFile);
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     recipes,
     recipe,
@@ -113,6 +127,7 @@ export function useRecipes() {
     updateRecipe,
     removeRecipe,
     importRecipe,
+    importRecipeFromImage,
   };
 }
 

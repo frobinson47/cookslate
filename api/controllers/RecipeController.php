@@ -292,6 +292,56 @@ class RecipeController {
     }
 
     /**
+     * POST /recipes/import-image
+     * Accepts a multipart upload (field: "image"). Uses the user's own
+     * OpenAI API key to extract recipe data from the photo. Returns a
+     * RecipeScraper-shaped array (including error_code/error on failure) —
+     * never a non-2xx status for parse-time failures, so the frontend can
+     * reuse the exact same review/edit flow as URL import.
+     */
+    public function importImage(): array {
+        $userId = Auth::requireAuth();
+
+        require_once __DIR__ . '/../models/UserApiKey.php';
+        $keyModel = new UserApiKey();
+        $apiKey = $keyModel->getDecryptedKey($userId, 'openai');
+        if (!$apiKey) {
+            return [
+                'title' => '', 'description' => '', 'prep_time' => null, 'cook_time' => null,
+                'servings' => null, 'ingredients' => [], 'instructions' => [],
+                'image_url' => '', 'source_url' => '',
+                'error_code' => 'no_api_key',
+                'error' => 'Add your OpenAI API key in Settings to use this feature.',
+            ];
+        }
+
+        if (empty($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            return ['error' => 'An image file is required', 'code' => 400];
+        }
+
+        $file = $_FILES['image'];
+        if ($file['size'] > MAX_UPLOAD_SIZE) {
+            http_response_code(400);
+            return ['error' => 'Image exceeds the size limit', 'code' => 400];
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($file['tmp_name']);
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!in_array($mimeType, $allowedTypes, true)) {
+            http_response_code(400);
+            return ['error' => 'Unsupported image type. Use JPEG, PNG, WEBP, or GIF.', 'code' => 400];
+        }
+
+        $imageBase64 = base64_encode(file_get_contents($file['tmp_name']));
+
+        require_once __DIR__ . '/../services/OpenAiVisionParser.php';
+        $parser = new OpenAiVisionParser();
+        return $parser->parseImage($imageBase64, $mimeType, $apiKey);
+    }
+
+    /**
      * POST /recipes/import-batch
      * Expects JSON: { urls: string[] }
      * Scrapes each URL and returns array of results.

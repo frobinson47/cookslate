@@ -1,19 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BookOpen, Link2 } from 'lucide-react';
+import { BookOpen, Link2, Camera } from 'lucide-react';
 import RecipeForm from '../components/recipe/RecipeForm';
 import ImportForm from '../components/recipe/ImportForm';
+import ImportImageForm from '../components/recipe/ImportImageForm';
 import useRecipes from '../hooks/useRecipes';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import { getOpenAiKeyStatus } from '../services/api';
 
 export default function AddRecipePage() {
   useDocumentTitle('Add Recipe');
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { createRecipe, importRecipe, isLoading } = useRecipes();
-  const [mode, setMode] = useState('choose'); // 'choose', 'manual', 'import'
+  const { createRecipe, importRecipe, importRecipeFromImage, isLoading } = useRecipes();
+  const [mode, setMode] = useState('choose'); // 'choose', 'manual', 'import', 'import-image'
   const [importedData, setImportedData] = useState(null);
+  const [openAiKeyConfigured, setOpenAiKeyConfigured] = useState(false);
+
+  useEffect(() => {
+    getOpenAiKeyStatus()
+      .then((result) => setOpenAiKeyConfigured(!!result.configured))
+      .catch(() => {});
+  }, []);
 
   // Handle URL param for quick import. When the app is the target of a
   // system share, browsers may put the URL in `url`, or embed it in `text`
@@ -98,7 +107,7 @@ export default function AddRecipePage() {
       <div className="max-w-xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-brown">Add New Recipe</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button
             onClick={() => setMode('import')}
             className="flex flex-col items-center gap-3 p-8 bg-surface rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-200 group"
@@ -110,6 +119,21 @@ export default function AddRecipePage() {
               <h3 className="font-bold text-brown">Import from URL</h3>
               <p className="text-sm text-warm-gray mt-1">
                 Paste a link from your favorite recipe site
+              </p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setMode('import-image')}
+            className="flex flex-col items-center gap-3 p-8 bg-surface rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-200 group"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-terracotta/10 flex items-center justify-center group-hover:bg-terracotta/20 transition-colors duration-200">
+              <Camera size={28} className="text-terracotta" />
+            </div>
+            <div className="text-center">
+              <h3 className="font-bold text-brown">Import from Photo</h3>
+              <p className="text-sm text-warm-gray mt-1">
+                Snap a cookbook page or recipe card
               </p>
             </div>
           </button>
@@ -151,6 +175,38 @@ export default function AddRecipePage() {
           onImport={importRecipe}
           isLoading={isLoading}
           initialUrl={urlParam}
+        />
+
+        <div className="text-center">
+          <button
+            onClick={() => setMode('manual')}
+            className="text-sm text-terracotta hover:underline"
+          >
+            Or enter manually instead
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'import-image' && !importedData) {
+    return (
+      <div className="max-w-xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-brown">Import Recipe from Photo</h1>
+          <button
+            onClick={() => setMode('choose')}
+            className="text-sm text-warm-gray hover:text-brown transition-colors"
+          >
+            Back
+          </button>
+        </div>
+
+        <ImportImageForm
+          onImportSuccess={handleImportSuccess}
+          onImport={importRecipeFromImage}
+          isLoading={isLoading}
+          keyConfigured={openAiKeyConfigured}
         />
 
         <div className="text-center">

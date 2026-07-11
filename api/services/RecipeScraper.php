@@ -1,10 +1,12 @@
 <?php
 
 require_once __DIR__ . '/IngredientParser.php';
+require_once __DIR__ . '/PinterestResolver.php';
 
 class RecipeScraper {
 
     private IngredientParser $ingredientParser;
+    private PinterestResolver $pinterestResolver;
 
     private const USER_AGENTS = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -20,10 +22,12 @@ class RecipeScraper {
         'fetch_blocked' => "This website blocked our request. Try copying the recipe manually.",
         'fetch_timeout' => "The website took too long to respond. Try again later.",
         'parse_failed' => "Found the page but couldn't find recipe data. You can enter it manually.",
+        'pinterest_no_source_link' => "Couldn't find a source link on this Pinterest pin. Try pasting the recipe URL directly.",
     ];
 
     public function __construct() {
         $this->ingredientParser = new IngredientParser();
+        $this->pinterestResolver = new PinterestResolver();
     }
 
     private function randomUserAgent(): string {
@@ -47,6 +51,18 @@ class RecipeScraper {
             'image_url' => '',
             'source_url' => $url,
         ];
+
+        // Resolve Pinterest pins to their outbound recipe source URL first.
+        if ($this->pinterestResolver->isPinterestUrl($url)) {
+            $resolved = $this->pinterestResolver->resolve($url);
+            if ($resolved === null) {
+                $result['error_code'] = 'pinterest_no_source_link';
+                $result['error'] = self::ERROR_MESSAGES['pinterest_no_source_link'];
+                return $result;
+            }
+            $url = $resolved;
+            $result['source_url'] = $url;
+        }
 
         // Validate URL
         if (!$this->isValidUrl($url)) {

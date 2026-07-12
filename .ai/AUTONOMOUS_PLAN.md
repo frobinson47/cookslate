@@ -50,7 +50,7 @@ Notes: Forgejo issue #62, milestone Differentiators (#31). See conversation rese
 
 ### AUTO-003 — Import from Pinterest pin (resolve to source URL)
 Priority: P3
-Status: TODO
+Status: DONE
 
 Goal: Let a user paste a Pinterest pin URL (`pin.it/xxx` or `pinterest.com/pin/id`) and have the app resolve it to the original recipe source URL, then feed that into the existing `RecipeScraper` import flow.
 Why it matters: Many recipes are discovered via Pinterest pins that link back to a blog; resolving the pin removes a manual copy-paste step for users, but see risks below.

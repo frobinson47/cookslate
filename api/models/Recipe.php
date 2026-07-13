@@ -430,7 +430,7 @@ class Recipe {
                    COALESCE(ROUND(AVG(rt.score), 1), 0) AS avg_rating
             FROM recipes r
             LEFT JOIN ratings rt ON rt.recipe_id = r.id
-            WHERE r.image_path IS NOT NULL AND r.image_path != ""
+            WHERE r.image_path IS NOT NULL AND r.image_path != "" AND r.is_private = 0
             GROUP BY r.id
             ORDER BY avg_rating DESC, r.created_at DESC
             LIMIT 10
@@ -446,6 +446,38 @@ class Recipe {
         $dayOfYear = (int) date('z');
         $index = $dayOfYear % count($candidates);
         return $candidates[$index];
+    }
+
+    /**
+     * Get one random public recipe (with an image), for external teasers/widgets.
+     */
+    public function getRandom(): ?array {
+        $stmt = $this->db->prepare('
+            SELECT r.id, r.title, r.description, r.image_path, r.prep_time, r.cook_time, r.servings
+            FROM recipes r
+            WHERE r.is_private = 0 AND r.image_path IS NOT NULL AND r.image_path != ""
+            ORDER BY RAND()
+            LIMIT 1
+        ');
+        $stmt->execute();
+        $recipe = $stmt->fetch();
+        return $recipe ?: null;
+    }
+
+    /**
+     * Get the most recently added public recipes, for external teasers/widgets.
+     */
+    public function getRecent(int $limit = 10): array {
+        $stmt = $this->db->prepare('
+            SELECT r.id, r.title, r.description, r.image_path, r.prep_time, r.cook_time, r.servings, r.created_at
+            FROM recipes r
+            WHERE r.is_private = 0
+            ORDER BY r.created_at DESC
+            LIMIT ?
+        ');
+        $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
 
     /**

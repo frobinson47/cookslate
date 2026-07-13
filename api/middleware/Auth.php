@@ -34,4 +34,17 @@ class Auth {
 
         return $userId;
     }
+
+    /**
+     * Allow either a logged-in session or a valid COOKSLATE_API_KEY (?apikey=...).
+     * For read-only, non-personalized endpoints exposed to trusted external callers.
+     */
+    public static function requireAuthOrApiKey(): void
+    {
+        require_once __DIR__ . '/ApiKeyAuth.php';
+        if (ApiKeyAuth::isValid()) {
+            return;
+        }
+        self::requireAuth();
+    }
 }

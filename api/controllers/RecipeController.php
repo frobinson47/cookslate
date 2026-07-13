@@ -448,12 +448,36 @@ class RecipeController {
      * GET /recipes/featured
      */
     public function featured(): array {
+        Auth::requireAuthOrApiKey();
         $model = new Recipe();
         $recipe = $model->getFeatured();
         if (!$recipe) {
             return ['recipe' => null];
         }
         return ['recipe' => $recipe];
+    }
+
+    /**
+     * GET /recipes/random
+     */
+    public function random(): array {
+        Auth::requireAuthOrApiKey();
+        $model = new Recipe();
+        $recipe = $model->getRandom();
+        if (!$recipe) {
+            return ['recipe' => null];
+        }
+        return ['recipe' => $recipe];
+    }
+
+    /**
+     * GET /recipes/recent
+     */
+    public function recent(): array {
+        Auth::requireAuthOrApiKey();
+        $limit = max(1, min(50, (int) ($_GET['limit'] ?? 10)));
+        $model = new Recipe();
+        return ['recipes' => $model->getRecent($limit)];
     }
 
     /**

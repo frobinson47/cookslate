@@ -315,6 +315,10 @@ try {
                 }
             } elseif ($id === 'featured' && $method === 'GET') {
                 $response = $controller->featured();
+            } elseif ($id === 'random' && $method === 'GET') {
+                $response = $controller->random();
+            } elseif ($id === 'recent' && $method === 'GET') {
+                $response = $controller->recent();
             } elseif ($id === 'export' && $method === 'GET') {
                 $response = $controller->export();
             } elseif ($id === 'export-zip' && $method === 'GET') {

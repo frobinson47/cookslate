@@ -32,6 +32,7 @@ APP_ENV=${APP_ENV:-development}
 APP_URL=${APP_URL:-http://localhost:8080}
 USDA_API_KEY=${USDA_API_KEY:-}
 APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:-}
+COOKSLATE_API_KEY=${COOKSLATE_API_KEY:-}
 ENVEOF
 fi
 
@@ -39,6 +40,9 @@ fi
 # scratch on first boot, so existing deployments need new keys appended.
 if [ -f /var/www/html/api/.env ] && ! grep -q '^APP_ENCRYPTION_KEY=' /var/www/html/api/.env; then
     echo "APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:-}" >> /var/www/html/api/.env
+fi
+if [ -f /var/www/html/api/.env ] && ! grep -q '^COOKSLATE_API_KEY=' /var/www/html/api/.env; then
+    echo "COOKSLATE_API_KEY=${COOKSLATE_API_KEY:-}" >> /var/www/html/api/.env
 fi
 
 # Apply schema on first boot (check if recipes table exists)

@@ -17,6 +17,7 @@ services:
       - DB_PASS=cookslate
       - USDA_API_KEY=${USDA_API_KEY:-}
       - APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:-}
+      - COOKSLATE_API_KEY=${COOKSLATE_API_KEY:-}
 
   db:
     image: mysql:8

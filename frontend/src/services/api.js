@@ -171,6 +171,19 @@ export function getOpenAiKeyStatus() {
   return request('/users/me/openai-key');
 }
 
+// Generate Recipe Art (BYOK, same OpenAI key as Import from Photo)
+export function listCardArt(recipeId) {
+  return request(`/recipes/${recipeId}/card-art`);
+}
+
+export function getCardArt(recipeId, template) {
+  return request(`/recipes/${recipeId}/card-art/${template}`);
+}
+
+export function generateCardArt(recipeId, template) {
+  return request(`/recipes/${recipeId}/card-art/${template}`, { method: 'POST' });
+}
+
 export function saveOpenAiKey(apiKey) {
   return request('/users/me/openai-key', { method: 'PUT', body: { api_key: apiKey } });
 }

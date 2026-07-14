@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Clock, Edit, Trash2, ExternalLink, ChefHat, ShoppingCart,
-  ArrowLeft, Plus, Printer, Link2, QrCode, Heart, Share2, UtensilsCrossed, ListChecks
+  ArrowLeft, Plus, Printer, Link2, QrCode, Heart, Share2, UtensilsCrossed, ListChecks, Sparkles
 } from 'lucide-react';
 import qrcode from 'qrcode-generator';
 import useRecipes from '../hooks/useRecipes';
@@ -26,6 +26,8 @@ import CookButton from '../components/recipe/CookButton';
 import AddToMealPlanButton from '../components/recipe/AddToMealPlanButton';
 import * as api from '../services/api';
 import RelatedRecipes from '../components/recipe/RelatedRecipes';
+import CardArtModal from '../components/recipe/CardArtModal';
+import { cardArtTemplateLabel } from '../constants/cardArtTemplates';
 import NutritionFacts from '../components/recipe/NutritionFacts';
 import RecipeInsights from '../components/recipe/RecipeInsights';
 import useRecentlyViewed from '../hooks/useRecentlyViewed';
@@ -56,6 +58,9 @@ export default function RecipePage() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [cookNotes, setCookNotes] = useState([]);
   const [annotations, setAnnotations] = useState({ ingredient: {}, instruction: {} });
+  const [showCardArtModal, setShowCardArtModal] = useState(false);
+  const [openAiKeyConfigured, setOpenAiKeyConfigured] = useState(false);
+  const [cardArtList, setCardArtList] = useState([]);
 
   useDocumentTitle(recipe?.title);
 
@@ -77,6 +82,12 @@ export default function RecipePage() {
         setAnnotations(map);
       })
       .catch(() => setAnnotations({ ingredient: {}, instruction: {} }));
+    api.getOpenAiKeyStatus()
+      .then((result) => setOpenAiKeyConfigured(!!result.configured))
+      .catch(() => {});
+    api.listCardArt(id)
+      .then((result) => setCardArtList(result.card_art || []))
+      .catch(() => setCardArtList([]));
   }, [id, fetchRecipe]);
 
   // Track recently viewed + JSON-LD
@@ -437,6 +448,14 @@ export default function RecipePage() {
           <Printer size={18} />
           Print
         </Button>
+        <Button
+          variant="outline"
+          onClick={() => setShowCardArtModal(true)}
+          className="print:hidden"
+        >
+          <Sparkles size={18} />
+          Generate Recipe Art
+        </Button>
         {!imageUrl && (
           <Button
             variant="outline"
@@ -564,6 +583,31 @@ export default function RecipePage() {
           </div>
         );
       })()}
+
+      {/* Other Images (generated recipe card art) */}
+      {cardArtList.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-bold text-brown font-display mb-3">Other Images</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {cardArtList.map((art) => (
+              <a
+                key={art.template}
+                href={`/recipe/${recipe.id}/card-art/${art.template}/print`}
+                target="_blank"
+                rel="noopener"
+                className="block rounded-xl overflow-hidden border border-cream-dark hover:border-terracotta transition-colors duration-200"
+              >
+                <img
+                  src={fullImageUrl(art.image_path)}
+                  alt={`${cardArtTemplateLabel(art.template)} recipe card art`}
+                  className="w-full aspect-[2/3] object-cover"
+                />
+                <p className="text-xs text-brown-light text-center py-2">{cardArtTemplateLabel(art.template)}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Related Recipes */}
       <RelatedRecipes recipeId={recipe.id} />
@@ -701,6 +745,21 @@ export default function RecipePage() {
           </div>
         )}
       </Modal>
+
+      {/* Generate Recipe Art modal */}
+      <CardArtModal
+        recipeId={recipe.id}
+        isOpen={showCardArtModal}
+        onClose={() => setShowCardArtModal(false)}
+        keyConfigured={openAiKeyConfigured}
+        existingTemplates={cardArtList.map((a) => a.template)}
+        onGenerated={({ template, image_path }) => {
+          setCardArtList((prev) => [
+            ...prev.filter((a) => a.template !== template),
+            { template, image_path },
+          ]);
+        }}
+      />
     </div>
   );
 }

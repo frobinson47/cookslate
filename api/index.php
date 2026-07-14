@@ -291,6 +291,23 @@ try {
                 }
             }
 
+            // Rate limit card art generation (calls an expensive external image API)
+            if ($subResource === 'card-art' && $method === 'POST') {
+                $rateLimiter = new RateLimiter();
+                $clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+                $rateResult = $rateLimiter->check($clientIp, 'card-art', 10, 300);
+                if (!$rateResult['allowed']) {
+                    http_response_code(429);
+                    header('Retry-After: ' . $rateResult['retryAfter']);
+                    $response = [
+                        'error' => 'Too many card art requests. Try again later.',
+                        'code' => 429,
+                        'retryAfter' => $rateResult['retryAfter'],
+                    ];
+                    break;
+                }
+            }
+
             if ($id === 'import' && $method === 'POST') {
                 $response = $controller->import();
             } elseif ($id === 'import-image' && $method === 'POST') {
@@ -422,6 +439,15 @@ try {
                 } elseif ($subResource === 'related' && $method === 'GET') {
                     // /recipes/{id}/related
                     $response = $controller->related($recipeId);
+                } elseif ($subResource === 'card-art' && $subId === null && $method === 'GET') {
+                    // GET /recipes/{id}/card-art
+                    $response = $controller->listCardArt($recipeId);
+                } elseif ($subResource === 'card-art' && $subId !== null && $method === 'GET') {
+                    // GET /recipes/{id}/card-art/{template}
+                    $response = $controller->getCardArt($recipeId, $subId);
+                } elseif ($subResource === 'card-art' && $subId !== null && $method === 'POST') {
+                    // POST /recipes/{id}/card-art/{template}
+                    $response = $controller->generateCardArt($recipeId, $subId);
                 } elseif ($subResource === 'jsonld' && $method === 'GET') {
                     // GET /recipes/{id}/jsonld — schema.org/Recipe JSON-LD export
                     $controller->jsonLd($recipeId);

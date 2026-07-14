@@ -5,6 +5,7 @@ require_once __DIR__ . '/../middleware/Auth.php';
 require_once __DIR__ . '/../services/ImageProcessor.php';
 require_once __DIR__ . '/../services/ValidationHelper.php';
 require_once __DIR__ . '/../services/LoggerService.php';
+require_once __DIR__ . '/../services/CardArtTemplates.php';
 
 class RecipeController {
 
@@ -656,5 +657,94 @@ class RecipeController {
     public function related(int $id): array {
         $model = new Recipe();
         return ['recipes' => $model->getRelated($id)];
+    }
+
+    /**
+     * GET /recipes/{id}/card-art
+     * Returns all card art generated so far for this recipe (up to one per template).
+     */
+    public function listCardArt(int $id): array {
+        require_once __DIR__ . '/../models/RecipeCardArt.php';
+        return ['card_art' => (new RecipeCardArt())->findAllForRecipe($id)];
+    }
+
+    /**
+     * GET /recipes/{id}/card-art/{template}
+     * Returns the cached generated card art for this recipe+template, if any.
+     */
+    public function getCardArt(int $id, string $template): array {
+        if (!CardArtTemplates::isValid($template)) {
+            http_response_code(400);
+            return ['error' => 'Unknown template', 'code' => 400];
+        }
+
+        require_once __DIR__ . '/../models/RecipeCardArt.php';
+        $art = (new RecipeCardArt())->find($id, $template);
+        if (!$art) {
+            http_response_code(404);
+            return ['error' => 'Card art not yet generated for this template', 'code' => 404];
+        }
+
+        return ['template' => $template, 'image_path' => $art['image_path']];
+    }
+
+    /**
+     * POST /recipes/{id}/card-art/{template}
+     * Generates (or returns already-cached) AI recipe card art for this recipe+template.
+     * Uses the user's own OpenAI API key (BYOK) — same key as Import from Photo.
+     */
+    public function generateCardArt(int $id, string $template): array {
+        $userId = Auth::requireAuth();
+
+        if (!CardArtTemplates::isValid($template)) {
+            http_response_code(400);
+            return ['error' => 'Unknown template', 'code' => 400];
+        }
+
+        require_once __DIR__ . '/../models/RecipeCardArt.php';
+        $cardArtModel = new RecipeCardArt();
+
+        // Never regenerate a cached slot — switching templates costs an API
+        // call only the first time it's generated for this recipe.
+        $existing = $cardArtModel->find($id, $template);
+        if ($existing) {
+            return ['template' => $template, 'image_path' => $existing['image_path'], 'generated' => false];
+        }
+
+        $recipeModel = new Recipe();
+        $recipe = $recipeModel->findById($id);
+        if (!$recipe) {
+            http_response_code(404);
+            return ['error' => 'Recipe not found', 'code' => 404];
+        }
+
+        require_once __DIR__ . '/../models/UserApiKey.php';
+        $keyModel = new UserApiKey();
+        $apiKey = $keyModel->getDecryptedKey($userId, 'openai');
+        if (!$apiKey) {
+            return [
+                'error_code' => 'no_api_key',
+                'error' => 'Add your OpenAI API key in Settings to use this feature.',
+            ];
+        }
+
+        require_once __DIR__ . '/../services/OpenAiCardArtGenerator.php';
+        $result = (new OpenAiCardArtGenerator())->generate($template, $recipe, $apiKey);
+        if (!$result['success']) {
+            return ['error_code' => $result['error_code'], 'error' => $result['error']];
+        }
+
+        $relativeDir = 'recipes' . DIRECTORY_SEPARATOR . $id;
+        $outputDir = UPLOAD_DIR . $relativeDir;
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
+        $filename = "card-art-{$template}.png";
+        file_put_contents($outputDir . DIRECTORY_SEPARATOR . $filename, $result['imageData']);
+
+        $imagePath = "recipes/{$id}/{$filename}";
+        $cardArtModel->save($id, $template, $imagePath);
+
+        return ['template' => $template, 'image_path' => $imagePath, 'generated' => true];
     }
 }

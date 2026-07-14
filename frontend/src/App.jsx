@@ -12,6 +12,7 @@ import Layout from './components/layout/Layout';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import RecipePage from './pages/RecipePage';
+import CardArtPrintPage from './pages/CardArtPrintPage';
 import AddRecipePage from './pages/AddRecipePage';
 import EditRecipePage from './pages/EditRecipePage';
 import GroceryPage from './pages/GroceryPage';
@@ -75,6 +76,14 @@ export default function App() {
                 <Layout>
                   <RecipePage />
                 </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recipe/:id/card-art/:template/print"
+            element={
+              <ProtectedRoute>
+                <CardArtPrintPage />
               </ProtectedRoute>
             }
           />

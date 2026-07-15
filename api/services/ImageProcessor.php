@@ -113,6 +113,49 @@ class ImageProcessor {
     }
 
     /**
+     * Process a user-uploaded custom card art image: validate, resize to a
+     * single reasonable max width, save under a caller-supplied filename
+     * (distinct from the recipe's main full.webp/thumb.webp).
+     *
+     * @return string|null  Relative image path on success, null on failure
+     */
+    public function processCardArtUpload(array $file, int $recipeId, string $filename): ?string {
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+        if ($file['size'] > MAX_UPLOAD_SIZE) {
+            return null;
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($file['tmp_name']);
+        if (!isset(self::ALLOWED_TYPES[$mimeType])) {
+            return null;
+        }
+
+        $imageInfo = getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            return null;
+        }
+
+        $relativeDir = 'recipes' . DIRECTORY_SEPARATOR . $recipeId;
+        $outputDir = UPLOAD_DIR . $relativeDir;
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
+
+        $source = $this->loadImage($file['tmp_name'], $imageInfo[2]);
+        if ($source === null) {
+            return null;
+        }
+
+        $this->resizeAndSave($source, imagesx($source), imagesy($source), CARD_ART_UPLOAD_MAX_WIDTH, IMAGE_QUALITY, $outputDir . DIRECTORY_SEPARATOR . $filename . '.webp');
+        imagedestroy($source);
+
+        return "recipes/{$recipeId}/{$filename}.webp";
+    }
+
+    /**
      * Download an image from a URL and process it.
      *
      * @param string $url  The image URL

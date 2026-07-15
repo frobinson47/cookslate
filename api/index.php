@@ -445,9 +445,15 @@ try {
                 } elseif ($subResource === 'card-art' && $subId !== null && $method === 'GET') {
                     // GET /recipes/{id}/card-art/{template}
                     $response = $controller->getCardArt($recipeId, $subId);
+                } elseif ($subResource === 'card-art' && $subId === 'upload' && $method === 'POST') {
+                    // POST /recipes/{id}/card-art/upload
+                    $response = $controller->uploadCardArt($recipeId);
                 } elseif ($subResource === 'card-art' && $subId !== null && $method === 'POST') {
                     // POST /recipes/{id}/card-art/{template}
                     $response = $controller->generateCardArt($recipeId, $subId);
+                } elseif ($subResource === 'card-art' && $subId !== null && $method === 'DELETE') {
+                    // DELETE /recipes/{id}/card-art/{template}
+                    $response = $controller->deleteCardArt($recipeId, $subId);
                 } elseif ($subResource === 'jsonld' && $method === 'GET') {
                     // GET /recipes/{id}/jsonld — schema.org/Recipe JSON-LD export
                     $controller->jsonLd($recipeId);

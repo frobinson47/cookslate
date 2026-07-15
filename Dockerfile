@@ -20,6 +20,9 @@ RUN apt-get update && apt-get install -y \
 # Apache config
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
+# Raise PHP upload limits to match MAX_UPLOAD_SIZE (see docker/uploads.ini for why)
+COPY docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+
 # Install Composer
 COPY --from=composer:2.8.4 /usr/bin/composer /usr/bin/composer
 

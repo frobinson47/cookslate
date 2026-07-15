@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Clock, Edit, Trash2, ExternalLink, ChefHat, ShoppingCart,
-  ArrowLeft, Plus, Printer, Link2, QrCode, Heart, Share2, UtensilsCrossed, ListChecks, Sparkles
+  ArrowLeft, Plus, Printer, Link2, QrCode, Heart, Share2, UtensilsCrossed, ListChecks, Sparkles, Upload, X
 } from 'lucide-react';
 import qrcode from 'qrcode-generator';
 import useRecipes from '../hooks/useRecipes';
@@ -61,6 +61,8 @@ export default function RecipePage() {
   const [showCardArtModal, setShowCardArtModal] = useState(false);
   const [openAiKeyConfigured, setOpenAiKeyConfigured] = useState(false);
   const [cardArtList, setCardArtList] = useState([]);
+  const [uploadingCardArt, setUploadingCardArt] = useState(false);
+  const cardArtFileRef = useRef(null);
 
   useDocumentTitle(recipe?.title);
 
@@ -120,6 +122,33 @@ export default function RecipePage() {
       navigate('/');
     } catch {
       toast.error('Failed to delete recipe');
+    }
+  };
+
+  const handleUploadCardArt = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setUploadingCardArt(true);
+    try {
+      const result = await api.uploadCardArt(recipe.id, file);
+      setCardArtList((prev) => [...prev, { template: result.template, image_path: result.image_path, source: 'uploaded' }]);
+      toast.success('Custom card uploaded');
+    } catch (err) {
+      toast.error(err.message || 'Failed to upload image');
+    } finally {
+      setUploadingCardArt(false);
+    }
+  };
+
+  const handleDeleteCardArt = async (template) => {
+    try {
+      await api.deleteCardArt(recipe.id, template);
+      setCardArtList((prev) => prev.filter((a) => a.template !== template));
+      toast.success('Removed');
+    } catch (err) {
+      toast.error(err.message || 'Failed to remove image');
     }
   };
 
@@ -584,14 +613,13 @@ export default function RecipePage() {
         );
       })()}
 
-      {/* Other Images (generated recipe card art) */}
-      {cardArtList.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-bold text-brown font-display mb-3">Other Images</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {cardArtList.map((art) => (
+      {/* Other Images (generated + uploaded recipe card art) */}
+      <div className="mt-8 print:hidden">
+        <h2 className="text-lg font-bold text-brown font-display mb-3">Other Images</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {cardArtList.map((art) => (
+            <div key={art.template} className="relative group">
               <a
-                key={art.template}
                 href={`/recipe/${recipe.id}/card-art/${art.template}/print`}
                 target="_blank"
                 rel="noopener"
@@ -604,10 +632,35 @@ export default function RecipePage() {
                 />
                 <p className="text-xs text-brown-light text-center py-2">{cardArtTemplateLabel(art.template)}</p>
               </a>
-            ))}
-          </div>
+              <button
+                onClick={(e) => { e.preventDefault(); handleDeleteCardArt(art.template); }}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-brown/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 min-w-[28px] min-h-[28px] flex items-center justify-center"
+                aria-label={`Remove ${cardArtTemplateLabel(art.template)}`}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+
+          <button
+            onClick={() => cardArtFileRef.current?.click()}
+            disabled={uploadingCardArt}
+            className="flex flex-col items-center justify-center gap-2 aspect-[2/3] rounded-xl border-2 border-dashed border-cream-dark hover:border-terracotta text-warm-gray hover:text-terracotta transition-colors duration-200 disabled:opacity-50"
+          >
+            {uploadingCardArt ? <Spinner size="sm" /> : <Upload size={20} />}
+            <span className="text-xs text-center px-2">
+              {uploadingCardArt ? 'Uploading…' : 'Upload Custom Card'}
+            </span>
+          </button>
+          <input
+            ref={cardArtFileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleUploadCardArt}
+            className="hidden"
+          />
         </div>
-      )}
+      </div>
 
       {/* Related Recipes */}
       <RelatedRecipes recipeId={recipe.id} />

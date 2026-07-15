@@ -12,5 +12,6 @@ export const CARD_ART_TEMPLATES = [
 ];
 
 export function cardArtTemplateLabel(key) {
+  if (key?.startsWith('custom-')) return 'Custom Upload';
   return CARD_ART_TEMPLATES.find((t) => t.key === key)?.label || key;
 }

@@ -8,3 +8,4 @@ define('THUMB_MAX_WIDTH', 300);
 define('IMAGE_QUALITY', 85);
 define('THUMB_QUALITY', 80);
 define('RECIPES_PER_PAGE', 20);
+define('CARD_ART_UPLOAD_MAX_WIDTH', 1200); // custom card art uploads are typically portrait, larger than the recipe photo

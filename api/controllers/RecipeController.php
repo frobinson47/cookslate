@@ -670,22 +670,117 @@ class RecipeController {
 
     /**
      * GET /recipes/{id}/card-art/{template}
-     * Returns the cached generated card art for this recipe+template, if any.
+     * Returns the cached card art for this recipe+template if it exists (generated
+     * OR uploaded — the template validity check below only applies to the not-yet-
+     * cached path, so custom upload keys resolve fine here).
+     *
+     * If not yet generated and the template is one of the known AI templates,
+     * returns the fully-built prompt instead so it can be copied and used
+     * manually (e.g. via a ChatGPT Plus/Pro web session) without an API key.
      */
     public function getCardArt(int $id, string $template): array {
+        require_once __DIR__ . '/../models/RecipeCardArt.php';
+        $art = (new RecipeCardArt())->find($id, $template);
+        if ($art) {
+            return ['template' => $template, 'image_path' => $art['image_path'], 'source' => $art['source'] ?? 'generated'];
+        }
+
         if (!CardArtTemplates::isValid($template)) {
             http_response_code(400);
             return ['error' => 'Unknown template', 'code' => 400];
         }
 
-        require_once __DIR__ . '/../models/RecipeCardArt.php';
-        $art = (new RecipeCardArt())->find($id, $template);
-        if (!$art) {
+        $userId = Auth::requireAuth();
+
+        $recipeModel = new Recipe();
+        $recipe = $recipeModel->findById($id);
+        if (!$recipe) {
             http_response_code(404);
-            return ['error' => 'Card art not yet generated for this template', 'code' => 404];
+            return ['error' => 'Recipe not found', 'code' => 404];
         }
 
-        return ['template' => $template, 'image_path' => $art['image_path']];
+        require_once __DIR__ . '/../models/UserApiKey.php';
+        $apiKey = (new UserApiKey())->getDecryptedKey($userId, 'openai');
+
+        require_once __DIR__ . '/../services/CardArtEnricher.php';
+        $enrichment = $apiKey
+            ? (new CardArtEnricher())->enrich($recipe, $apiKey)
+            : array_fill_keys(['subtitle', 'slogan', 'quote', 'main_ingredient', 'cooking_vibe', 'color_palette', 'headline_style'], '');
+
+        $prompt = CardArtTemplates::buildPrompt($template, $recipe, $enrichment);
+
+        return ['template' => $template, 'image_path' => null, 'prompt' => $prompt];
+    }
+
+    /**
+     * POST /recipes/{id}/card-art/upload
+     * Uploads a custom card art image (e.g. generated manually via ChatGPT
+     * Plus/Pro using a copied prompt) and stores it alongside AI-generated art.
+     */
+    public function uploadCardArt(int $id): array {
+        Auth::requireAuth();
+
+        $recipeModel = new Recipe();
+        if (!$recipeModel->findById($id)) {
+            http_response_code(404);
+            return ['error' => 'Recipe not found', 'code' => 404];
+        }
+
+        if (empty($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            return ['error' => 'An image file is required', 'code' => 400];
+        }
+
+        $file = $_FILES['image'];
+        if ($file['size'] > MAX_UPLOAD_SIZE) {
+            http_response_code(400);
+            return ['error' => 'Image exceeds the size limit', 'code' => 400];
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($file['tmp_name']);
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!in_array($mimeType, $allowedTypes, true)) {
+            http_response_code(400);
+            return ['error' => 'Unsupported image type. Use JPEG, PNG, WEBP, or GIF.', 'code' => 400];
+        }
+
+        $template = 'custom-' . bin2hex(random_bytes(4));
+
+        $imagePath = (new ImageProcessor())->processCardArtUpload($file, $id, "card-art-{$template}");
+        if (!$imagePath) {
+            http_response_code(400);
+            return ['error' => 'Could not process the uploaded image', 'code' => 400];
+        }
+
+        require_once __DIR__ . '/../models/RecipeCardArt.php';
+        (new RecipeCardArt())->save($id, $template, $imagePath, 'uploaded');
+
+        return ['template' => $template, 'image_path' => $imagePath, 'source' => 'uploaded'];
+    }
+
+    /**
+     * DELETE /recipes/{id}/card-art/{template}
+     * Removes a generated or uploaded card art image and its file.
+     */
+    public function deleteCardArt(int $id, string $template): array {
+        Auth::requireAuth();
+
+        require_once __DIR__ . '/../models/RecipeCardArt.php';
+        $model = new RecipeCardArt();
+        $art = $model->find($id, $template);
+        if (!$art) {
+            http_response_code(404);
+            return ['error' => 'Card art not found', 'code' => 404];
+        }
+
+        $fullPath = rtrim(UPLOAD_DIR, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $art['image_path']);
+        if (is_file($fullPath)) {
+            @unlink($fullPath);
+        }
+        $model->delete($id, $template);
+
+        return ['message' => 'Deleted'];
     }
 
     /**

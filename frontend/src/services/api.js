@@ -184,6 +184,16 @@ export function generateCardArt(recipeId, template) {
   return request(`/recipes/${recipeId}/card-art/${template}`, { method: 'POST' });
 }
 
+export function uploadCardArt(recipeId, imageFile) {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  return request(`/recipes/${recipeId}/card-art/upload`, { method: 'POST', body: formData, isFormData: true });
+}
+
+export function deleteCardArt(recipeId, template) {
+  return request(`/recipes/${recipeId}/card-art/${template}`, { method: 'DELETE' });
+}
+
 export function saveOpenAiKey(apiKey) {
   return request('/users/me/openai-key', { method: 'PUT', body: { api_key: apiKey } });
 }

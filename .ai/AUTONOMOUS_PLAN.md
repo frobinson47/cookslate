@@ -77,7 +77,7 @@ Risks or assumptions: None.
 Notes: Imported from Forgejo issue #69 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/69).
 
 ### AUTO-005 — Migrate cookslate prod secrets from plain .env to Infisical
-Priority: P2
+Priority: P1
 Status: TODO
 
 Goal: Imported from Forgejo issue #64: Migrate cookslate prod secrets from plain .env to Infisical
@@ -90,7 +90,7 @@ Risks or assumptions: None.
 Notes: Imported from Forgejo issue #64 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/64).
 
 ### AUTO-006 — Blog: What is a self-hosted recipe manager? (top-of-funnel AEO)
-Priority: P2
+Priority: P3
 Status: TODO
 
 Goal: Imported from Forgejo issue #61: Blog: What is a self-hosted recipe manager? (top-of-funnel AEO)
@@ -103,7 +103,7 @@ Risks or assumptions: None.
 Notes: Imported from Forgejo issue #61 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/61).
 
 ### AUTO-007 — Blog: Migrating from Plan to Eat to Cookslate (AEO)
-Priority: P2
+Priority: P3
 Status: TODO
 
 Goal: Imported from Forgejo issue #60: Blog: Migrating from Plan to Eat to Cookslate (AEO)
@@ -116,7 +116,7 @@ Risks or assumptions: None.
 Notes: Imported from Forgejo issue #60 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/60).
 
 ### AUTO-008 — Blog: Self-hosted recipe manager comparison roundup (Mealie vs Tandoor vs Cookslate vs Nextcloud Cookbook)
-Priority: P2
+Priority: P3
 Status: TODO
 
 Goal: Imported from Forgejo issue #59: Blog: Self-hosted recipe manager comparison roundup (Mealie vs Tandoor vs Cookslate vs Nextcloud Cookbook)
@@ -129,7 +129,7 @@ Risks or assumptions: None.
 Notes: Imported from Forgejo issue #59 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/59).
 
 ### AUTO-009 — Blog: Best Mealie alternatives in 2026 (AEO)
-Priority: P2
+Priority: P3
 Status: TODO
 
 Goal: Imported from Forgejo issue #58: Blog: Best Mealie alternatives in 2026 (AEO)
@@ -140,19 +140,6 @@ Acceptance criteria: TBD
 Validation: TBD
 Risks or assumptions: None.
 Notes: Imported from Forgejo issue #58 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/58).
-
-### AUTO-010 — Migrate Architect Console to cloud VPS
-Priority: P2
-Status: TODO
-
-Goal: Imported from Forgejo issue #55: Migrate Architect Console to cloud VPS
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #55 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/55).
 
 ### AUTO-011 — Remove CLAUDE.md from repo and gitignore it
 Priority: P2
@@ -169,7 +156,7 @@ Notes: Imported from Forgejo issue #49 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-012 — cookslate.com domain acquisition
 Priority: P2
-Status: TODO
+Status: DEFERRED
 
 Goal: Imported from Forgejo issue #34: cookslate.com domain acquisition
 Why it matters: TBD
@@ -182,7 +169,7 @@ Notes: Imported from Forgejo issue #34 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-013 — Native mobile app
 Priority: P2
-Status: TODO
+Status: DEFERRED
 
 Goal: Imported from Forgejo issue #33: Native mobile app
 Why it matters: TBD
@@ -207,7 +194,7 @@ Risks or assumptions: None.
 Notes: Imported from Forgejo issue #32 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/32).
 
 ### AUTO-015 — More import formats (Nextcloud Cookbook, RecipeSage)
-Priority: P2
+Priority: P3
 Status: TODO
 
 Goal: Imported from Forgejo issue #31: More import formats (Nextcloud Cookbook, RecipeSage)
@@ -233,7 +220,7 @@ Risks or assumptions: None.
 Notes: Imported from Forgejo issue #30 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/30).
 
 ### AUTO-017 — Cooklang export
-Priority: P2
+Priority: P3
 Status: TODO
 
 Goal: Imported from Forgejo issue #29: Cooklang export
@@ -273,7 +260,7 @@ Notes: Imported from Forgejo issue #27 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-020 — Tandoor comparison matrix listing
 Priority: P2
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #24: Tandoor comparison matrix listing
 Why it matters: TBD
@@ -286,7 +273,7 @@ Notes: Imported from Forgejo issue #24 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-021 — Reddit r/selfhosted standalone post
 Priority: P2
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #23: Reddit r/selfhosted standalone post
 Why it matters: TBD
@@ -298,7 +285,7 @@ Risks or assumptions: None.
 Notes: Imported from Forgejo issue #23 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/23).
 
 ### AUTO-022 — Year-in-review cooking stats page
-Priority: P2
+Priority: P3
 Status: TODO
 
 Goal: Imported from Forgejo issue #17: Year-in-review cooking stats page

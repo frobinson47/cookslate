@@ -143,16 +143,16 @@ Notes: Imported from Forgejo issue #58 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-011 — Remove CLAUDE.md from repo and gitignore it
 Priority: P2
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #49: Remove CLAUDE.md from repo and gitignore it
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
+Why it matters: CLAUDE.md was tracked and syncing to GitHub via the Forgejo push mirror; keeping it untracked avoids publishing internal project notes.
+Scope: Already resolved prior to this import.
+Expected files or areas: `.gitignore`, `CLAUDE.md`.
+Acceptance criteria: `CLAUDE.md` is untracked and matched by `.gitignore`.
+Validation: `git ls-files | grep CLAUDE.md` returns nothing; `git status` shows no pending changes for the file.
 Risks or assumptions: None.
-Notes: Imported from Forgejo issue #49 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/49).
+Notes: Already done in commit aec3539 (2026-04-22), predating this import. Verified still untracked/gitignored on 2026-07-27. Forgejo issue #49 closed as already resolved.
 
 ### AUTO-012 — cookslate.com domain acquisition
 Priority: P2

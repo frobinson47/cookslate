@@ -14,6 +14,10 @@ RewriteRule ^(.*)$ $1 [L]
 RewriteCond %{REQUEST_URI} ^/(cookslate|crumble)/frontend/dist/
 RewriteRule ^(.*)$ $1 [L]
 
+# Real 404 for non-SPA extensions bots love to probe (no legitimate route uses these)
+RewriteCond %{REQUEST_URI} \.(php|phtml|asp|aspx|jsp|cgi)$ [NC]
+RewriteRule ^ - [R=404,L]
+
 # SPA fallback — everything else to frontend index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

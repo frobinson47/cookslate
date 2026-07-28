@@ -59,6 +59,16 @@ class Collection {
         $stmt->execute([$recipeId, $collectionId]);
     }
 
+    /**
+     * Add multiple recipes to a collection in one go. Idempotent per recipe.
+     */
+    public function addRecipesBulk(int $collectionId, array $recipeIds): void {
+        $stmt = $this->db->prepare('INSERT IGNORE INTO recipe_collections (recipe_id, collection_id) VALUES (?, ?)');
+        foreach ($recipeIds as $recipeId) {
+            $stmt->execute([(int) $recipeId, $collectionId]);
+        }
+    }
+
     public function removeRecipe(int $collectionId, int $recipeId): void {
         $stmt = $this->db->prepare('DELETE FROM recipe_collections WHERE recipe_id = ? AND collection_id = ?');
         $stmt->execute([$recipeId, $collectionId]);

@@ -593,6 +593,8 @@ try {
                             $response = $controller->delete($collectionId);
                             break;
                     }
+                } elseif ($subResource === 'recipes' && $subId === 'bulk' && $method === 'POST') {
+                    $response = $controller->addRecipesBulk($collectionId);
                 } elseif ($subResource === 'recipes' && is_numeric($subId)) {
                     switch ($method) {
                         case 'POST':

@@ -128,6 +128,33 @@ class CollectionController {
     }
 
     /**
+     * POST /collections/{id}/recipes/bulk
+     * Expects JSON: { ids: [1, 2, 3] }
+     * Add multiple recipes to a collection in one request.
+     */
+    public function addRecipesBulk(int $id): array {
+        $userId = Auth::requireAuth();
+        $model = new Collection();
+
+        if (!$model->isOwner($id, $userId)) {
+            http_response_code(403);
+            return ['error' => 'Access denied', 'code' => 403];
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $ids = array_values(array_unique(array_map('intval', $input['ids'] ?? [])));
+
+        if (empty($ids)) {
+            http_response_code(400);
+            return ['error' => 'ids is required', 'code' => 400];
+        }
+
+        $model->addRecipesBulk($id, $ids);
+        http_response_code(201);
+        return ['added' => $ids];
+    }
+
+    /**
      * DELETE /collections/{id}/recipes/{recipeId}
      * Remove a recipe from a collection.
      */

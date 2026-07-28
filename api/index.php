@@ -308,7 +308,11 @@ try {
                 }
             }
 
-            if ($id === 'import' && $method === 'POST') {
+            if ($id === 'bulk-delete' && $method === 'POST') {
+                $response = $controller->bulkDelete();
+            } elseif ($id === 'bulk-tag' && $method === 'POST') {
+                $response = $controller->bulkTag();
+            } elseif ($id === 'import' && $method === 'POST') {
                 $response = $controller->import();
             } elseif ($id === 'import-image' && $method === 'POST') {
                 $response = $controller->importImage();

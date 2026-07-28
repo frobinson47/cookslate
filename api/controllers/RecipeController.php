@@ -269,6 +269,73 @@ class RecipeController {
     }
 
     /**
+     * POST /recipes/bulk-delete
+     * Expects JSON: { ids: [1, 2, 3] }
+     * Deletes each recipe the user is the creator of (or admin); others are
+     * reported back as skipped rather than failing the whole request.
+     */
+    public function bulkDelete(): array {
+        $userId = Auth::requireAuth();
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $ids = array_values(array_unique(array_map('intval', $input['ids'] ?? [])));
+
+        if (empty($ids)) {
+            http_response_code(400);
+            return ['error' => 'ids is required', 'code' => 400];
+        }
+
+        $recipeModel = new Recipe();
+        $isAdmin = ($_SESSION['role'] ?? '') === 'admin';
+        $deleted = [];
+        $skipped = [];
+
+        foreach ($ids as $id) {
+            if (!$recipeModel->findById($id) || (!$isAdmin && !$recipeModel->isCreator($id, $userId))) {
+                $skipped[] = $id;
+                continue;
+            }
+            $recipeModel->delete($id);
+            $deleted[] = $id;
+        }
+
+        LoggerService::channel('recipe')->info('Bulk recipe delete', ['deleted' => $deleted, 'skipped' => $skipped, 'user_id' => $userId]);
+        return ['deleted' => $deleted, 'skipped' => $skipped];
+    }
+
+    /**
+     * POST /recipes/bulk-tag
+     * Expects JSON: { ids: [1, 2, 3], tags: ["quick", "weeknight"] }
+     * Adds tags additively — existing tags on each recipe are kept.
+     */
+    public function bulkTag(): array {
+        $userId = Auth::requireAuth();
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $ids = array_values(array_unique(array_map('intval', $input['ids'] ?? [])));
+        $tagNames = array_values(array_filter(array_map('trim', $input['tags'] ?? [])));
+
+        if (empty($ids) || empty($tagNames)) {
+            http_response_code(400);
+            return ['error' => 'ids and tags are required', 'code' => 400];
+        }
+
+        $recipeModel = new Recipe();
+        $isAdmin = ($_SESSION['role'] ?? '') === 'admin';
+        $updated = [];
+        $skipped = [];
+
+        foreach ($ids as $id) {
+            if (!$recipeModel->findById($id) || (!$isAdmin && !$recipeModel->isCreator($id, $userId))) {
+                $skipped[] = $id;
+                continue;
+            }
+            $recipeModel->addTags($id, $tagNames);
+            $updated[] = $id;
+        }
+
+        return ['updated' => $updated, 'skipped' => $skipped];
+    }
+
+    /**
      * POST /recipes/import
      * Expects JSON: { url }
      * Returns parsed recipe data for preview (does NOT save).

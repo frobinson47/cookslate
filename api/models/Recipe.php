@@ -523,6 +523,30 @@ class Recipe {
     }
 
     /**
+     * Add tags to a recipe additively — existing tags and other recipe
+     * fields are left untouched (unlike update(), which replaces the tag set).
+     */
+    public function addTags(int $recipeId, array $tagNames): void {
+        foreach ($tagNames as $tagName) {
+            $tagName = trim($tagName);
+            if ($tagName === '') continue;
+
+            $findStmt = $this->db->prepare('SELECT id FROM tags WHERE name = ?');
+            $findStmt->execute([$tagName]);
+            $tagId = $findStmt->fetchColumn();
+
+            if ($tagId === false) {
+                $createStmt = $this->db->prepare('INSERT INTO tags (name) VALUES (?)');
+                $createStmt->execute([$tagName]);
+                $tagId = (int) $this->db->lastInsertId();
+            }
+
+            $linkStmt = $this->db->prepare('INSERT IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)');
+            $linkStmt->execute([$recipeId, (int) $tagId]);
+        }
+    }
+
+    /**
      * Find recipes by matching ingredient names.
      * Returns recipes ranked by how many of the provided ingredients match.
      */

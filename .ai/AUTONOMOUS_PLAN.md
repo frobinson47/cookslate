@@ -63,18 +63,18 @@ Notes: Forgejo issue #63, milestone Backlog (#35) given fragility — revisit pr
 
 ## Roadmap v1
 
-### AUTO-004 — Receipt Scaning
+### AUTO-004 — Receipt Scanning
 Priority: P2
-Status: TODO
+Status: DONE
 
-Goal: Imported from Forgejo issue #69: Receipt Scaning
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #69 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/69).
+Goal: Imported from Forgejo issue #69: snap a photo of a receipt, extract every line item/price/store, and prefill spending history + pantry automatically.
+Why it matters: Manual line-item entry is what makes people quit tracking pantry/spending. Full line-item extraction (not totals-only) is required for both category breakdowns and pantry prefill to work at all — decided explicitly over the totals-only alternative.
+Scope: Full line-item vision extraction; new spending-history subsystem (shopping_trips/shopping_trip_items); pantry quantity tracking (previously just name + always-stocked boolean). Broken into 5 sub-tasks, Forgejo #70-#74.
+Expected files or areas: database/migrations/022_pantry_quantity.sql, 023_shopping_trips.sql; api/services/ReceiptVisionParser.php + OpenAiReceiptParser.php; api/models/ShoppingTrip.php + ShoppingTripItem.php; api/controllers/ShoppingTripController.php; api/models/Pantry.php (quantity support); frontend/src/pages/ScanReceiptPage.jsx + SpendingHistoryPage.jsx; frontend/src/components/receipt/*; frontend/src/hooks/useShoppingTrips.js.
+Acceptance criteria: User uploads a receipt photo, reviews/edits extracted store/date/total/line-items, confirms — trip + items persist, matched pantry entries get quantity/unit prefilled (accumulated when units match). Spending History page lists trips and shows a per-trip category breakdown.
+Validation: 20 new PHPUnit tests (7 vision parser, 4 pantry quantity, 6 shopping trip model) — all pass alongside full existing suite (263 tests). Frontend verified via `npm run build` (not `npm run lint` — see risks).
+Risks or assumptions: Receipt images aren't persisted to disk yet (receipt_image_path stays null), matching the same simplification the recipe-image-import feature made for its source image. Pantry quantity accumulation doesn't attempt unit conversion — mismatched units just overwrite rather than sum. `npm run lint` is broken repo-wide (ESLint 9 needs eslint.config.js migration from .eslintrc.*) — pre-existing, unrelated, not fixed as part of this task.
+Notes: Imported from Forgejo issue #69 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/69). Sub-tasks: #70 (schema), #71 (vision parser), #72 (backend), #73 (upload/review frontend), #74 (spending history + pantry UI).
 
 ### AUTO-005 — Migrate cookslate prod secrets from plain .env to Infisical
 Priority: P1

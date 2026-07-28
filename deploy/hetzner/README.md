@@ -49,11 +49,22 @@ HTTP-01 challenges directly.
 
 ## Deploy workflow
 
+Prod secrets (`APP_ENCRYPTION_KEY`, `APP_URL`, `COOKSLATE_API_KEY`, `EMAIL_FROM`,
+`RESEND_API_KEY`, `USDA_API_KEY`) live in Infisical (`Cookslate` project, `prod`
+environment), not a hand-maintained `.env`. Deploy via the wrapper script, which
+pulls secrets from Infisical, writes a break-glass `.env` mirror, and recreates
+the app container:
+
 ```bash
 ssh root@204.168.148.56
-cd /opt/cookslate && git pull && docker compose build app && docker compose up -d app
+/opt/cookslate/deploy.sh   # see deploy/hetzner/cookslate/deploy.sh
 cd /opt/cookslate-demo && docker compose build app && docker compose up -d app
 ```
+
+`deploy.sh` requires `/opt/cookslate/.infisical-auth` (chmod 600, gitignored) —
+the `cookslate-app` machine identity's Universal Auth `CLIENT_ID`/`CLIENT_SECRET`,
+scoped to viewer access on the Cookslate Infisical project. Demo still uses a
+plain `.env` (only `APP_ENCRYPTION_KEY`) — not yet migrated.
 
 Demo seed reset runs hourly via root crontab:
 `0 * * * * /opt/cookslate-demo/seed/reset-demo.sh >> /opt/cookslate-demo/seed/reset.log 2>&1`

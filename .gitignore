@@ -28,3 +28,9 @@ crumble_db_backup.sql
 
 # Local-only marketing assets (not shipped in the repo)
 marketing/
+
+# Local knowledge scaffold (global CLAUDE.md instructions, not project-specific)
+knowledge/
+
+# Infisical machine-identity creds for prod deploy (server-side only, never committed)
+.infisical-auth

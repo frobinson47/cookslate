@@ -2,13 +2,17 @@ services:
   app:
     build: .
     container_name: cookslate-app
+    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     volumes:
       - uploads:/var/www/html/uploads
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - default
+      - web
     environment:
       - DB_HOST=db
       - DB_PORT=3306
@@ -16,14 +20,16 @@ services:
       - DB_USER=cookslate
       - DB_PASS=cookslate
       - USDA_API_KEY=${USDA_API_KEY:-}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - APP_URL=${APP_URL:-}
       - APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:-}
       - COOKSLATE_API_KEY=${COOKSLATE_API_KEY:-}
 
   db:
     image: mysql:8
     container_name: cookslate-db
-    ports:
-      - "3309:3306"
+    restart: unless-stopped
     volumes:
       - dbdata:/var/lib/mysql
     environment:
@@ -36,6 +42,11 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+networks:
+  web:
+    external: true
+    name: web
 
 volumes:
   uploads:

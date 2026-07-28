@@ -78,16 +78,16 @@ Notes: Imported from Forgejo issue #69 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-005 — Migrate cookslate prod secrets from plain .env to Infisical
 Priority: P1
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #64: Migrate cookslate prod secrets from plain .env to Infisical
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #64 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/64).
+Why it matters: A plaintext .env on the prod box is the exact pattern behind a prior real incident (a leaked API key scraped and abused within minutes). Infisical is this org's mandated secrets source of truth.
+Scope: Cookslate prod only (home.cookslate.app on hookhouse-pro). Demo (demo.cookslate.app) still uses a plain .env with only APP_ENCRYPTION_KEY — not migrated, out of scope for this task.
+Expected files or areas: New Infisical project "Cookslate" (workspaceId 454001e7-e795-45d6-a5c4-a34846dcef91), scoped `cookslate-app` machine identity (viewer), `/opt/cookslate/.infisical-auth` on the server, `deploy/hetzner/cookslate/deploy.sh`, `deploy/hetzner/README.md`.
+Acceptance criteria: All 6 prod secrets (APP_ENCRYPTION_KEY, APP_URL, COOKSLATE_API_KEY, EMAIL_FROM, RESEND_API_KEY, USDA_API_KEY) live in Infisical prod env; deploy script pulls from Infisical via a scoped machine identity and writes a break-glass .env mirror; app container recreated successfully with Infisical-sourced values.
+Validation: Verified login + `infisical export` returns the same 6 keys with byte-identical values (accounting for dotenv quote-wrapping) as the original .env; ran `deploy.sh` for real and confirmed the app container came up healthy.
+Risks or assumptions: cookslate-app identity has viewer-only access, scoped to this one project. The break-glass .env mirror means a stale plaintext copy still exists on disk after each deploy — acceptable per org policy (same pattern used for every other app).
+Notes: Imported from Forgejo issue #64 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/64). While wiring this, found the server's docker-compose.yml had drifted from the repo (restart: unless-stopped, 127.0.0.1-only port binding, external "web" network for Caddy, and the RESEND_API_KEY/EMAIL_FROM/APP_URL env vars) — reconciled by pulling the server's live config back into the repo rather than overwriting it. Also found 7 Card Art feature files and 9 modified files on the server that were byte-identical to already-merged commits (6ffe9f0/44df2df) — safe leftovers from an earlier direct-to-server deploy, discarded so `git pull` works cleanly again.
 
 ### AUTO-006 — Blog: What is a self-hosted recipe manager? (top-of-funnel AEO)
 Priority: P3
@@ -156,7 +156,7 @@ Notes: Already done in commit aec3539 (2026-04-22), predating this import. Verif
 
 ### AUTO-012 — cookslate.com domain acquisition
 Priority: P2
-Status: DEFERRED
+Status: SKIPPED
 
 Goal: Imported from Forgejo issue #34: cookslate.com domain acquisition
 Why it matters: TBD
@@ -165,11 +165,11 @@ Expected files or areas: TBD
 Acceptance criteria: TBD
 Validation: TBD
 Risks or assumptions: None.
-Notes: Imported from Forgejo issue #34 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/34).
+Notes: Imported from Forgejo issue #34 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/34). Skipped — nothing actionable until closer to the domain's 2026-10-20 expiry; revisit then.
 
 ### AUTO-013 — Native mobile app
 Priority: P2
-Status: DEFERRED
+Status: SKIPPED
 
 Goal: Imported from Forgejo issue #33: Native mobile app
 Why it matters: TBD
@@ -178,7 +178,7 @@ Expected files or areas: TBD
 Acceptance criteria: TBD
 Validation: TBD
 Risks or assumptions: None.
-Notes: Imported from Forgejo issue #33 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/33).
+Notes: Imported from Forgejo issue #33 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/33). Skipped — explicitly waiting for customer demand before scoping.
 
 ### AUTO-014 — Batch editing for recipes
 Priority: P2

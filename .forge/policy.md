@@ -8,6 +8,7 @@
 - docs/**
 - aar/**
 - design-exploration/**
+- deploy/**
 - README.md
 - CONTRIBUTING.md
 - .gitignore

@@ -16,6 +16,7 @@ import CardArtPrintPage from './pages/CardArtPrintPage';
 import AddRecipePage from './pages/AddRecipePage';
 import EditRecipePage from './pages/EditRecipePage';
 import GroceryPage from './pages/GroceryPage';
+import ScanReceiptPage from './pages/ScanReceiptPage';
 import AdminPage from './pages/AdminPage';
 import BulkImportPage from './pages/BulkImportPage';
 import CookHistoryPage from './pages/CookHistoryPage';
@@ -123,6 +124,16 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <GroceryPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/scan-receipt"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ScanReceiptPage />
                 </Layout>
               </ProtectedRoute>
             }

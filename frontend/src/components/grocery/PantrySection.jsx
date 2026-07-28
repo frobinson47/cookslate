@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Warehouse } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, X, Warehouse, Receipt } from 'lucide-react';
 import usePantry from '../../hooks/usePantry';
 import Button from '../ui/Button';
 
@@ -28,6 +29,13 @@ export default function PantrySection() {
         <Warehouse size={18} className="text-terracotta" />
         <h2 className="font-semibold text-brown">My Pantry</h2>
         <span className="text-xs text-warm-gray ml-auto">{items.length} items</span>
+        <Link
+          to="/scan-receipt"
+          className="flex items-center gap-1 text-xs text-terracotta hover:underline"
+        >
+          <Receipt size={14} />
+          Scan Receipt
+        </Link>
       </div>
 
       <p className="px-4 py-2 text-xs text-warm-gray">

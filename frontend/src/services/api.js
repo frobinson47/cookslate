@@ -505,6 +505,29 @@ export function removePantryItem(id) {
   return request(`/pantry/${id}`, { method: 'DELETE' });
 }
 
+// Shopping trips (receipt scanning / spending history)
+export function importReceipt(imageFile) {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  return request('/shopping-trips/import-receipt', { method: 'POST', body: formData, isFormData: true });
+}
+
+export function createShoppingTrip(trip) {
+  return request('/shopping-trips', { method: 'POST', body: trip });
+}
+
+export function getShoppingTrips() {
+  return request('/shopping-trips');
+}
+
+export function getShoppingTrip(id) {
+  return request(`/shopping-trips/${id}`);
+}
+
+export function deleteShoppingTrip(id) {
+  return request(`/shopping-trips/${id}`, { method: 'DELETE' });
+}
+
 // Collections
 export function getCollections() {
   return request('/collections');

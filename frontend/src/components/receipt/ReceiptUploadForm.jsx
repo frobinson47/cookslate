@@ -50,6 +50,7 @@ export default function ReceiptUploadForm({ onImportSuccess, isLoading, onImport
         ref={fileRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
+        capture="environment"
         onChange={handleFileChange}
         disabled={isLoading}
         className="block w-full text-sm text-brown-light file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-terracotta file:text-white file:text-sm file:font-medium hover:file:bg-terracotta/90 disabled:opacity-50"

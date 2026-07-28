@@ -134,6 +134,14 @@ export function deleteRecipe(id) {
   return request(`/recipes/${id}`, { method: 'DELETE' });
 }
 
+export function bulkDeleteRecipes(ids) {
+  return request('/recipes/bulk-delete', { method: 'POST', body: { ids } });
+}
+
+export function bulkTagRecipes(ids, tags) {
+  return request('/recipes/bulk-tag', { method: 'POST', body: { ids, tags } });
+}
+
 export function importRecipe(url) {
   return request('/recipes/import', { method: 'POST', body: { url } });
 }
@@ -551,6 +559,10 @@ export function deleteCollection(id) {
 
 export function addRecipeToCollection(collectionId, recipeId) {
   return request(`/collections/${collectionId}/recipes/${recipeId}`, { method: 'POST' });
+}
+
+export function addRecipesToCollectionBulk(collectionId, ids) {
+  return request(`/collections/${collectionId}/recipes/bulk`, { method: 'POST', body: { ids } });
 }
 
 export function removeRecipeFromCollection(collectionId, recipeId) {

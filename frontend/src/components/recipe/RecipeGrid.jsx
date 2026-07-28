@@ -6,7 +6,7 @@ import { RecipeCardSkeleton } from '../ui/Skeleton';
 import { BookOpen } from 'lucide-react';
 import EmptyState from '../ui/EmptyState';
 
-export default function RecipeGrid({ recipes, isLoading, hasMore, onLoadMore, density = 'grid' }) {
+export default function RecipeGrid({ recipes, isLoading, hasMore, onLoadMore, density = 'grid', selectMode = false, selectedIds, onToggleSelect }) {
   if (isLoading && recipes.length === 0) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
@@ -72,7 +72,13 @@ export default function RecipeGrid({ recipes, isLoading, hasMore, onLoadMore, de
     <div>
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
         {recipes.map((recipe) => (
-          <RecipeCard key={recipe.id} recipe={recipe} />
+          <RecipeCard
+            key={recipe.id}
+            recipe={recipe}
+            selectMode={selectMode}
+            selected={selectedIds?.has(recipe.id)}
+            onToggleSelect={onToggleSelect}
+          />
         ))}
       </div>
       {loadMoreBtn}

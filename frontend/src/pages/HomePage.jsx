@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
-import { Plus, Search, Clock, ArrowRight, UtensilsCrossed, X, ChefHat, CalendarDays, RotateCcw, Sparkles, Link2, FileUp, ClipboardPaste } from 'lucide-react';
+import { Plus, Search, Clock, ArrowRight, UtensilsCrossed, X, ChefHat, CalendarDays, RotateCcw, Sparkles, Link2, FileUp, ClipboardPaste, ListChecks } from 'lucide-react';
 import RecipeGrid from '../components/recipe/RecipeGrid';
+import BulkActionToolbar from '../components/recipe/BulkActionToolbar';
 import DensityToggle from '../components/ui/DensityToggle';
 import useRecipes from '../hooks/useRecipes';
 import useRecentlyViewed from '../hooks/useRecentlyViewed';
@@ -31,10 +32,34 @@ export default function HomePage({ searchQuery = '' }) {
   const [uncookedRecipes, setUncookedRecipes] = useState([]);
   const [deleteTagConfirm, setDeleteTagConfirm] = useState(null);
   const [density, setDensity] = useState(() => localStorage.getItem('recipeDensity') || 'grid');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
 
   const handleDensityChange = (v) => {
     setDensity(v);
     localStorage.setItem('recipeDensity', v);
+  };
+
+  const toggleSelect = useCallback((id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkActionComplete = () => {
+    exitSelectMode();
+    loadRecipes({ page: 1 });
   };
 
   // Fetch today's meal plan, forgotten favorites, and uncooked recipes
@@ -150,6 +175,20 @@ export default function HomePage({ searchQuery = '' }) {
   };
 
   const isFiltering = localSearch || activeTag;
+
+  const selectToggleButton = density === 'grid' && (
+    <button
+      onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+      className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 min-h-[36px] ${
+        selectMode
+          ? 'bg-terracotta text-white'
+          : 'bg-cream hover:bg-terracotta/10 text-brown-light hover:text-terracotta'
+      }`}
+    >
+      <ListChecks size={16} />
+      {selectMode ? 'Cancel' : 'Select'}
+    </button>
+  );
 
   return (
     <div className="space-y-6">
@@ -386,16 +425,22 @@ export default function HomePage({ searchQuery = '' }) {
             ))}
           </div>
           </div>
-          <div className="hidden md:block shrink-0">
-            <DensityToggle value={density} onChange={handleDensityChange} />
+          <div className="flex items-center gap-2 shrink-0">
+            {selectToggleButton}
+            <div className="hidden md:block">
+              <DensityToggle value={density} onChange={handleDensityChange} />
+            </div>
           </div>
         </div>
       )}
 
       {/* Density toggle standalone (when no tags) */}
       {tags.length === 0 && (
-        <div className="hidden md:flex justify-end">
-          <DensityToggle value={density} onChange={handleDensityChange} />
+        <div className="flex justify-end items-center gap-2">
+          {selectToggleButton}
+          <div className="hidden md:block">
+            <DensityToggle value={density} onChange={handleDensityChange} />
+          </div>
         </div>
       )}
 
@@ -650,17 +695,30 @@ export default function HomePage({ searchQuery = '' }) {
           hasMore={pagination.page < pagination.totalPages}
           onLoadMore={handleLoadMore}
           density={density}
+          selectMode={selectMode}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+        />
+      )}
+
+      {selectMode && selectedIds.size > 0 && (
+        <BulkActionToolbar
+          selectedIds={selectedIds}
+          onClear={() => setSelectedIds(new Set())}
+          onComplete={handleBulkActionComplete}
         />
       )}
 
       {/* Mobile FAB */}
-      <Link
-        to="/add"
-        className="md:hidden fixed bottom-20 right-4 z-20 w-14 h-14 bg-terracotta text-white rounded-full shadow-lg flex items-center justify-center hover:bg-terracotta-dark transition-colors duration-200"
-        aria-label="Add recipe"
-      >
-        <Plus size={28} />
-      </Link>
+      {!selectMode && (
+        <Link
+          to="/add"
+          className="md:hidden fixed bottom-20 right-4 z-20 w-14 h-14 bg-terracotta text-white rounded-full shadow-lg flex items-center justify-center hover:bg-terracotta-dark transition-colors duration-200"
+          aria-label="Add recipe"
+        >
+          <Plus size={28} />
+        </Link>
+      )}
 
       {/* Delete tag confirmation modal */}
       <Modal

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Users, UtensilsCrossed, ChefHat, Flame } from 'lucide-react';
+import { Clock, Users, UtensilsCrossed, ChefHat, Flame, CheckCircle2, Circle } from 'lucide-react';
 import TagBadge from '../ui/TagBadge';
 import StarRating from '../ui/StarRating';
 import FavoriteButton from './FavoriteButton';
@@ -8,14 +8,24 @@ import AddToMealPlanButton from './AddToMealPlanButton';
 import { thumbImageUrl } from '../../utils/imageUrl';
 import { estimateDifficulty, DIFFICULTY_COLORS } from '../../utils/recipeDifficulty';
 
-export default function RecipeCard({ recipe }) {
+export default function RecipeCard({ recipe, selectMode = false, selected = false, onToggleSelect }) {
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
   const imageUrl = thumbImageUrl(recipe.image_path);
 
+  const cardProps = selectMode
+    ? {
+        type: 'button',
+        onClick: () => onToggleSelect?.(recipe.id),
+        'aria-pressed': selected,
+      }
+    : { to: `/recipe/${recipe.id}` };
+
+  const CardTag = selectMode ? 'button' : Link;
+
   return (
-    <Link
-      to={`/recipe/${recipe.id}`}
-      className="group block bg-surface rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
+    <CardTag
+      {...cardProps}
+      className={`group block w-full text-left bg-surface rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 ${selected ? 'ring-2 ring-terracotta' : ''}`}
     >
       {/* Image */}
       <div className="relative aspect-[4/3] bg-cream-dark overflow-hidden">
@@ -32,16 +42,28 @@ export default function RecipeCard({ recipe }) {
           </div>
         )}
 
-        {/* Favorite overlay */}
-        <FavoriteButton
-          recipeId={recipe.id}
-          initialFavorited={recipe.is_favorited}
-          size="sm"
-          overlay
-        />
+        {selectMode ? (
+          <div className="absolute top-2 left-2 bg-surface/90 rounded-full p-0.5">
+            {selected ? (
+              <CheckCircle2 size={24} className="text-terracotta" />
+            ) : (
+              <Circle size={24} className="text-warm-gray" />
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Favorite overlay */}
+            <FavoriteButton
+              recipeId={recipe.id}
+              initialFavorited={recipe.is_favorited}
+              size="sm"
+              overlay
+            />
 
-        {/* Meal plan overlay */}
-        <AddToMealPlanButton recipeId={recipe.id} variant="overlay" />
+            {/* Meal plan overlay */}
+            <AddToMealPlanButton recipeId={recipe.id} variant="overlay" />
+          </>
+        )}
 
         {/* Time badge */}
         {totalTime > 0 && (
@@ -107,6 +129,6 @@ export default function RecipeCard({ recipe }) {
           </div>
         )}
       </div>
-    </Link>
+    </CardTag>
   );
 }

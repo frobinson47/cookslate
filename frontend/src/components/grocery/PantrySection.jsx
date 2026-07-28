@@ -50,6 +50,11 @@ export default function PantrySection() {
               className="inline-flex items-center gap-1 px-3 py-1.5 bg-cream-dark/60 rounded-full text-sm text-brown-light"
             >
               {item.ingredient_name}
+              {item.quantity != null && (
+                <span className="text-warm-gray">
+                  ({item.quantity}{item.unit ? ` ${item.unit}` : ''})
+                </span>
+              )}
               <button
                 onClick={() => removeItem(item.id)}
                 className="p-0.5 hover:text-red-500 transition-colors"

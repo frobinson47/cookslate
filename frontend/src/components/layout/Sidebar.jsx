@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, ShoppingCart, Heart, CalendarDays, Search, Settings, Sun, Moon, Monitor, LogOut, Plus, Upload, BookOpen, TrendingUp, Shield, Database, Compass, Library, ChevronRight, Download, FileText, User } from 'lucide-react';
+import { LayoutGrid, ShoppingCart, Heart, CalendarDays, Search, Settings, Sun, Moon, Monitor, LogOut, Plus, Upload, BookOpen, TrendingUp, Shield, Database, Compass, Library, ChevronRight, Download, FileText, User, Receipt } from 'lucide-react';
 import CookslateLogo from '../ui/CookslateLogo';
 import { useAuth } from '../../hooks/useAuth';
 import useTheme from '../../hooks/useTheme';
@@ -81,6 +81,7 @@ export default function Sidebar() {
     { to: '/collections', icon: Library, label: 'Collections' },
     { to: '/discover', icon: Compass, label: 'Discover' },
     { to: '/cook-history', icon: BookOpen, label: 'Cook History' },
+    { to: '/spending-history', icon: Receipt, label: 'Spending History' },
     ...(proActive ? [{ to: '/stats', icon: TrendingUp, label: 'Kitchen Stats' }] : []),
     ...(isAdmin ? [{ to: '/admin', icon: Shield, label: 'Admin' }] : []),
     { to: '/ingredient-database', icon: Database, label: 'Ingredients' },

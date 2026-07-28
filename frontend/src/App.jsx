@@ -17,6 +17,7 @@ import AddRecipePage from './pages/AddRecipePage';
 import EditRecipePage from './pages/EditRecipePage';
 import GroceryPage from './pages/GroceryPage';
 import ScanReceiptPage from './pages/ScanReceiptPage';
+import SpendingHistoryPage from './pages/SpendingHistoryPage';
 import AdminPage from './pages/AdminPage';
 import BulkImportPage from './pages/BulkImportPage';
 import CookHistoryPage from './pages/CookHistoryPage';
@@ -134,6 +135,26 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <ScanReceiptPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/spending-history"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SpendingHistoryPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/spending-history/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SpendingHistoryPage />
                 </Layout>
               </ProtectedRoute>
             }

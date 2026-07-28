@@ -182,16 +182,16 @@ Notes: Imported from Forgejo issue #33 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-014 — Batch editing for recipes
 Priority: P2
-Status: TODO
+Status: DONE
 
-Goal: Imported from Forgejo issue #32: Batch editing for recipes
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #32 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/32).
+Goal: Imported from Forgejo issue #32: multi-select + bulk tag/delete/add-to-collection, referencing Tandoor's batch editing for recipes/foods/users/shopping.
+Why it matters: Manually editing recipes one at a time (tagging, cleaning up, organizing into collections) doesn't scale once a library grows past a few dozen recipes.
+Scope: Recipes only (matches the issue title; foods/users/shopping batch editing from the Tandoor comparison are separate, not opened here). Multi-select lands on the HomePage grid density view only, per user confirmation — list/compact density and other recipe-listing pages (Favorites, Discover, Collections) don't get it in this pass.
+Expected files or areas: api/models/Recipe.php (addTags), Collection.php (addRecipesBulk); api/controllers/RecipeController.php (bulkDelete/bulkTag), CollectionController.php (addRecipesBulk); api/index.php routing; frontend/src/components/recipe/RecipeCard.jsx (selection mode), BulkActionToolbar.jsx (new), RecipeGrid.jsx; frontend/src/pages/HomePage.jsx.
+Acceptance criteria: User taps Select, checks multiple recipe cards, and can bulk-tag (additive), bulk-delete (with confirm), or bulk-add-to-collection from a floating toolbar. Recipes the user doesn't own are silently skipped (reported in the response) rather than failing the whole batch, matching the existing single-recipe delete/edit authorization model.
+Validation: 7 new PHPUnit tests (5 Recipe bulk ops, 2 Collection bulk ops) — all pass alongside full suite (270 tests). Frontend verified via `npm run build` (lint still broken repo-wide, unrelated — see AUTO-004 notes).
+Risks or assumptions: Bulk add-to-collection only checks collection ownership (not per-recipe), matching the existing single addRecipe endpoint's behavior — collections are personal folders over a shared recipe library, not per-recipe ACLs.
+Notes: Imported from Forgejo issue #32 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/32). Lesson from AUTO-004: deploy to prod as part of "done," not just push to Forgejo — applied here.
 
 ### AUTO-015 — More import formats (Nextcloud Cookbook, RecipeSage)
 Priority: P3

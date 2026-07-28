@@ -621,6 +621,47 @@ try {
             }
             break;
 
+        // ── Shopping Trip Routes (receipt scanning / spending history) ──
+        case 'shopping-trips':
+            require_once __DIR__ . '/controllers/ShoppingTripController.php';
+            $controller = new ShoppingTripController();
+
+            if ($id === 'import-receipt' && $method === 'POST') {
+                $rateLimiter = new RateLimiter();
+                $clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+                $rateResult = $rateLimiter->check($clientIp, 'import', 10, 300);
+                if (!$rateResult['allowed']) {
+                    http_response_code(429);
+                    header('Retry-After: ' . $rateResult['retryAfter']);
+                    $response = [
+                        'error' => 'Too many import requests. Try again later.',
+                        'code' => 429,
+                        'retryAfter' => $rateResult['retryAfter'],
+                    ];
+                    break;
+                }
+                $response = $controller->importReceipt();
+            } elseif ($id === null) {
+                switch ($method) {
+                    case 'GET':
+                        $response = $controller->list();
+                        break;
+                    case 'POST':
+                        $response = $controller->create();
+                        break;
+                }
+            } elseif (is_numeric($id)) {
+                switch ($method) {
+                    case 'GET':
+                        $response = $controller->get((int) $id);
+                        break;
+                    case 'DELETE':
+                        $response = $controller->delete((int) $id);
+                        break;
+                }
+            }
+            break;
+
         // ── Grocery Routes ──────────────────────────────────────────────
         case 'grocery':
             require_once __DIR__ . '/controllers/GroceryController.php';

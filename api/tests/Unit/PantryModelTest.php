@@ -97,4 +97,34 @@ class PantryModelTest extends TestCase
         $this->assertNotContains('flour', $matches);
         $this->assertNotContains('butter', $matches);
     }
+
+    public function testAddWithQuantityStoresQuantityAndUnit(): void
+    {
+        $item = $this->pantry->add($this->testUserId, 'eggs', 12.0, 'count');
+        $this->assertEquals(12.0, (float) $item['quantity']);
+        $this->assertEquals('count', $item['unit']);
+    }
+
+    public function testAddWithQuantitySameUnitAccumulates(): void
+    {
+        $this->pantry->add($this->testUserId, 'eggs', 6.0, 'count');
+        $item = $this->pantry->add($this->testUserId, 'eggs', 6.0, 'count');
+        $this->assertEquals(12.0, (float) $item['quantity']);
+    }
+
+    public function testAddWithQuantityDifferentUnitOverwrites(): void
+    {
+        $this->pantry->add($this->testUserId, 'flour', 2.0, 'lb');
+        $item = $this->pantry->add($this->testUserId, 'flour', 500.0, 'g');
+        $this->assertEquals(500.0, (float) $item['quantity']);
+        $this->assertEquals('g', $item['unit']);
+    }
+
+    public function testAddWithoutQuantityLeavesExistingQuantityUntouched(): void
+    {
+        $this->pantry->add($this->testUserId, 'sugar', 3.0, 'lb');
+        $item = $this->pantry->add($this->testUserId, 'sugar');
+        $this->assertEquals(3.0, (float) $item['quantity']);
+        $this->assertEquals('lb', $item['unit']);
+    }
 }

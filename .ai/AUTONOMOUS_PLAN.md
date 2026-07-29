@@ -14,7 +14,7 @@ To be documented as the project evolves.
 
 ## Current implementation status
 
-Roadmap v1 is in progress.
+Roadmap v1 is complete. Roadmap v2 (AUTO-023 through AUTO-025) is in progress.
 
 ## Technical debt
 
@@ -244,6 +244,49 @@ Acceptance criteria: GET /cook-log/year-in-review?year=YYYY returns total meals,
 Validation: 6 new PHPUnit tests (total/unique counts, most active month, most-made recipe, new-recipes exclusion logic, streak-peak calculation, empty-year zeroing) — all pass alongside full suite (276 tests). `npm run build` succeeds.
 Risks or assumptions: Not manually click-tested in a live browser this pass.
 Notes: Imported from Forgejo issue #17 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/17).
+
+## Roadmap v2
+
+Sourced from competitive research against Mealie, Tandoor Recipes, Nextcloud Cookbook, Paprika, and the 2026 AI-pantry-scan app wave (FEATURE_ENHANCEMENTS.md, 2026-07-29), since the v1 Forgejo backlog was fully exhausted. User approved the top 3 recommendations.
+
+### AUTO-023 — Pantry expiration tracking + Use It Soon surfacing
+Priority: P1
+Status: TODO
+
+Goal: Imported from Forgejo issue #75. Add an optional expiration date to pantry items and surface a "Use It Soon" card so users see what's about to go bad.
+Why it matters: Every commercial and AI-pantry competitor (Paprika, Pantry AI, RecipeScan) leads with expiry reminders as the core food-waste-reduction hook. Cookslate's pantry has quantity tracking (AUTO-004) but no time dimension at all.
+Scope: Add expiration_date to the pantry table; surface a "Use It Soon" HomePage card (same pattern as the existing "Forgotten Favorites"/"Something New" cards). No push notifications or reminders in this pass — just in-app surfacing.
+Expected files or areas: New migration (024_pantry_expiration.sql); api/models/Pantry.php; frontend/src/components/grocery/PantrySection.jsx (date input), frontend/src/pages/HomePage.jsx (new card).
+Acceptance criteria: User can optionally set/edit an expiration date per pantry item; items expiring within N days (start with 3) surface in a dedicated HomePage card; items with no expiration date set behave exactly as today (fully optional field).
+Validation: PHPUnit tests for the new pantry query; npm run build; manual check that the card only shows when relevant.
+Risks or assumptions: None — purely additive, nullable column.
+Notes: Imported from Forgejo issue #75 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/75).
+
+### AUTO-024 — Pantry photo scan (fridge/shelf inventory from one photo)
+Priority: P1
+Status: TODO
+
+Goal: Imported from Forgejo issue #76. Extend the existing receipt-scanning vision pipeline to a second mode: photograph a fridge/pantry/freezer shelf and bulk-add identified items to the pantry, no receipt needed.
+Why it matters: Every dedicated AI-pantry app in 2026 leads with exactly this, and Tandoor already ships it as a differentiator against Mealie. ~80% of the infrastructure already exists from AUTO-004 (OpenAI vision pipeline, BYOK key handling, Pantry model with quantities).
+Scope: New vision parser (new prompt, reusing the same OpenAI vision call pattern as OpenAiReceiptParser) that returns item name + rough quantity only (no price/store/date). Reuses ScanReceiptPage's upload+review UX with a simpler review form. Writes straight to Pantry::add(), skips shopping_trips entirely.
+Expected files or areas: api/services/OpenAiPantryScanParser.php (new, or extend OpenAiReceiptParser); api/controllers/ (new endpoint or reuse ShoppingTripController pattern); frontend: new PantryScanPage or extend ScanReceiptPage with a mode toggle; entry point button next to "Scan Receipt".
+Acceptance criteria: User uploads a fridge/pantry photo, reviews an editable list of identified items + estimated quantities, confirms — items added to pantry (accumulating quantities per the existing Pantry::add() logic from AUTO-004, including AUTO-023's expiration date if the user sets one during review).
+Validation: PHPUnit tests against synthetic sample vision responses (mirroring the OpenAiReceiptParserTest pattern); npm run build.
+Risks or assumptions: Same BYOK/cost-exposure considerations as receipt scanning — shares the existing rate limit bucket. Depends on AUTO-023 shipping first if the review form should let users set expiration dates during pantry-scan (soft dependency, not a hard blocker).
+Notes: Imported from Forgejo issue #76 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/76).
+
+### AUTO-025 — Home Assistant integration (read-only sensors + dashboard card)
+Priority: P1
+Status: TODO
+
+Goal: Imported from Forgejo issue #77. Expose a small, stable read-only API surface (today's meal plan, pantry "use it soon" items) for Home Assistant REST sensor consumption, plus documentation with an example Lovelace card config.
+Why it matters: Mealie's official Home Assistant integration has 2,555+ active installs — real evidence the self-hosted recipe-app audience already runs Home Assistant. Reuses the existing read-only external API key infrastructure (COOKSLATE_API_KEY) rather than building new auth.
+Scope: Two new read-only endpoints scoped to the existing external API key middleware. No official HACS integration in this pass — a documented REST sensor YAML config is the v1 target, not a published HA custom component.
+Expected files or areas: api/controllers/ (new ExternalController methods or extend the existing one), api/index.php routing; new docs/home-assistant.md with copy-pasteable `rest` sensor + card YAML.
+Acceptance criteria: GET /external/today-meal and GET /external/pantry-alerts return read-only data authenticated via the existing external API key; docs/home-assistant.md has a working example a user can copy into configuration.yaml.
+Validation: PHPUnit tests for the new endpoints (auth required, correct data shape); manual test with a real API key via curl.
+Risks or assumptions: Depends on AUTO-023 (pantry expiration) for the pantry-alerts endpoint to have real data to return — sequence after AUTO-023.
+Notes: Imported from Forgejo issue #77 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/77).
 
 ## Future Ideas
 

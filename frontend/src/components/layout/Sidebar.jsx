@@ -64,7 +64,7 @@ function NavIcon({ to, icon: Icon, label, end = false }) {
 }
 
 export default function Sidebar() {
-  const { user, isAdmin, logout } = useAuth();
+  const { isAdmin, logout } = useAuth();
   const { theme, cycle } = useTheme();
   const { active: proActive } = useLicense();
   const [expanded, setExpanded] = useState(false);

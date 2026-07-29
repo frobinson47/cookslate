@@ -25,6 +25,7 @@ export function LicenseProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-located with its Provider by design
 export function useLicense() {
   return useContext(LicenseContext);
 }

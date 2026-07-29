@@ -5,7 +5,7 @@ import usePantry from '../../hooks/usePantry';
 import Button from '../ui/Button';
 
 export default function PantrySection() {
-  const { items, isLoading, fetchPantry, addItem, removeItem } = usePantry();
+  const { items, fetchPantry, addItem, removeItem } = usePantry();
   const [newName, setNewName] = useState('');
 
   useEffect(() => {

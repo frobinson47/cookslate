@@ -256,7 +256,7 @@ export default function Header({ onSearch }) {
             <button
               onClick={async () => {
                 setDrawerOpen(false);
-                try { await logout(); } catch {}
+                try { await logout(); } catch { /* ignore */ }
               }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-left text-brown-light hover:bg-cream-dark hover:text-brown transition-colors duration-200 min-h-[44px] font-medium"
             >

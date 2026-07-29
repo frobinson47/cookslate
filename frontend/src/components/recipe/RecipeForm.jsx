@@ -164,7 +164,7 @@ export default function RecipeForm({ initialData, onSubmit, isLoading, submitLab
 
       setIsPrivate(Boolean(initialData.is_private));
     }
-  }, [initialData]);
+  }, [initialData, nextKey]);
 
   // Tag autocomplete filter
   useEffect(() => {
@@ -790,7 +790,7 @@ export default function RecipeForm({ initialData, onSubmit, isLoading, submitLab
                     setFat(String(data.fat || ''));
                     setFiber(String(data.fiber || ''));
                   }
-                } catch { }
+                } catch { /* ignore */ }
                 setAutoNutritionLoading(false);
               }}
               className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-sage bg-sage/10 rounded-lg hover:bg-sage/20 transition-colors disabled:opacity-50"

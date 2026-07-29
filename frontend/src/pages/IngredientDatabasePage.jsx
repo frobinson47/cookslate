@@ -54,14 +54,14 @@ export default function IngredientDatabasePage() {
       await api.updateIngredientData(editingId, editValues);
       setEditingId(null);
       fetchIngredients();
-    } catch { }
+    } catch { /* ignore */ }
   };
 
   const handleDelete = async (id) => {
     try {
       await api.deleteIngredientData(id);
       fetchIngredients();
-    } catch { }
+    } catch { /* ignore */ }
   };
 
   const handleAdd = async () => {
@@ -70,7 +70,7 @@ export default function IngredientDatabasePage() {
       setNewIngredient({ name: '', category: '', avg_price: '', price_unit: '' });
       setShowAdd(false);
       fetchIngredients();
-    } catch { }
+    } catch { /* ignore */ }
   };
 
   const handleUsdaSearch = async () => {

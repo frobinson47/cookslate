@@ -99,7 +99,9 @@ export default function SettingsPage() {
           <div>
             <div className="flex items-center gap-2 text-sage mb-2">
               <Check className="w-4 h-4" />
-              <span className="font-medium">Cookslate Pro — Active</span>
+              <span className="font-medium">
+                Cookslate {tier === 'household' ? 'Household' : 'Pro'} — Active
+              </span>
             </div>
             <p className="text-sm text-warm-gray mb-4">Licensed to {email}</p>
             <button
@@ -222,7 +224,7 @@ export default function SettingsPage() {
             <p className="text-xs text-warm-gray capitalize">{user?.role}</p>
           </div>
           <button
-            onClick={async () => { try { await logout(); } catch {} }}
+            onClick={async () => { try { await logout(); } catch { /* ignore */ } }}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-brown-light hover:bg-red-50 hover:text-red-600 transition-colors duration-200 font-medium"
           >
             <LogOut size={18} />

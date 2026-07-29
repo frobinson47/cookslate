@@ -21,6 +21,7 @@ export default function SubstitutionTip({ ingredientName }) {
       return;
     }
     setLoading(true);
+    setOpen(true);
     try {
       const data = await api.getSubstitutions(ingredientName);
       setSubs(data.substitutions || []);
@@ -28,7 +29,6 @@ export default function SubstitutionTip({ ingredientName }) {
       setSubs([]);
     }
     setLoading(false);
-    setOpen(true);
   };
 
   return (
@@ -41,6 +41,9 @@ export default function SubstitutionTip({ ingredientName }) {
       >
         <ArrowLeftRight size={12} />
       </button>
+      {open && loading && (
+        <span className="block mt-1 mb-1 pl-4 text-xs text-warm-gray">Loading substitutions...</span>
+      )}
       {open && subs && subs.length > 0 && (
         <span className="block mt-1 mb-1 pl-4 text-xs text-sage border-l-2 border-sage/20">
           {subs.slice(0, 2).map((sub, i) => (

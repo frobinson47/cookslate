@@ -1,14 +1,14 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Camera, CameraOff, X } from 'lucide-react';
 
-export default function BarcodeScanner({ onScan, onClose }) {
+export default function BarcodeScanner({ onScan }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const scanIntervalRef = useRef(null);
   const [error, setError] = useState(null);
   const [scanning, setScanning] = useState(false);
-  const [hasDetector, setHasDetector] = useState(false);
+  const [, setHasDetector] = useState(false);
 
   const stopStream = useCallback(() => {
     if (scanIntervalRef.current) {

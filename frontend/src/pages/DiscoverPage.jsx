@@ -67,7 +67,7 @@ export default function DiscoverPage() {
     try {
       const detail = await api.getDiscoverMeal(meal.mealdb_id);
       setMealDetail(detail);
-    } catch { }
+    } catch { /* ignore */ }
     setDetailLoading(false);
   };
 
@@ -78,7 +78,7 @@ export default function DiscoverPage() {
       const recipe = await api.importDiscoverMeal(mealDetail.mealdb_id);
       setSelectedMeal(null);
       navigate(`/recipe/${recipe.id}`);
-    } catch { }
+    } catch { /* ignore */ }
     setImporting(false);
   };
 

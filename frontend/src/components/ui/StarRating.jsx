@@ -17,7 +17,6 @@ export default function StarRating({ value = 0, onChange = null, size = 'md', co
         const filled = displayValue >= star;
         const halfFilled = !filled && displayValue >= star - 0.5;
         const commonProps = {
-          key: star,
           className: `
             ${interactive ? 'cursor-pointer hover:scale-110' : 'cursor-default'}
             transition-transform duration-150
@@ -38,6 +37,7 @@ export default function StarRating({ value = 0, onChange = null, size = 'md', co
         if (interactive) {
           return (
             <button
+              key={star}
               {...commonProps}
               type="button"
               onClick={() => onChange(star)}
@@ -52,6 +52,7 @@ export default function StarRating({ value = 0, onChange = null, size = 'md', co
 
         return (
           <span
+            key={star}
             {...commonProps}
             aria-hidden="true"
           >

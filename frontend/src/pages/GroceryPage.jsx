@@ -21,7 +21,7 @@ export default function GroceryPage() {
     addItem, updateItem, removeItem, clearChecked,
   } = useGrocery();
 
-  const { addItem: addPantryItem, removeItem: removePantryItem, fetchPantry } = usePantry();
+  const { addItem: addPantryItem } = usePantry();
 
   useDocumentTitle(currentList ? currentList.name : 'Grocery Lists');
 
@@ -96,13 +96,16 @@ export default function GroceryPage() {
   };
 
   // Sort items: unchecked first, checked last
-  const sortedItems = currentList?.items
-    ? [...currentList.items].sort((a, b) => {
-        const aChecked = a.checked ? 1 : 0;
-        const bChecked = b.checked ? 1 : 0;
-        return aChecked - bChecked;
-      })
-    : [];
+  const sortedItems = useMemo(
+    () => currentList?.items
+      ? [...currentList.items].sort((a, b) => {
+          const aChecked = a.checked ? 1 : 0;
+          const bChecked = b.checked ? 1 : 0;
+          return aChecked - bChecked;
+        })
+      : [],
+    [currentList?.items]
+  );
 
   const groupedItems = useMemo(
     () => groupedView ? groupByCategory(sortedItems) : null,
@@ -112,7 +115,7 @@ export default function GroceryPage() {
   const toggleGrouped = () => {
     const next = !groupedView;
     setGroupedView(next);
-    try { localStorage.setItem('cookslate-grocery-grouped', String(next)); } catch {}
+    try { localStorage.setItem('cookslate-grocery-grouped', String(next)); } catch { /* ignore */ }
   };
 
   const handleCopyList = async () => {
@@ -323,7 +326,7 @@ export default function GroceryPage() {
         <div className="flex gap-3 justify-end">
           <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
           <Button variant="danger" onClick={async () => {
-            try { await deleteList(deleteConfirm); } catch {}
+            try { await deleteList(deleteConfirm); } catch { /* ignore */ }
             setDeleteConfirm(null);
           }}>Delete</Button>
         </div>

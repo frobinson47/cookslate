@@ -23,8 +23,8 @@ const TOTAL_TIME_RE = /total\s*(?:time)?\s*[:=]?\s*(\d+)\s*(?:min(?:ute)?s?|hrs?
 const SERVINGS_RE = /(?:serves?|servings?|yield|makes?|portions?)\s*[:=]?\s*(\d+)/i;
 
 // Line classification helpers
-const NUMBERED_LINE_RE = /^\d+[\.\)]\s+/;
-const BULLET_RE = /^[\-•●◦▪▸]\s+/;
+const NUMBERED_LINE_RE = /^\d+[.)]\s+/;
+const BULLET_RE = /^[-•●◦▪▸]\s+/;
 const INGREDIENT_AMOUNT_RE = /^(?:\d+[\s/¼½¾⅓⅔⅛⅜⅝⅞]|½|¼|¾|⅓|⅔|\d+(?:lb|oz|g|kg|ml|tsp|tbsp|cup)s?\b)/;
 
 /**

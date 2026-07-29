@@ -41,6 +41,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-located with its Provider by design
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
@@ -49,4 +50,5 @@ export function useAuth() {
   return context;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-located with its Provider by design
 export default useAuth;

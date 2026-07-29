@@ -191,7 +191,7 @@ export default function AdminPage() {
           {maxUsers && (
             <span className="flex items-center gap-1 text-sm text-warm-gray">
               <Users size={14} />
-              {users.filter(u => !u.is_demo).length}/{maxUsers} users
+              {users.filter(u => !u.is_demo).length}/{maxUsers} users ({tier === 'household' ? 'Household' : 'Pro'})
             </span>
           )}
           <Button

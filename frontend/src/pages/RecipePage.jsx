@@ -622,7 +622,7 @@ export default function RecipePage() {
               <a
                 href={`/recipe/${recipe.id}/card-art/${art.template}/print`}
                 target="_blank"
-                rel="noopener"
+                rel="noopener noreferrer"
                 className="block rounded-xl overflow-hidden border border-cream-dark hover:border-terracotta transition-colors duration-200"
               >
                 <img

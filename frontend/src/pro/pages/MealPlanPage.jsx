@@ -176,7 +176,7 @@ function DragOverlayCard({ item }) {
   );
 }
 
-function DroppableDayColumn({ dayIndex, children, isToday }) {
+function DroppableDayColumn({ dayIndex, children }) {
   const { setNodeRef, isOver } = useDroppable({ id: `day-${dayIndex}` });
 
   return (
@@ -340,7 +340,6 @@ export default function MealPlanPage() {
     if (!over || !plan) return;
 
     const activeItemId = active.id;
-    const numId = parseInt(activeItemId.replace('item-', ''));
     const overId = over.id;
 
     // Determine target day
@@ -590,7 +589,7 @@ export default function MealPlanPage() {
                   </div>
 
                   {/* Droppable + Sortable meal items */}
-                  <DroppableDayColumn dayIndex={dayIndex} isToday={isToday}>
+                  <DroppableDayColumn dayIndex={dayIndex}>
                     <SortableContext items={dayItemIds[dayIndex]} strategy={verticalListSortingStrategy}>
                       {items.map(item => (
                         <SortableMealItem

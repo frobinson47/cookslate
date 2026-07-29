@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Volume2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, X } from 'lucide-react';
 import Button from './Button';
 
 function requestNotificationPermission() {
@@ -95,7 +95,7 @@ export default function Timer({ initialMinutes, onClose, autoStart = false }) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, totalSeconds, playBeep]);
+  }, [isRunning, totalSeconds, playBeep, initialMinutes]);
 
   // Clean up audio context on unmount
   useEffect(() => {
@@ -163,6 +163,16 @@ export default function Timer({ initialMinutes, onClose, autoStart = false }) {
 
       {isDone && (
         <span className="text-terracotta font-bold text-sm" role="alert">Time is up!</span>
+      )}
+
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg text-warm-gray hover:text-brown hover:bg-warm-gray/20 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          aria-label="Remove timer"
+        >
+          <X size={18} />
+        </button>
       )}
     </div>
   );

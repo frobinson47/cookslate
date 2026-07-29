@@ -31,6 +31,11 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
     return () => {
       document.body.style.overflow = '';
     };
+    // Only re-run on isOpen transitions — `visible` is read at the moment
+    // isOpen changes (always fresh for that render) and is otherwise driven
+    // entirely by this same effect's setTimeout, so adding it as a dep would
+    // just cause redundant re-invocations.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Auto-focus the close button when modal opens

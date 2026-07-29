@@ -62,18 +62,18 @@ function getSavedProgress(recipeId) {
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (data.recipeId === recipeId && data.step > 0) return data.step;
-  } catch {}
+  } catch { /* ignore */ }
   return null;
 }
 
 function saveProgress(recipeId, step) {
   try {
     sessionStorage.setItem(COOK_PROGRESS_KEY, JSON.stringify({ recipeId, step }));
-  } catch {}
+  } catch { /* ignore */ }
 }
 
 function clearProgress() {
-  try { sessionStorage.removeItem(COOK_PROGRESS_KEY); } catch {}
+  try { sessionStorage.removeItem(COOK_PROGRESS_KEY); } catch { /* ignore */ }
 }
 
 export default function CookMode({ steps, ingredients, onClose, recipeId, onDone, annotations = {} }) {

@@ -16,7 +16,7 @@ export default function HomePage({ searchQuery = '' }) {
   const { recipes, pagination, isLoading, fetchRecipes } = useRecipes();
   const { user } = useAuth();
   const { recent } = useRecentlyViewed();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [localSearch, setLocalSearch] = useState(searchQuery || searchParams.get('search') || '');
   const [activeTag, setActiveTag] = useState(searchParams.get('tag') || '');
   const [tags, setTags] = useState([]);
@@ -218,7 +218,7 @@ export default function HomePage({ searchQuery = '' }) {
         >
           <div className="aspect-[16/9] sm:aspect-[21/9] md:aspect-[3/1]">
             <img
-              src={thumbImageUrl(featured.image_path)}
+              src={fullImageUrl(featured.image_path)}
               alt={featured.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
@@ -445,17 +445,28 @@ export default function HomePage({ searchQuery = '' }) {
               All
             </button>
             {tags.map(tag => (
-              <button
+              <span
                 key={tag.id || tag.name}
-                onClick={() => handleTagClick(tag.name || tag)}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 min-h-[36px] ${
+                className={`shrink-0 inline-flex items-center rounded-full text-sm font-semibold transition-colors duration-200 min-h-[36px] ${
                   activeTag === (tag.name || tag)
                     ? 'bg-terracotta text-white'
                     : 'bg-cream hover:bg-terracotta/10 text-brown-light hover:text-terracotta'
                 }`}
               >
-                {tag.name || tag}
-              </button>
+                <button
+                  onClick={() => handleTagClick(tag.name || tag)}
+                  className="pl-4 pr-1 py-1.5"
+                >
+                  {tag.name || tag}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDeleteTag(tag); }}
+                  className="pr-3 pl-1 py-1.5 opacity-60 hover:opacity-100"
+                  aria-label={`Delete tag ${tag.name || tag}`}
+                >
+                  <X size={12} />
+                </button>
+              </span>
             ))}
           </div>
           </div>
@@ -777,7 +788,7 @@ export default function HomePage({ searchQuery = '' }) {
               await api.deleteTag(deleteTagConfirm.id);
               setTags(prev => prev.filter(t => t.id !== deleteTagConfirm.id));
               if (activeTag === deleteTagConfirm.name) setActiveTag('');
-            } catch {}
+            } catch { /* ignore */ }
             setDeleteTagConfirm(null);
           }}>Delete</Button>
         </div>

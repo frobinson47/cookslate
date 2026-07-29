@@ -495,6 +495,15 @@ export default function RecipePage() {
             Share
           </Button>
         )}
+        <a
+          href={`/api/recipes/${recipe.id}/jsonld`}
+          target="_blank"
+          rel="noreferrer"
+          className="print:hidden inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-terracotta text-terracotta hover:bg-terracotta hover:text-white transition-colors duration-200 min-h-[44px]"
+        >
+          <Link2 size={18} />
+          Export JSON-LD
+        </a>
       </div>
 
       {/* Source URL */}

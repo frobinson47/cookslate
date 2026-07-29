@@ -18,6 +18,7 @@ import EditRecipePage from './pages/EditRecipePage';
 import GroceryPage from './pages/GroceryPage';
 import ScanReceiptPage from './pages/ScanReceiptPage';
 import SpendingHistoryPage from './pages/SpendingHistoryPage';
+import YearInReviewPage from './pages/YearInReviewPage';
 import AdminPage from './pages/AdminPage';
 import BulkImportPage from './pages/BulkImportPage';
 import CookHistoryPage from './pages/CookHistoryPage';
@@ -185,6 +186,16 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <CookHistoryPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/year-in-review"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <YearInReviewPage />
                 </Layout>
               </ProtectedRoute>
             }

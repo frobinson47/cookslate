@@ -55,6 +55,116 @@ class CookLog {
     }
 
     /**
+     * "Year in Cooking" recap for a single calendar year: total meals cooked,
+     * most active month, most-made recipe, new recipes tried, longest streak
+     * of consecutive cooking days, and top tag ("top cuisine" proxy — recipes
+     * don't have a dedicated cuisine field).
+     */
+    public function getYearInReview(int $userId, int $year): array {
+        $stmt = $this->db->prepare('
+            SELECT COUNT(*) AS total_meals, COUNT(DISTINCT recipe_id) AS unique_recipes
+            FROM cook_log
+            WHERE user_id = ? AND YEAR(cooked_at) = ?
+        ');
+        $stmt->execute([$userId, $year]);
+        $totals = $stmt->fetch();
+
+        $stmt = $this->db->prepare("
+            SELECT DATE_FORMAT(cooked_at, '%Y-%m') AS month, COUNT(*) AS count
+            FROM cook_log
+            WHERE user_id = ? AND YEAR(cooked_at) = ?
+            GROUP BY month
+            ORDER BY count DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$userId, $year]);
+        $mostActiveMonth = $stmt->fetch();
+
+        $stmt = $this->db->prepare('
+            SELECT r.id, r.title, r.image_path, COUNT(*) AS cook_count
+            FROM cook_log cl
+            INNER JOIN recipes r ON cl.recipe_id = r.id
+            WHERE cl.user_id = ? AND YEAR(cl.cooked_at) = ?
+            GROUP BY r.id, r.title, r.image_path
+            ORDER BY cook_count DESC
+            LIMIT 1
+        ');
+        $stmt->execute([$userId, $year]);
+        $mostMade = $stmt->fetch();
+
+        $stmt = $this->db->prepare('
+            SELECT COUNT(DISTINCT recipe_id) AS new_recipes
+            FROM cook_log
+            WHERE user_id = ?
+              AND YEAR(cooked_at) = ?
+              AND recipe_id NOT IN (
+                  SELECT recipe_id FROM cook_log
+                  WHERE user_id = ? AND cooked_at < CONCAT(?, "-01-01")
+              )
+        ');
+        $stmt->execute([$userId, $year, $userId, $year]);
+        $newRecipesTried = (int) $stmt->fetchColumn();
+
+        $stmt = $this->db->prepare('
+            SELECT t.name, COUNT(*) AS count
+            FROM cook_log cl
+            INNER JOIN recipe_tags rt ON cl.recipe_id = rt.recipe_id
+            INNER JOIN tags t ON rt.tag_id = t.id
+            WHERE cl.user_id = ? AND YEAR(cl.cooked_at) = ?
+            GROUP BY t.name
+            ORDER BY count DESC
+            LIMIT 1
+        ');
+        $stmt->execute([$userId, $year]);
+        $topTag = $stmt->fetch();
+
+        $stmt = $this->db->prepare('
+            SELECT DISTINCT DATE(cooked_at) AS cook_date
+            FROM cook_log
+            WHERE user_id = ? AND YEAR(cooked_at) = ?
+            ORDER BY cook_date ASC
+        ');
+        $stmt->execute([$userId, $year]);
+        $dates = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+
+        $streakPeak = 0;
+        $current = 0;
+        $prevDate = null;
+        foreach ($dates as $dateStr) {
+            $date = new \DateTime($dateStr);
+            if ($prevDate !== null && $prevDate->diff($date)->days === 1) {
+                $current++;
+            } else {
+                $current = 1;
+            }
+            $streakPeak = max($streakPeak, $current);
+            $prevDate = $date;
+        }
+
+        return [
+            'year' => $year,
+            'total_meals' => (int) $totals['total_meals'],
+            'unique_recipes' => (int) $totals['unique_recipes'],
+            'most_active_month' => $mostActiveMonth ? [
+                'month' => $mostActiveMonth['month'],
+                'count' => (int) $mostActiveMonth['count'],
+            ] : null,
+            'most_made_recipe' => $mostMade ? [
+                'id' => (int) $mostMade['id'],
+                'title' => $mostMade['title'],
+                'image_path' => $mostMade['image_path'],
+                'cook_count' => (int) $mostMade['cook_count'],
+            ] : null,
+            'new_recipes_tried' => $newRecipesTried,
+            'streak_peak' => $streakPeak,
+            'top_tag' => $topTag ? [
+                'name' => $topTag['name'],
+                'count' => (int) $topTag['count'],
+            ] : null,
+        ];
+    }
+
+    /**
      * Get recipes the user has cooked multiple times but not recently.
      * Surfaces "forgotten favorites" — recipes they clearly like but haven't made in a while.
      */

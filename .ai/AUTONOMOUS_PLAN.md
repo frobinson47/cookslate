@@ -169,16 +169,16 @@ Notes: Imported from Forgejo issue #30 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-017 — Cooklang export
 Priority: P3
-Status: TODO
+Status: DONE
 
-Goal: Imported from Forgejo issue #29: Cooklang export
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #29 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/29).
+Goal: Imported from Forgejo issue #29: convert recipes to Cooklang plain-text format for data portability.
+Why it matters: Export matters more than import for portability messaging (users trust a tool more if they can leave with their data).
+Scope: Already resolved prior to this import — no code changes made this pass.
+Expected files or areas: api/services/CooklangExporter.php.
+Acceptance criteria: Recipes export as valid Cooklang plain text.
+Validation: `vendor/bin/phpunit tests/Unit/CooklangTest.php` passes (3 tests, 20 assertions). Confirmed `/recipes/export-cooklang` is wired in api/index.php and exposed in the UI (Sidebar.jsx export menu, "Cooklang (.cook)" link).
+Risks or assumptions: None — fully implemented and already user-facing.
+Notes: Imported from Forgejo issue #29 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/29). Closed as already-resolved.
 
 ### AUTO-018 — Recipe page dead code cleanup
 Priority: P2
@@ -234,15 +234,15 @@ Notes: Imported from Forgejo issue #23 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-022 — Year-in-review cooking stats page
 Priority: P3
-Status: TODO
+Status: DONE
 
-Goal: Imported from Forgejo issue #17: Year-in-review cooking stats page
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
+Goal: Imported from Forgejo issue #17: total meals, most active month, most-made recipe, new recipes tried, streak peak, top cuisine — a "Your Year in Cooking" recap, derivable from existing cook_log/ratings/recipe_tags.
+Why it matters: A shareable annual recap is a proven free-tier engagement/virality pattern (Spotify Wrapped-style) — distinct from the ongoing Pro Kitchen Stats dashboard, which already covers similar ground but as a permanent analytics view.
+Scope: Free, standalone page (not Pro-gated) — confirmed with user given heavy overlap with the existing Pro StatsController. "Top cuisine" mapped to "top tag" since recipes have no dedicated cuisine field. "Streak peak" is new (existing Pro stats only tracks the current streak, not the longest-ever).
+Expected files or areas: api/models/CookLog.php (getYearInReview), api/controllers/CookLogController.php, api/index.php; frontend/src/pages/YearInReviewPage.jsx (new), App.jsx, Sidebar.jsx.
+Acceptance criteria: GET /cook-log/year-in-review?year=YYYY returns total meals, most active month, most-made recipe, new recipes tried, streak peak, and top tag for that year; frontend page lets the user pick a year and shows an empty state if nothing was logged.
+Validation: 6 new PHPUnit tests (total/unique counts, most active month, most-made recipe, new-recipes exclusion logic, streak-peak calculation, empty-year zeroing) — all pass alongside full suite (276 tests). `npm run build` succeeds.
+Risks or assumptions: Not manually click-tested in a live browser this pass.
 Notes: Imported from Forgejo issue #17 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/17).
 
 ## Future Ideas

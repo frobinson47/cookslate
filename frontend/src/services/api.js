@@ -287,6 +287,10 @@ export function getForgottenFavorites() {
   return request('/cook-log/forgotten-favorites');
 }
 
+export function getYearInReview(year) {
+  return request(`/cook-log/year-in-review${year ? `?year=${year}` : ''}`);
+}
+
 export function getUncookedRecipes() {
   return request('/recipes/uncooked');
 }

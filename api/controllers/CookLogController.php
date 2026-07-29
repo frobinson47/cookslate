@@ -31,4 +31,15 @@ class CookLogController {
         $model = new CookLog();
         return ['recipes' => $model->getForgottenFavorites($userId)];
     }
+
+    /**
+     * GET /cook-log/year-in-review?year=2026
+     */
+    public function yearInReview(): array {
+        $userId = Auth::requireAuth();
+        $year = isset($_GET['year']) && ctype_digit((string) $_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+
+        $model = new CookLog();
+        return $model->getYearInReview($userId, $year);
+    }
 }

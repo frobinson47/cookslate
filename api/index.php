@@ -533,6 +533,9 @@ try {
             } elseif ($id === 'forgotten-favorites' && $method === 'GET') {
                 // GET /cook-log/forgotten-favorites
                 $response = $cookController->forgottenFavorites();
+            } elseif ($id === 'year-in-review' && $method === 'GET') {
+                // GET /cook-log/year-in-review?year=2026
+                $response = $cookController->yearInReview();
             }
             break;
 

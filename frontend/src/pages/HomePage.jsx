@@ -174,6 +174,24 @@ export default function HomePage({ searchQuery = '' }) {
     }
   };
 
+  const useMyPantry = async () => {
+    setIngredientLoading(true);
+    try {
+      const data = await api.getPantryItems();
+      const names = (data.items || data || []).map(i => i.ingredient_name.toLowerCase());
+      if (names.length === 0) {
+        setIngredientResults([]);
+        return;
+      }
+      setIngredientList(names);
+      await fetchIngredientResults(names);
+    } catch {
+      setIngredientResults([]);
+    } finally {
+      setIngredientLoading(false);
+    }
+  };
+
   const isFiltering = localSearch || activeTag;
 
   const selectToggleButton = density === 'grid' && (
@@ -351,6 +369,14 @@ export default function HomePage({ searchQuery = '' }) {
             </div>
           )}
         </div>
+        {searchMode === 'ingredients' && (
+          <button
+            onClick={useMyPantry}
+            className="mt-2 text-sm text-terracotta hover:underline"
+          >
+            Use My Pantry
+          </button>
+        )}
       </div>
 
       {/* Mobile ingredient search */}
@@ -392,6 +418,14 @@ export default function HomePage({ searchQuery = '' }) {
               className="flex-1 min-w-[100px] bg-transparent text-brown placeholder:text-warm-gray focus:outline-none text-sm"
             />
           </div>
+        )}
+        {searchMode === 'ingredients' && (
+          <button
+            onClick={useMyPantry}
+            className="mt-2 text-sm text-terracotta hover:underline"
+          >
+            Use My Pantry
+          </button>
         )}
       </div>
 
@@ -638,10 +672,16 @@ export default function HomePage({ searchQuery = '' }) {
       )}
 
       {/* Recipe grid / Ingredient search results */}
-      {searchMode === 'ingredients' && ingredientList.length > 0 ? (
+      {searchMode === 'ingredients' && (ingredientList.length > 0 || ingredientResults !== null) ? (
         <div>
           <h2 className="text-lg font-bold text-brown mb-3">
-            {ingredientLoading ? 'Searching...' : ingredientResults?.length ? `${ingredientResults.length} recipes you can make` : 'No matching recipes'}
+            {ingredientLoading
+              ? 'Searching...'
+              : ingredientList.length === 0
+                ? 'Your pantry is empty — add items from the Grocery page.'
+                : ingredientResults?.length
+                  ? `${ingredientResults.length} recipes you can make`
+                  : 'No matching recipes'}
           </h2>
           {ingredientResults && ingredientResults.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">

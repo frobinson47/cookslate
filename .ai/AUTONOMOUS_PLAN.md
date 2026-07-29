@@ -208,16 +208,16 @@ Notes: Imported from Forgejo issue #31 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-016 — Pantry-based recipe search (What Can I Make?)
 Priority: P2
-Status: TODO
+Status: DONE
 
-Goal: Imported from Forgejo issue #30: Pantry-based recipe search (What Can I Make?)
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #30 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/30).
+Goal: Imported from Forgejo issue #30: search recipes scored by pantry coverage, originally estimated at 6.5hr (new pantry table, new scoring endpoint, new frontend page).
+Why it matters: Self-hosted recipe managers don't offer this; helps users cook from what they already have rather than shopping for every recipe.
+Scope: The pantry table (AUTO-004) and an ingredient-coverage-scoring endpoint (`byIngredients`/`findByIngredients`, already backing HomePage's manually-typed "What can I make?" mode) already existed from unrelated earlier work — this collapsed to wiring a "Use My Pantry" shortcut that pulls the user's pantry list and feeds it into the existing scored search, rather than building new infrastructure.
+Expected files or areas: frontend/src/pages/HomePage.jsx.
+Acceptance criteria: In ingredient-search mode, tapping "Use My Pantry" populates the ingredient list from the user's pantry and shows scored results; an empty pantry shows a clear message instead of silently falling back to the normal grid.
+Validation: `npm run build` succeeds. Not manually click-tested in a live browser this pass.
+Risks or assumptions: Matching is by exact/normalized ingredient name only (same as the existing manual ingredient search) — no fuzzy matching or unit awareness.
+Notes: Imported from Forgejo issue #30 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/30). Estimate dropped from 6.5hr to a small UI change once the AUTO-004 pantry work and the existing ingredient-search endpoint were accounted for.
 
 ### AUTO-017 — Cooklang export
 Priority: P3
@@ -234,29 +234,29 @@ Notes: Imported from Forgejo issue #29 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-018 — Recipe page dead code cleanup
 Priority: P2
-Status: TODO
+Status: DONE
 
-Goal: Imported from Forgejo issue #28: Recipe page dead code cleanup
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #28 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/28).
+Goal: Imported from Forgejo issue #28: remove ~150 lines of commented-out card sharing code from RecipePage.jsx, clean up StarRating display.
+Why it matters: Dead code clutters the file and confuses future readers about what's actually live.
+Scope: Already resolved prior to this import — no code changes made this pass.
+Expected files or areas: frontend/src/pages/RecipePage.jsx.
+Acceptance criteria: No large commented-out blocks remain; StarRating renders once, cleanly.
+Validation: Scanned the file for runs of 5+ consecutive commented lines (none found) and for any "card sharing"-related dead code (none found); StarRating is a single clean instance with no surrounding cruft.
+Risks or assumptions: None — evidently cleaned up in a later refactor without the Forgejo issue or roadmap being updated.
+Notes: Imported from Forgejo issue #28 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/28). Closed as already-resolved.
 
 ### AUTO-019 — WebP image conversion
 Priority: P2
-Status: TODO
+Status: DONE
 
-Goal: Imported from Forgejo issue #27: WebP image conversion
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #27 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/27).
+Goal: Imported from Forgejo issue #27: switch imagejpeg() to imagewebp() in ImageProcessor for new uploads only (25-35% smaller files); existing JPEG images stay as-is.
+Why it matters: Smaller image payloads improve load time, especially on mobile.
+Scope: Already resolved prior to this import — no code changes made this pass.
+Expected files or areas: api/services/ImageProcessor.php, frontend/src/utils/imageUrl.js.
+Acceptance criteria: New recipe/card-art image uploads are saved as .webp; legacy .jpg images continue to resolve correctly.
+Validation: Verified by reading current code: ImageProcessor::resizeAndSave/processCardArtUpload already call imagewebp() and write full.webp/thumb.webp/{filename}.webp; imageUrl.js's thumbImageUrl() already handles both `.webp` (new) and `.jpg` (legacy) via regex.
+Risks or assumptions: None — this was evidently completed in an earlier session (image-related commits from the "production readiness"/"launch prep" era) without the Forgejo issue or roadmap ever being updated to reflect it.
+Notes: Imported from Forgejo issue #27 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/27). Closed as already-resolved.
 
 ### AUTO-020 — Tandoor comparison matrix listing
 Priority: P2

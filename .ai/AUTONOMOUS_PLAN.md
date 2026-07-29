@@ -89,58 +89,6 @@ Validation: Verified login + `infisical export` returns the same 6 keys with byt
 Risks or assumptions: cookslate-app identity has viewer-only access, scoped to this one project. The break-glass .env mirror means a stale plaintext copy still exists on disk after each deploy — acceptable per org policy (same pattern used for every other app).
 Notes: Imported from Forgejo issue #64 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/64). While wiring this, found the server's docker-compose.yml had drifted from the repo (restart: unless-stopped, 127.0.0.1-only port binding, external "web" network for Caddy, and the RESEND_API_KEY/EMAIL_FROM/APP_URL env vars) — reconciled by pulling the server's live config back into the repo rather than overwriting it. Also found 7 Card Art feature files and 9 modified files on the server that were byte-identical to already-merged commits (6ffe9f0/44df2df) — safe leftovers from an earlier direct-to-server deploy, discarded so `git pull` works cleanly again.
 
-### AUTO-006 — Blog: What is a self-hosted recipe manager? (top-of-funnel AEO)
-Priority: P3
-Status: TODO
-
-Goal: Imported from Forgejo issue #61: Blog: What is a self-hosted recipe manager? (top-of-funnel AEO)
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #61 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/61).
-
-### AUTO-007 — Blog: Migrating from Plan to Eat to Cookslate (AEO)
-Priority: P3
-Status: TODO
-
-Goal: Imported from Forgejo issue #60: Blog: Migrating from Plan to Eat to Cookslate (AEO)
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #60 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/60).
-
-### AUTO-008 — Blog: Self-hosted recipe manager comparison roundup (Mealie vs Tandoor vs Cookslate vs Nextcloud Cookbook)
-Priority: P3
-Status: TODO
-
-Goal: Imported from Forgejo issue #59: Blog: Self-hosted recipe manager comparison roundup (Mealie vs Tandoor vs Cookslate vs Nextcloud Cookbook)
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #59 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/59).
-
-### AUTO-009 — Blog: Best Mealie alternatives in 2026 (AEO)
-Priority: P3
-Status: TODO
-
-Goal: Imported from Forgejo issue #58: Blog: Best Mealie alternatives in 2026 (AEO)
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
-Notes: Imported from Forgejo issue #58 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/58).
-
 ### AUTO-011 — Remove CLAUDE.md from repo and gitignore it
 Priority: P2
 Status: DONE

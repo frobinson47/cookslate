@@ -143,15 +143,15 @@ Notes: Imported from Forgejo issue #32 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-015 — More import formats (Nextcloud Cookbook, RecipeSage)
 Priority: P3
-Status: TODO
+Status: DONE
 
-Goal: Imported from Forgejo issue #31: More import formats (Nextcloud Cookbook, RecipeSage)
-Why it matters: TBD
-Scope: TBD
-Expected files or areas: TBD
-Acceptance criteria: TBD
-Validation: TBD
-Risks or assumptions: None.
+Goal: Imported from Forgejo issue #31: expand import compatibility beyond Mealie/Paprika/Tandoor to Nextcloud Cookbook and RecipeSage.
+Why it matters: Broadens the set of self-hosted/other tools users can migrate from.
+Scope: New POST /recipes/import-nextcloud and /recipes/import-recipesage endpoints, wired into BulkImportPage's existing zip-format picker.
+Expected files or areas: api/services/NextcloudCookbookImporter.php, RecipeSageImporter.php (new); api/controllers/RecipeController.php; api/index.php; frontend/src/services/api.js, pages/BulkImportPage.jsx.
+Acceptance criteria: Uploading a Nextcloud Cookbook or RecipeSage export ZIP produces the same parsed-but-unsaved recipe preview flow as Mealie/Tandoor/Paprika imports.
+Validation: 7 new PHPUnit tests against synthetic sample ZIPs (built with ZipArchive in-test, not real exports) — all pass alongside full suite (283 tests). `npm run build` succeeds.
+Risks or assumptions: Nextcloud Cookbook importer reuses the same schema.org/Recipe JSON-LD parsing TandoorImporter already handles (both tools export this shape) — reasonably confident. RecipeSageImporter was built from documented format knowledge only, NOT verified against a real RecipeSage export file (confirmed with user to proceed this way) — field names/shapes may need adjustment if a real export surfaces differences, particularly around the ingredients/instructions string-vs-array shape and free-text time parsing.
 Notes: Imported from Forgejo issue #31 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/31).
 
 ### AUTO-016 — Pantry-based recipe search (What Can I Make?)

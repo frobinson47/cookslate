@@ -512,6 +512,32 @@ class RecipeController {
         return $importer->import($_FILES['file']['tmp_name']);
     }
 
+    public function importNextcloud(): array {
+        Auth::requireAuth();
+
+        if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            return ['error' => 'A .zip file is required', 'code' => 400];
+        }
+
+        require_once __DIR__ . '/../services/NextcloudCookbookImporter.php';
+        $importer = new NextcloudCookbookImporter();
+        return $importer->import($_FILES['file']['tmp_name']);
+    }
+
+    public function importRecipeSage(): array {
+        Auth::requireAuth();
+
+        if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            return ['error' => 'A .zip file is required', 'code' => 400];
+        }
+
+        require_once __DIR__ . '/../services/RecipeSageImporter.php';
+        $importer = new RecipeSageImporter();
+        return $importer->import($_FILES['file']['tmp_name']);
+    }
+
     /**
      * GET /recipes/featured
      */

@@ -324,6 +324,10 @@ try {
                 $response = $controller->importPaprika();
             } elseif ($id === 'import-tandoor' && $method === 'POST') {
                 $response = $controller->importTandoor();
+            } elseif ($id === 'import-nextcloud' && $method === 'POST') {
+                $response = $controller->importNextcloud();
+            } elseif ($id === 'import-recipesage' && $method === 'POST') {
+                $response = $controller->importRecipeSage();
             } elseif ($id === null) {
                 // /recipes
                 switch ($method) {

@@ -168,6 +168,18 @@ export function importTandoor(file) {
   return request('/recipes/import-tandoor', { method: 'POST', body: formData, isFormData: true });
 }
 
+export function importNextcloud(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request('/recipes/import-nextcloud', { method: 'POST', body: formData, isFormData: true });
+}
+
+export function importRecipeSage(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request('/recipes/import-recipesage', { method: 'POST', body: formData, isFormData: true });
+}
+
 export function importRecipeFromImage(imageFile) {
   const formData = new FormData();
   formData.append('image', imageFile);

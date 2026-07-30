@@ -264,7 +264,7 @@ Notes: Imported from Forgejo issue #75 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-024 — Pantry photo scan (fridge/shelf inventory from one photo)
 Priority: P1
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #76. Extend the existing receipt-scanning vision pipeline to a second mode: photograph a fridge/pantry/freezer shelf and bulk-add identified items to the pantry, no receipt needed.
 Why it matters: Every dedicated AI-pantry app in 2026 leads with exactly this, and Tandoor already ships it as a differentiator against Mealie. ~80% of the infrastructure already exists from AUTO-004 (OpenAI vision pipeline, BYOK key handling, Pantry model with quantities).

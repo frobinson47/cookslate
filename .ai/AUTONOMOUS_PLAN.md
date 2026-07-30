@@ -333,7 +333,7 @@ Notes: Imported from Forgejo issue #80 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-029 — Multi-source barcode nutrition for pantry-scan/receipt flow
 Priority: P3
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #81. When receipt-scan or pantry-scan items match a known branded product (via AUTO-028), auto-attach nutrition data rather than leaving a bare quantity/name record.
 Why it matters: Closes the loop between "what's in my pantry" and "what am I eating" without extra data entry.
@@ -342,7 +342,7 @@ Expected files or areas: api/services/OpenAiPantryScanParser.php, OpenAiReceiptP
 Acceptance criteria: A scanned item matching a known branded product gets nutrition data attached automatically; unmatched items are unaffected.
 Validation: PHPUnit tests for the matching logic.
 Risks or assumptions: Fuzzy matching risk — false positives would attach wrong nutrition data. Confidence threshold needs to be conservative.
-Notes: Imported from Forgejo issue #81 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/81). Sequence after AUTO-028.
+Notes: Imported from Forgejo issue #81 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/81). Built `api/services/IngredientDataEnricher.php` — best-effort, non-blocking enrichment wired into `ShoppingTripController::create()` and `PantryController::bulkAdd()`. Confident match = exact normalized name match, or substring containment with ≤8 char length gap. Skips items that already have nutrition data. 5 new PHPUnit tests (fake OpenFoodFactsClient via constructor injection), full suite 303/303 passing. Deployed to prod (hookhouse-pro) 2026-07-30, verified live — no migration needed (writes to existing `ingredient_data` table). Commit 5dae75e.
 
 ### AUTO-030 — Granular household sharing permissions
 Priority: P3

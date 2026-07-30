@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/../services/AutoTagger.php';
+require_once __DIR__ . '/../services/RecipeAnalyzer.php';
 
 class Recipe {
     private PDO $db;
@@ -69,6 +70,7 @@ class Recipe {
         $sql = "
             SELECT r.id, r.title, r.description, r.prep_time, r.cook_time, r.servings,
                    r.image_path, r.calories, r.is_private, r.created_at, r.updated_at, r.created_by,
+                   r.estimated_cost_per_serving,
                    u.username AS author,
                    (SELECT COUNT(*) FROM ingredients i WHERE i.recipe_id = r.id) AS ingredient_count,
                    (SELECT ROUND(AVG(rt.score), 1) FROM ratings rt WHERE rt.recipe_id = r.id) AS avg_rating,
@@ -291,6 +293,8 @@ class Recipe {
                 }
             }
 
+            $this->recalculateCost($recipeId);
+
             $this->db->commit();
             return $this->findById($recipeId);
         } catch (\Exception $e) {
@@ -381,6 +385,8 @@ class Recipe {
                     }
                 }
             }
+
+            $this->recalculateCost($id);
 
             $this->db->commit();
             return $this->findById($id);
@@ -520,6 +526,36 @@ class Recipe {
         $stmt = $this->db->prepare('SELECT 1 FROM recipes WHERE id = ? AND created_by = ?');
         $stmt->execute([$recipeId, $userId]);
         return (bool) $stmt->fetch();
+    }
+
+    /**
+     * Recompute and cache the estimated per-serving cost from the recipe's
+     * current ingredients (always re-read from the DB rather than trusting
+     * the caller's $data, so it's correct regardless of what actually
+     * changed in a given create/update call). RecipeAnalyzer does several
+     * ingredient_data lookups per ingredient, so this is cached on the
+     * recipes row rather than recomputed on every list request.
+     */
+    private function recalculateCost(int $recipeId): void {
+        $stmt = $this->db->prepare('SELECT servings FROM recipes WHERE id = ?');
+        $stmt->execute([$recipeId]);
+        $servings = $stmt->fetchColumn();
+        $servings = $servings !== false && $servings !== null ? (int) $servings : null;
+
+        $stmt = $this->db->prepare('SELECT name, amount, unit FROM ingredients WHERE recipe_id = ? ORDER BY sort_order ASC');
+        $stmt->execute([$recipeId]);
+        $ingredients = $stmt->fetchAll();
+
+        $analyzer = new \RecipeAnalyzer();
+        $analysis = $analyzer->analyze($ingredients, $servings);
+        // No ingredients matched pricing data at all — leave cost unknown
+        // rather than showing a misleading "$0.00".
+        $costPerServing = ($analysis['coverage']['matched'] ?? 0) > 0
+            ? ($analysis['cost']['per_serving'] ?? $analysis['cost']['total'] ?? null)
+            : null;
+
+        $update = $this->db->prepare('UPDATE recipes SET estimated_cost_per_serving = ? WHERE id = ?');
+        $update->execute([$costPerServing, $recipeId]);
     }
 
     /**

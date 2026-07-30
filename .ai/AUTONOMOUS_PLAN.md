@@ -294,15 +294,15 @@ Remaining 5 ideas from the same competitive research batch (FEATURE_ENHANCEMENTS
 
 ### AUTO-026 — Recipe cost visibility on the recipe card/grid
 Priority: P3
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #78. Surface the existing per-recipe cost analysis (RecipeAnalyzer.php) as a badge on recipe cards in the main grid, not just the detail page.
 Why it matters: Cookslate already computes recipe cost — ahead of Mealie, roughly matching Tandoor. The gap is discoverability, not the feature itself.
-Scope: RecipeCard.jsx badge only, computed at list-query time to avoid N+1 calls.
-Expected files or areas: api/models/Recipe.php (list query), frontend/src/components/recipe/RecipeCard.jsx.
-Acceptance criteria: Recipe cards in the grid show a cost badge alongside existing calorie/difficulty badges, when cost data is available.
-Validation: PHPUnit tests; npm run build.
-Risks or assumptions: Must avoid N+1 queries — compute in the existing list query, not per-card.
+Scope: Since RecipeAnalyzer does several ingredient_data lookups per ingredient (not a simple SQL aggregate), computing it live on every list request would be a real per-page cost — cached on the recipes row instead (migration 025), recomputed on create/update.
+Expected files or areas: database/migrations/025_recipe_cost_cache.sql; api/models/Recipe.php (recalculateCost(), list query); frontend/src/components/recipe/RecipeCard.jsx.
+Acceptance criteria: Recipe cards in the grid show a cost-per-serving badge alongside existing calorie/difficulty badges, when cost data is available; left null (not $0.00) when no ingredients matched pricing data, to avoid implying the recipe is free.
+Validation: 3 new PHPUnit tests (cost caching on create, recalculation on update, null-when-unmatched) — all pass alongside full suite (298 tests). npm run build/lint/test clean.
+Risks or assumptions: No backfill run — existing recipes won't show a badge until their next edit/save recomputes the cached value. Deployed and migration applied to prod.
 Notes: Imported from Forgejo issue #78 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/78).
 
 ### AUTO-027 — Saved/reusable meal plan templates

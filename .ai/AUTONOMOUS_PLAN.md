@@ -14,7 +14,7 @@ To be documented as the project evolves.
 
 ## Current implementation status
 
-Roadmap v1 and v2 (AUTO-023 through AUTO-025) are both complete.
+Roadmap v1 and v2 are complete. Roadmap v3 (AUTO-026 through AUTO-030) is in progress.
 
 ## Technical debt
 
@@ -287,6 +287,75 @@ Acceptance criteria: GET /external/today-meal and GET /external/pantry-alerts re
 Validation: PHPUnit tests for the new endpoints (auth required, correct data shape); manual test with a real API key via curl.
 Risks or assumptions: Depends on AUTO-023 (pantry expiration) for the pantry-alerts endpoint to have real data to return — sequence after AUTO-023.
 Notes: Imported from Forgejo issue #77 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/77).
+
+## Roadmap v3
+
+Remaining 5 ideas from the same competitive research batch (FEATURE_ENHANCEMENTS.md, 2026-07-29), lower priority/effort than the v2 batch.
+
+### AUTO-026 — Recipe cost visibility on the recipe card/grid
+Priority: P3
+Status: TODO
+
+Goal: Imported from Forgejo issue #78. Surface the existing per-recipe cost analysis (RecipeAnalyzer.php) as a badge on recipe cards in the main grid, not just the detail page.
+Why it matters: Cookslate already computes recipe cost — ahead of Mealie, roughly matching Tandoor. The gap is discoverability, not the feature itself.
+Scope: RecipeCard.jsx badge only, computed at list-query time to avoid N+1 calls.
+Expected files or areas: api/models/Recipe.php (list query), frontend/src/components/recipe/RecipeCard.jsx.
+Acceptance criteria: Recipe cards in the grid show a cost badge alongside existing calorie/difficulty badges, when cost data is available.
+Validation: PHPUnit tests; npm run build.
+Risks or assumptions: Must avoid N+1 queries — compute in the existing list query, not per-card.
+Notes: Imported from Forgejo issue #78 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/78).
+
+### AUTO-027 — Saved/reusable meal plan templates
+Priority: P3
+Status: TODO
+
+Goal: Imported from Forgejo issue #79. Let users save a populated week's meal plan as a named, reusable template, applicable to any future week.
+Why it matters: Paprika calls this out explicitly; most households repeat 3-5 weekly patterns.
+Scope: New meal_plan_templates table; "Save as template" + "Apply template" UI on MealPlanPage. Pro-gated (meal planning is already Pro-only).
+Expected files or areas: New migration; api/pro/models/MealPlan.php, api/pro/controllers/MealPlanController.php; frontend/src/pro/pages/MealPlanPage.jsx.
+Acceptance criteria: User can save the current week as a named template and apply a saved template to any week, overwriting that week's current plan.
+Validation: PHPUnit tests; npm run build.
+Risks or assumptions: None significant.
+Notes: Imported from Forgejo issue #79 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/79).
+
+### AUTO-028 — OpenFoodFacts barcode lookup for packaged/branded products
+Priority: P2
+Status: TODO
+
+Goal: Imported from Forgejo issue #80. Add OpenFoodFacts as a second barcode-lookup source alongside USDA, for branded/packaged products USDA's generic-ingredient database often misses.
+Why it matters: Tandoor's OpenFoodFacts integration is called out for barcode accuracy on real packaged groceries.
+Scope: Free, keyless public API (api.openfoodfacts.org) — no BYOK complexity. Try OpenFoodFacts first, fall back to USDA.
+Expected files or areas: New api/services/OpenFoodFactsClient.php (mirrors EdamamClient.php); api/controllers/IngredientDataController.php or wherever the barcode lookup currently lives.
+Acceptance criteria: Scanning a packaged product barcode returns OpenFoodFacts data when available; falls back to USDA for generic/unbranded matches.
+Validation: PHPUnit tests against fixture responses (no live API calls in CI).
+Risks or assumptions: Public API, no auth — rate limits unknown, should degrade gracefully on failure.
+Notes: Imported from Forgejo issue #80 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/80).
+
+### AUTO-029 — Multi-source barcode nutrition for pantry-scan/receipt flow
+Priority: P3
+Status: TODO
+
+Goal: Imported from Forgejo issue #81. When receipt-scan or pantry-scan items match a known branded product (via AUTO-028), auto-attach nutrition data rather than leaving a bare quantity/name record.
+Why it matters: Closes the loop between "what's in my pantry" and "what am I eating" without extra data entry.
+Scope: Depends on AUTO-028 shipping first. Fuzzy-match scan item names against OpenFoodFacts; only attach on a confident match, never guess.
+Expected files or areas: api/services/OpenAiPantryScanParser.php, OpenAiReceiptParser.php (post-processing step); api/services/OpenFoodFactsClient.php.
+Acceptance criteria: A scanned item matching a known branded product gets nutrition data attached automatically; unmatched items are unaffected.
+Validation: PHPUnit tests for the matching logic.
+Risks or assumptions: Fuzzy matching risk — false positives would attach wrong nutrition data. Confidence threshold needs to be conservative.
+Notes: Imported from Forgejo issue #81 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/81). Sequence after AUTO-028.
+
+### AUTO-030 — Granular household sharing permissions
+Priority: P3
+Status: TODO
+
+Goal: Imported from Forgejo issue #82. Extend the binary admin/member role model with finer-grained sharing (e.g. a viewer/cook role that can't edit/delete recipes).
+Why it matters: Tandoor's granular permissions are a named differentiator; Cookslate's Household tier (5 users) currently only distinguishes admin vs. member.
+Scope: Highest-effort item in this batch — touches auth middleware and every write-path ownership check (isCreator patterns throughout RecipeController/CollectionController). Needs a dedicated planning/discussion pass before implementation, not a direct build.
+Expected files or areas: TBD pending planning discussion.
+Acceptance criteria: TBD pending planning discussion.
+Validation: TBD.
+Risks or assumptions: Large blast radius — do not implement without explicit scoping discussion first.
+Notes: Imported from Forgejo issue #82 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/82).
 
 ## Future Ideas
 

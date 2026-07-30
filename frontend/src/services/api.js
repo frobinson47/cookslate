@@ -321,6 +321,10 @@ export function getUsers() {
   return request('/users');
 }
 
+export function getExternalApiKey() {
+  return request('/admin/external-api-key');
+}
+
 export function createUser(username, password, role, email) {
   return request('/users', { method: 'POST', body: { username, password, role, email } });
 }

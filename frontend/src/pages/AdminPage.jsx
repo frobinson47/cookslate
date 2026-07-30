@@ -14,6 +14,8 @@ export default function AdminPage() {
 
   const { user, logout } = useAuth();
   const { tier, max_users: maxUsers } = useLicense();
+  const [externalApiKey, setExternalApiKey] = useState(null);
+  const [apiKeyCopied, setApiKeyCopied] = useState(false);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -59,7 +61,29 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchUsers();
+    api.getExternalApiKey()
+      .then(setExternalApiKey)
+      .catch(() => setExternalApiKey(null));
   }, []);
+
+  const handleCopyApiKey = async () => {
+    if (!externalApiKey?.key) return;
+    try {
+      await navigator.clipboard.writeText(externalApiKey.key);
+      setApiKeyCopied(true);
+      setTimeout(() => setApiKeyCopied(false), 2000);
+    } catch {
+      // Fallback for non-HTTPS
+      const input = document.createElement('input');
+      input.value = externalApiKey.key;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      setApiKeyCopied(true);
+      setTimeout(() => setApiKeyCopied(false), 2000);
+    }
+  };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
@@ -298,6 +322,35 @@ export default function AdminPage() {
           </table>
         </div>
       </div>
+
+      {/* Integrations section */}
+      {externalApiKey?.configured && (
+        <div className="bg-surface rounded-2xl shadow-md p-6">
+          <h2 className="text-lg font-bold text-brown mb-2 flex items-center gap-2">
+            <Key size={18} />
+            External Integrations
+          </h2>
+          <p className="text-brown-light text-sm mb-4">
+            Read-only API key for external tools like Home Assistant (see docs/home-assistant.md).
+            Grants instance-wide read access — treat it like a password.
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 px-3 py-2.5 rounded-xl bg-cream text-brown text-sm font-mono truncate">
+              {externalApiKey.key}
+            </code>
+            <button
+              onClick={handleCopyApiKey}
+              className="flex items-center justify-center p-2.5 rounded-xl border border-cream-dark hover:bg-cream transition-colors min-w-[44px] min-h-[44px]"
+              aria-label="Copy API key"
+            >
+              {apiKeyCopied ? <Check size={18} className="text-sage" /> : <Copy size={18} />}
+            </button>
+          </div>
+          {apiKeyCopied && (
+            <p className="text-sm text-sage mt-2 font-medium">Copied to clipboard!</p>
+          )}
+        </div>
+      )}
 
       {/* Account section */}
       <div className="bg-surface rounded-2xl shadow-md p-6">

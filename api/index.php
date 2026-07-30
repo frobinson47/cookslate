@@ -908,6 +908,19 @@ try {
                     'total_checked' => count($rows),
                     'updated' => $updated,
                 ];
+            } elseif ($id === 'external-api-key' && $method === 'GET') {
+                // GET /admin/external-api-key — the instance-wide read-only
+                // key used by /external/* routes (e.g. Home Assistant).
+                // Admin-only: this key grants read access across the whole
+                // instance, not just the requesting admin's own data.
+                require_once __DIR__ . '/middleware/Auth.php';
+                Auth::requireAdmin();
+
+                $key = env('COOKSLATE_API_KEY', '');
+                $response = [
+                    'configured' => $key !== '',
+                    'key' => $key !== '' ? $key : null,
+                ];
             }
             break;
 

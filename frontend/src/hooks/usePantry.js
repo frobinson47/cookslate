@@ -48,12 +48,24 @@ export function usePantry() {
     }
   }, []);
 
+  const setExpiration = useCallback(async (id, expirationDate) => {
+    setError(null);
+    try {
+      const updated = await api.setPantryItemExpiration(id, expirationDate);
+      setItems(prev => prev.map(i => (i.id === id ? updated : i)));
+      return updated;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  }, []);
+
   const isInPantry = useCallback((ingredientName) => {
     const normalized = ingredientName.toLowerCase().trim();
     return items.some(i => i.ingredient_name.toLowerCase().trim() === normalized);
   }, [items]);
 
-  return { items, isLoading, error, fetchPantry, addItem, removeItem, isInPantry };
+  return { items, isLoading, error, fetchPantry, addItem, removeItem, isInPantry, setExpiration };
 }
 
 export default usePantry;

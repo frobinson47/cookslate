@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
-import { Plus, Search, Clock, ArrowRight, UtensilsCrossed, X, ChefHat, CalendarDays, RotateCcw, Sparkles, Link2, FileUp, ClipboardPaste, ListChecks } from 'lucide-react';
+import { Plus, Search, Clock, ArrowRight, UtensilsCrossed, X, ChefHat, CalendarDays, RotateCcw, Sparkles, Link2, FileUp, ClipboardPaste, ListChecks, AlertTriangle } from 'lucide-react';
 import RecipeGrid from '../components/recipe/RecipeGrid';
 import BulkActionToolbar from '../components/recipe/BulkActionToolbar';
 import DensityToggle from '../components/ui/DensityToggle';
@@ -30,6 +30,7 @@ export default function HomePage({ searchQuery = '' }) {
   const [todayMeals, setTodayMeals] = useState([]);
   const [forgottenFavorites, setForgottenFavorites] = useState([]);
   const [uncookedRecipes, setUncookedRecipes] = useState([]);
+  const [expiringPantryItems, setExpiringPantryItems] = useState([]);
   const [deleteTagConfirm, setDeleteTagConfirm] = useState(null);
   const [density, setDensity] = useState(() => localStorage.getItem('recipeDensity') || 'grid');
   const [selectMode, setSelectMode] = useState(false);
@@ -73,6 +74,9 @@ export default function HomePage({ searchQuery = '' }) {
     api.getUncookedRecipes()
       .then(data => setUncookedRecipes(data.recipes || []))
       .catch(() => setUncookedRecipes([]));
+    api.getExpiringPantryItems()
+      .then(data => setExpiringPantryItems(data.items || []))
+      .catch(() => setExpiringPantryItems([]));
   }, []);
 
   // Fetch tags
@@ -485,6 +489,34 @@ export default function HomePage({ searchQuery = '' }) {
           {selectToggleButton}
           <div className="hidden md:block">
             <DensityToggle value={density} onChange={handleDensityChange} />
+          </div>
+        </div>
+      )}
+
+      {/* Use It Soon — pantry items expiring within a few days */}
+      {expiringPantryItems.length > 0 && !isFiltering && (
+        <div className="bg-surface rounded-2xl shadow-md p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle size={16} className="text-terracotta" />
+            <h2 className="text-lg font-bold text-brown">Use It Soon</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {expiringPantryItems.map(item => {
+              const isPast = new Date(item.expiration_date) < new Date(new Date().toDateString());
+              return (
+                <span
+                  key={item.id}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm ${
+                    isPast ? 'bg-red-100 text-red-700' : 'bg-terracotta/10 text-terracotta'
+                  }`}
+                >
+                  {item.ingredient_name}
+                  <span className="text-xs opacity-75">
+                    {isPast ? 'expired' : `exp. ${item.expiration_date}`}
+                  </span>
+                </span>
+              );
+            })}
           </div>
         </div>
       )}

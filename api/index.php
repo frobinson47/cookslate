@@ -620,7 +620,9 @@ try {
             require_once __DIR__ . '/controllers/PantryController.php';
             $controller = new PantryController();
 
-            if ($id === null) {
+            if ($id === 'expiring' && $method === 'GET') {
+                $response = $controller->expiring();
+            } elseif ($id === null) {
                 switch ($method) {
                     case 'GET':
                         $response = $controller->list();
@@ -629,8 +631,15 @@ try {
                         $response = $controller->add();
                         break;
                 }
-            } elseif (is_numeric($id) && $method === 'DELETE') {
-                $response = $controller->remove((int) $id);
+            } elseif (is_numeric($id)) {
+                switch ($method) {
+                    case 'PUT':
+                        $response = $controller->update((int) $id);
+                        break;
+                    case 'DELETE':
+                        $response = $controller->remove((int) $id);
+                        break;
+                }
             }
             break;
 

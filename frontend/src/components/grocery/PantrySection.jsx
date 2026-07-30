@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, X, Warehouse, Receipt } from 'lucide-react';
+import { Plus, X, Warehouse, Receipt, CalendarClock } from 'lucide-react';
 import usePantry from '../../hooks/usePantry';
 import Button from '../ui/Button';
 
+function isExpiringSoon(dateStr) {
+  if (!dateStr) return false;
+  const days = (new Date(dateStr) - new Date(new Date().toDateString())) / 86400000;
+  return days <= 3;
+}
+
 export default function PantrySection() {
-  const { items, fetchPantry, addItem, removeItem } = usePantry();
+  const { items, fetchPantry, addItem, removeItem, setExpiration } = usePantry();
   const [newName, setNewName] = useState('');
+  const [editingExpiry, setEditingExpiry] = useState(null);
 
   useEffect(() => {
     fetchPantry();
@@ -47,13 +54,36 @@ export default function PantrySection() {
           {items.map(item => (
             <span
               key={item.id}
-              className="inline-flex items-center gap-1 px-3 py-1.5 bg-cream-dark/60 rounded-full text-sm text-brown-light"
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm ${
+                isExpiringSoon(item.expiration_date)
+                  ? 'bg-terracotta/10 text-terracotta'
+                  : 'bg-cream-dark/60 text-brown-light'
+              }`}
             >
               {item.ingredient_name}
               {item.quantity != null && (
                 <span className="text-warm-gray">
                   ({item.quantity}{item.unit ? ` ${item.unit}` : ''})
                 </span>
+              )}
+              {editingExpiry === item.id ? (
+                <input
+                  type="date"
+                  autoFocus
+                  defaultValue={item.expiration_date || ''}
+                  onBlur={(e) => { setExpiration(item.id, e.target.value || null); setEditingExpiry(null); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                  className="text-xs bg-transparent border-b border-current focus:outline-none"
+                />
+              ) : (
+                <button
+                  onClick={() => setEditingExpiry(item.id)}
+                  className="p-0.5 hover:text-terracotta transition-colors"
+                  aria-label={item.expiration_date ? `Change expiration date for ${item.ingredient_name}` : `Set expiration date for ${item.ingredient_name}`}
+                  title={item.expiration_date ? `Expires ${item.expiration_date}` : 'Set expiration date'}
+                >
+                  <CalendarClock size={13} />
+                </button>
               )}
               <button
                 onClick={() => removeItem(item.id)}

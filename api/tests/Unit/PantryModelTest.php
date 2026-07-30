@@ -127,4 +127,52 @@ class PantryModelTest extends TestCase
         $this->assertEquals(3.0, (float) $item['quantity']);
         $this->assertEquals('lb', $item['unit']);
     }
+
+    public function testAddWithExpirationDateStoresIt(): void
+    {
+        $item = $this->pantry->add($this->testUserId, 'milk', 1.0, 'gallon', '2026-08-05');
+        $this->assertEquals('2026-08-05', $item['expiration_date']);
+    }
+
+    public function testAddWithoutExpirationLeavesExistingDateUntouched(): void
+    {
+        $this->pantry->add($this->testUserId, 'milk', 1.0, 'gallon', '2026-08-05');
+        $item = $this->pantry->add($this->testUserId, 'milk', 1.0, 'gallon');
+        $this->assertEquals('2026-08-05', $item['expiration_date']);
+    }
+
+    public function testSetExpirationUpdatesDate(): void
+    {
+        $item = $this->pantry->add($this->testUserId, 'yogurt');
+        $updated = $this->pantry->setExpiration((int) $item['id'], $this->testUserId, '2026-08-10');
+        $this->assertEquals('2026-08-10', $updated['expiration_date']);
+    }
+
+    public function testSetExpirationCanClearDate(): void
+    {
+        $item = $this->pantry->add($this->testUserId, 'yogurt', null, null, '2026-08-10');
+        $updated = $this->pantry->setExpiration((int) $item['id'], $this->testUserId, null);
+        $this->assertNull($updated['expiration_date']);
+    }
+
+    public function testSetExpirationRejectsOtherUser(): void
+    {
+        $item = $this->pantry->add($this->testUserId, 'yogurt');
+        $result = $this->pantry->setExpiration((int) $item['id'], 99999, '2026-08-10');
+        $this->assertNull($result);
+    }
+
+    public function testGetExpiringSoonReturnsOnlyItemsWithinWindow(): void
+    {
+        $this->pantry->add($this->testUserId, 'expiring soon item', null, null, date('Y-m-d', strtotime('+1 day')));
+        $this->pantry->add($this->testUserId, 'expiring later item', null, null, date('Y-m-d', strtotime('+30 days')));
+        $this->pantry->add($this->testUserId, 'no expiration item');
+
+        $results = $this->pantry->getExpiringSoon($this->testUserId, 3);
+        $names = array_column($results, 'ingredient_name');
+
+        $this->assertContains('expiring soon item', $names);
+        $this->assertNotContains('expiring later item', $names);
+        $this->assertNotContains('no expiration item', $names);
+    }
 }

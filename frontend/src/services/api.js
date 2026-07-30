@@ -529,6 +529,14 @@ export function removePantryItem(id) {
   return request(`/pantry/${id}`, { method: 'DELETE' });
 }
 
+export function setPantryItemExpiration(id, expirationDate) {
+  return request(`/pantry/${id}`, { method: 'PUT', body: { expiration_date: expirationDate } });
+}
+
+export function getExpiringPantryItems(days) {
+  return request(`/pantry/expiring${days ? `?days=${days}` : ''}`);
+}
+
 // Shopping trips (receipt scanning / spending history)
 export function importReceipt(imageFile) {
   const formData = new FormData();

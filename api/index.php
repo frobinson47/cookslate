@@ -812,6 +812,18 @@ try {
             } elseif ($id === 'grocery' && $method === 'POST') {
                 // POST /meal-plan/grocery
                 $response = $controller->generateGrocery();
+            } elseif ($id === 'templates' && $subResource === null && $method === 'GET') {
+                // GET /meal-plan/templates
+                $response = $controller->listTemplates();
+            } elseif ($id === 'templates' && $subResource === null && $method === 'POST') {
+                // POST /meal-plan/templates
+                $response = $controller->saveTemplate();
+            } elseif ($id === 'templates' && is_numeric($subResource) && $subId === 'apply' && $method === 'POST') {
+                // POST /meal-plan/templates/{id}/apply
+                $response = $controller->applyTemplate((int) $subResource);
+            } elseif ($id === 'templates' && is_numeric($subResource) && $subId === null && $method === 'DELETE') {
+                // DELETE /meal-plan/templates/{id}
+                $response = $controller->deleteTemplate((int) $subResource);
             }
             break;
 

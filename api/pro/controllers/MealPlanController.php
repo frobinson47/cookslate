@@ -212,4 +212,86 @@ class MealPlanController {
         http_response_code(201);
         return ['grocery_list_id' => $groceryListId];
     }
+
+    /**
+     * GET /meal-plan/templates
+     */
+    public function listTemplates(): array {
+        $userId = Auth::requireAuth();
+        $model = new MealPlan();
+        return ['templates' => $model->getTemplatesForUser($userId)];
+    }
+
+    /**
+     * POST /meal-plan/templates
+     * Expects JSON: { week_start, name }
+     * Saves the given week's current plan as a new named template.
+     */
+    public function saveTemplate(): array {
+        $userId = Auth::requireAuth();
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        $weekStart = $input['week_start'] ?? null;
+        $name = isset($input['name']) ? trim($input['name']) : '';
+
+        $v = new ValidationHelper();
+        $v->required($weekStart, 'week_start')
+          ->date($weekStart, 'week_start')
+          ->required($name, 'name')
+          ->maxLength($name, 'name', 255);
+        $response = $v->responseIfFailed();
+        if ($response) return $response;
+
+        $model = new MealPlan();
+        $template = $model->saveAsTemplate($userId, $weekStart, $name);
+
+        if ($template === null) {
+            http_response_code(400);
+            return ['error' => 'That week has no meals to save as a template', 'code' => 400];
+        }
+
+        http_response_code(201);
+        return $template;
+    }
+
+    /**
+     * POST /meal-plan/templates/{id}/apply
+     * Expects JSON: { week_start }
+     * Applies a saved template to the given week, overwriting its current plan.
+     */
+    public function applyTemplate(int $templateId): array {
+        $userId = Auth::requireAuth();
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        $weekStart = $input['week_start'] ?? null;
+        $v = new ValidationHelper();
+        $v->required($weekStart, 'week_start')->date($weekStart, 'week_start');
+        $response = $v->responseIfFailed();
+        if ($response) return $response;
+
+        $model = new MealPlan();
+        $plan = $model->applyTemplate($templateId, $weekStart, $userId);
+
+        if ($plan === null) {
+            http_response_code(404);
+            return ['error' => 'Template not found or access denied', 'code' => 404];
+        }
+
+        return $plan;
+    }
+
+    /**
+     * DELETE /meal-plan/templates/{id}
+     */
+    public function deleteTemplate(int $templateId): array {
+        $userId = Auth::requireAuth();
+        $model = new MealPlan();
+
+        if (!$model->deleteTemplate($templateId, $userId)) {
+            http_response_code(404);
+            return ['error' => 'Template not found or access denied', 'code' => 404];
+        }
+
+        return ['message' => 'Template deleted'];
+    }
 }

@@ -399,6 +399,28 @@ export function generateGroceryFromPlan(weekStart, listName) {
   });
 }
 
+export function getMealPlanTemplates() {
+  return request('/meal-plan/templates');
+}
+
+export function saveMealPlanTemplate(weekStart, name) {
+  return request('/meal-plan/templates', {
+    method: 'POST',
+    body: { week_start: weekStart, name },
+  });
+}
+
+export function applyMealPlanTemplate(templateId, weekStart) {
+  return request(`/meal-plan/templates/${templateId}/apply`, {
+    method: 'POST',
+    body: { week_start: weekStart },
+  });
+}
+
+export function deleteMealPlanTemplate(templateId) {
+  return request(`/meal-plan/templates/${templateId}`, { method: 'DELETE' });
+}
+
 // Data Export
 export function exportRecipes() {
   return request('/recipes/export');

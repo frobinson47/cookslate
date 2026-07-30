@@ -351,4 +351,147 @@ class MealPlan {
 
         return $listId;
     }
+
+    /**
+     * Save a week's plan as a named, reusable template.
+     * Returns the new template with its items, or null if unauthorized/empty.
+     */
+    public function saveAsTemplate(int $userId, string $weekStart, string $name): ?array {
+        $plan = $this->getByWeek($userId, $weekStart);
+
+        if (empty($plan['items'])) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare('INSERT INTO meal_plan_templates (user_id, name) VALUES (?, ?)');
+        $stmt->execute([$userId, $name]);
+        $templateId = (int) $this->db->lastInsertId();
+
+        $insertStmt = $this->db->prepare('
+            INSERT INTO meal_plan_template_items (template_id, recipe_id, day_of_week, meal_type, sort_order, servings_override)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ');
+        foreach ($plan['items'] as $item) {
+            $insertStmt->execute([
+                $templateId,
+                $item['recipe_id'],
+                $item['day_of_week'],
+                $item['meal_type'],
+                $item['sort_order'],
+                $item['servings_override'],
+            ]);
+        }
+
+        return $this->getTemplate($templateId, $userId);
+    }
+
+    /**
+     * List all saved templates for a user (without items, for a picker list).
+     */
+    public function getTemplatesForUser(int $userId): array {
+        $stmt = $this->db->prepare('
+            SELECT t.id, t.name, t.created_at, COUNT(ti.id) AS item_count
+            FROM meal_plan_templates t
+            LEFT JOIN meal_plan_template_items ti ON ti.template_id = t.id
+            WHERE t.user_id = ?
+            GROUP BY t.id, t.name, t.created_at
+            ORDER BY t.created_at DESC
+        ');
+        $stmt->execute([$userId]);
+        $rows = $stmt->fetchAll();
+
+        return array_map(fn($row) => [
+            'id' => (int) $row['id'],
+            'name' => $row['name'],
+            'created_at' => $row['created_at'],
+            'item_count' => (int) $row['item_count'],
+        ], $rows);
+    }
+
+    /**
+     * Get a single template with its items (with recipe data), scoped to the owning user.
+     */
+    public function getTemplate(int $templateId, int $userId): ?array {
+        $stmt = $this->db->prepare('SELECT id, name, created_at FROM meal_plan_templates WHERE id = ? AND user_id = ?');
+        $stmt->execute([$templateId, $userId]);
+        $template = $stmt->fetch();
+
+        if (!$template) {
+            return null;
+        }
+
+        $itemStmt = $this->db->prepare('
+            SELECT ti.id, ti.recipe_id, ti.day_of_week, ti.meal_type, ti.sort_order, ti.servings_override,
+                   r.id AS r_id, r.title, r.image_path
+            FROM meal_plan_template_items ti
+            INNER JOIN recipes r ON ti.recipe_id = r.id
+            WHERE ti.template_id = ?
+            ORDER BY ti.sort_order ASC, ti.id ASC
+        ');
+        $itemStmt->execute([$templateId]);
+        $rows = $itemStmt->fetchAll();
+
+        $items = array_map(fn($row) => [
+            'id' => (int) $row['id'],
+            'recipe_id' => (int) $row['recipe_id'],
+            'day_of_week' => (int) $row['day_of_week'],
+            'meal_type' => $row['meal_type'],
+            'sort_order' => (int) $row['sort_order'],
+            'servings_override' => $row['servings_override'] !== null ? (int) $row['servings_override'] : null,
+            'recipe' => [
+                'id' => (int) $row['r_id'],
+                'title' => $row['title'],
+                'image_path' => $row['image_path'],
+            ],
+        ], $rows);
+
+        return [
+            'id' => (int) $template['id'],
+            'name' => $template['name'],
+            'created_at' => $template['created_at'],
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * Apply a saved template to a week, overwriting that week's current plan items.
+     * Returns the resulting week plan, or null if the template isn't found/owned.
+     */
+    public function applyTemplate(int $templateId, string $weekStart, int $userId): ?array {
+        $template = $this->getTemplate($templateId, $userId);
+        if ($template === null) {
+            return null;
+        }
+
+        $plan = $this->getByWeek($userId, $weekStart);
+        $planId = $plan['id'];
+
+        $this->db->prepare('DELETE FROM meal_plan_items WHERE plan_id = ?')->execute([$planId]);
+
+        $insertStmt = $this->db->prepare('
+            INSERT INTO meal_plan_items (plan_id, recipe_id, day_of_week, meal_type, sort_order, servings_override)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ');
+        foreach ($template['items'] as $item) {
+            $insertStmt->execute([
+                $planId,
+                $item['recipe_id'],
+                $item['day_of_week'],
+                $item['meal_type'],
+                $item['sort_order'],
+                $item['servings_override'],
+            ]);
+        }
+
+        return $this->getByWeek($userId, $weekStart);
+    }
+
+    /**
+     * Delete a saved template. Returns true on success, false if not found/owned.
+     */
+    public function deleteTemplate(int $templateId, int $userId): bool {
+        $stmt = $this->db->prepare('DELETE FROM meal_plan_templates WHERE id = ? AND user_id = ?');
+        $stmt->execute([$templateId, $userId]);
+        return $stmt->rowCount() > 0;
+    }
 }

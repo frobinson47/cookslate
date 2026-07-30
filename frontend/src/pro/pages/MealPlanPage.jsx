@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus, X, ShoppingCart, CalendarDays, Calendar, GripVertical, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, ShoppingCart, CalendarDays, Calendar, GripVertical, ArrowRight, Bookmark, BookmarkPlus, Trash2 } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
@@ -212,6 +212,13 @@ export default function MealPlanPage() {
   const [activeMobileDay, setActiveMobileDay] = useState(() => getDefaultMobileDay(getMonday(new Date())));
   const [activeId, setActiveId] = useState(null);
   const [selectedMealType, setSelectedMealType] = useState(null);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateActionLoading, setTemplateActionLoading] = useState(false);
+  const [templateError, setTemplateError] = useState(null);
 
   const searchTimerRef = useRef(null);
 
@@ -501,6 +508,69 @@ export default function MealPlanPage() {
     }
   };
 
+  // Meal plan templates
+  const handleOpenTemplates = async () => {
+    setShowTemplates(true);
+    setTemplateError(null);
+    setTemplatesLoading(true);
+    try {
+      const data = await api.getMealPlanTemplates();
+      setTemplates(data.templates || []);
+    } catch {
+      setTemplates([]);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  const handleOpenSaveTemplate = () => {
+    setTemplateName(`${formatDateRange(weekStart)} Plan`);
+    setTemplateError(null);
+    setShowSaveTemplate(true);
+  };
+
+  const handleSaveTemplate = async () => {
+    setTemplateActionLoading(true);
+    setTemplateError(null);
+    try {
+      await api.saveMealPlanTemplate(weekStart, templateName.trim());
+      setShowSaveTemplate(false);
+    } catch (err) {
+      setTemplateError(err?.message || 'Could not save this week as a template.');
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  };
+
+  const handleApplyTemplate = async (templateId) => {
+    if (plan?.items?.length > 0 && !window.confirm(`Apply this template to ${formatDateRange(weekStart)}? This replaces the current meals for that week.`)) {
+      return;
+    }
+    setTemplateActionLoading(true);
+    setTemplateError(null);
+    try {
+      const data = await api.applyMealPlanTemplate(templateId, weekStart);
+      setPlan(data);
+      setShowTemplates(false);
+    } catch (err) {
+      setTemplateError(err?.message || 'Could not apply that template.');
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId) => {
+    setTemplateActionLoading(true);
+    try {
+      await api.deleteMealPlanTemplate(templateId);
+      setTemplates(prev => prev.filter(t => t.id !== templateId));
+    } catch {
+      // Error surfaced via templateError below on next action
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -518,6 +588,18 @@ export default function MealPlanPage() {
             <Calendar size={16} />
             iCal
           </a>
+          <Button variant="secondary" onClick={handleOpenTemplates}>
+            <Bookmark size={18} />
+            Templates
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={handleOpenSaveTemplate}
+            disabled={!plan || !plan.items || plan.items.length === 0}
+          >
+            <BookmarkPlus size={18} />
+            Save as Template
+          </Button>
           <Button variant="secondary" onClick={handleOpenGrocery} disabled={!plan || !plan.items || plan.items.length === 0}>
             <ShoppingCart size={18} />
             Generate Grocery List
@@ -804,6 +886,80 @@ export default function MealPlanPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Save as template modal */}
+      <Modal isOpen={showSaveTemplate} onClose={() => setShowSaveTemplate(false)} title="Save as Template" size="sm">
+        <div className="space-y-4">
+          <p className="text-brown-light text-sm">
+            Save this week's meal plan as a reusable template you can apply to any future week.
+          </p>
+          <div>
+            <label className="block text-sm font-semibold text-brown mb-1">Template Name</label>
+            <input
+              type="text"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-cream-dark bg-surface text-brown placeholder:text-warm-gray focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors duration-200"
+              autoFocus
+            />
+          </div>
+          {templateError && <p className="text-sm text-red-500">{templateError}</p>}
+          <div className="flex gap-3 justify-end">
+            <Button variant="ghost" onClick={() => setShowSaveTemplate(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveTemplate} disabled={templateActionLoading || !templateName.trim()}>
+              {templateActionLoading ? <Spinner /> : <BookmarkPlus size={16} />}
+              {templateActionLoading ? 'Saving...' : 'Save Template'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Templates list modal */}
+      <Modal isOpen={showTemplates} onClose={() => setShowTemplates(false)} title="Meal Plan Templates" size="md">
+        <div className="space-y-3">
+          {templateError && <p className="text-sm text-red-500">{templateError}</p>}
+          {templatesLoading ? (
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
+          ) : templates.length === 0 ? (
+            <div className="text-center py-8">
+              <Bookmark size={32} className="mx-auto text-warm-gray/40 mb-2" />
+              <p className="text-warm-gray">No saved templates yet</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {templates.map(template => (
+                <div key={template.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-cream">
+                  <div className="min-w-0">
+                    <p className="font-medium text-brown truncate">{template.name}</p>
+                    <p className="text-xs text-warm-gray">{template.item_count} meal{template.item_count === 1 ? '' : 's'}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleApplyTemplate(template.id)}
+                      disabled={templateActionLoading}
+                    >
+                      Apply to This Week
+                    </Button>
+                    <button
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      disabled={templateActionLoading}
+                      className="p-2 rounded-lg text-warm-gray hover:text-red-500 hover:bg-red-50 transition-colors duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                      aria-label={`Delete ${template.name}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

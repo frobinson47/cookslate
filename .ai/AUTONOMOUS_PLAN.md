@@ -350,14 +350,14 @@ Notes: Imported from Forgejo issue #81 (https://forgejo.familytechlab.com/fmrdig
 Priority: P3
 Status: TODO
 
-Goal: Imported from Forgejo issue #82. Extend the binary admin/member role model with finer-grained sharing (e.g. a viewer/cook role that can't edit/delete recipes).
-Why it matters: Tandoor's granular permissions are a named differentiator; Cookslate's Household tier (5 users) currently only distinguishes admin vs. member.
-Scope: Highest-effort item in this batch — touches auth middleware and every write-path ownership check (isCreator patterns throughout RecipeController/CollectionController). Needs a dedicated planning/discussion pass before implementation, not a direct build.
-Expected files or areas: TBD pending planning discussion.
-Acceptance criteria: TBD pending planning discussion.
-Validation: TBD.
-Risks or assumptions: Large blast radius — do not implement without explicit scoping discussion first.
-Notes: Imported from Forgejo issue #82 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/82).
+Goal: Imported from Forgejo issue #82. Add a `viewer` role (admin/member/viewer), and make collections, meal plans, grocery lists, and pantry visible to every user on the instance (not just their creator) — matching how recipes already work. Edit/delete stays creator-or-admin-only, unchanged. Recipes, favorites, ratings, cook log, shopping trips, and API keys are unaffected.
+Why it matters: Tandoor's granular permissions are a named differentiator; Cookslate's Household tier (5 users) is currently just a seat-count cap with zero actual data sharing between those users — collections/meal-plans/grocery-lists/pantry are siloed per-account today, which undercuts the "household" pitch.
+Scope: See decisions/2026-07-30-household-permissions-scope.md for full reasoning. No new `households` table — a self-hosted instance already IS the household (`license.php::maxUsers()` just caps seats on it). Widen the list/read query on 4 models to drop the `WHERE created_by/user_id = ?` filter; add a `viewer` role enforced by a shared write-gate reused across mutating endpoints. Explicitly declined: multi-household-per-instance modeling, and extending shared *editing* rights to any of these resources or to recipes (creator/admin-only stays the rule everywhere).
+Expected files or areas: database/migrations (users.role enum → add 'viewer'); api/middleware/Auth.php (new write-gate helper, e.g. requireWriteAccess()); api/models/Collection.php, GroceryList.php, api/pro/models/MealPlan.php, api/models/Pantry.php (drop owner filter on list/read; keep isOwner/isCreator for mutations); api/controllers/CollectionController.php, GroceryController.php, api/pro/controllers/MealPlanController.php, PantryController.php (apply write-gate); frontend: gray out/hide edit-delete controls for items not owned by the current user, add a "viewer" role option in user management UI (AdminPage/UserController), show a creator badge on shared items where useful for clarity.
+Acceptance criteria: A member on a Household-tier instance sees every household member's collections, meal plans, grocery lists, and pantry items, but can only edit/delete their own (or any, if admin). A viewer-role user can view everything a member can but cannot create/edit/delete anything anywhere in the app. Recipes, favorites, ratings, cook log, shopping trips, and API keys behave exactly as they do today.
+Validation: PHPUnit tests per model (shared visibility + edit-still-restricted-to-owner + viewer-blocked-from-writes); npm run build/lint; manual smoke test of the viewer role end-to-end.
+Risks or assumptions: Scoping discussion complete 2026-07-30 (decisions/2026-07-30-household-permissions-scope.md) — blast radius is smaller than originally feared since edit-rights logic is unchanged, only visibility widens on 4 models plus one new role gate. Existing Household-tier users will see a behavior change: other members' collections/meal-plans/grocery-lists/pantry become visible where they weren't before — worth a release note.
+Notes: Imported from Forgejo issue #82 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/82). Scoped 2026-07-30 with the user; ready to build.
 
 ## Future Ideas
 

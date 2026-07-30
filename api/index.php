@@ -1265,6 +1265,24 @@ try {
             }
             break;
 
+        // ── External Integration Routes (Home Assistant, etc.) ───────────
+        case 'external':
+            require_once __DIR__ . '/middleware/ApiKeyAuth.php';
+            if (!ApiKeyAuth::isValid()) {
+                http_response_code(401);
+                $response = ['error' => 'Valid apikey required', 'code' => 401];
+                break;
+            }
+            require_once __DIR__ . '/controllers/ExternalController.php';
+            $controller = new ExternalController();
+
+            if ($id === 'today-meal' && $method === 'GET') {
+                $response = $controller->todayMeal();
+            } elseif ($id === 'pantry-alerts' && $method === 'GET') {
+                $response = $controller->pantryAlerts();
+            }
+            break;
+
         // ── License Routes ──────────────────────────────────────────────
         case 'license':
             require_once __DIR__ . '/config/license.php';

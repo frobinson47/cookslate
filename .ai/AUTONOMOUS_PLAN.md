@@ -307,7 +307,7 @@ Notes: Imported from Forgejo issue #78 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-027 — Saved/reusable meal plan templates
 Priority: P3
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #79. Let users save a populated week's meal plan as a named, reusable template, applicable to any future week.
 Why it matters: Paprika calls this out explicitly; most households repeat 3-5 weekly patterns.
@@ -316,7 +316,9 @@ Expected files or areas: New migration; api/pro/models/MealPlan.php, api/pro/con
 Acceptance criteria: User can save the current week as a named template and apply a saved template to any week, overwriting that week's current plan.
 Validation: PHPUnit tests; npm run build.
 Risks or assumptions: None significant.
-Notes: Imported from Forgejo issue #79 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/79).
+Notes: Imported from Forgejo issue #79 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/79). Migration 026 adds `meal_plan_templates` + `meal_plan_template_items`. New `MealPlan::saveAsTemplate/getTemplatesForUser/getTemplate/applyTemplate/deleteTemplate`; new routes `GET/POST /meal-plan/templates`, `POST /meal-plan/templates/{id}/apply`, `DELETE /meal-plan/templates/{id}`. MealPlanPage got "Templates" and "Save as Template" header buttons plus two modals; applying a template to a non-empty week asks for confirmation since it overwrites. 6 new PHPUnit tests, full suite 309/309 passing. Frontend lint/build clean. Deployed to prod (hookhouse-pro) 2026-07-30 — migration applied via app container, deploy.sh run, verified live (`GET /api/meal-plan/templates` returns 401 unauthenticated, as expected, on home.cookslate.app; new tables confirmed present). Not manually clicked through in a live browser this pass (no test credentials available without risking the 5-attempt lockout) — worth a manual UI smoke-test in a future session. Commit 2c3c5fe.
+
+Also discovered in passing: local dev DB was missing migration 017 (meal_type column) — pure local drift, prod already had it. Applied locally so tests could run; no prod action needed.
 
 ### AUTO-028 — OpenFoodFacts barcode lookup for packaged/branded products
 Priority: P2

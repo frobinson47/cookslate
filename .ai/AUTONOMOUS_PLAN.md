@@ -251,7 +251,7 @@ Sourced from competitive research against Mealie, Tandoor Recipes, Nextcloud Coo
 
 ### AUTO-023 — Pantry expiration tracking + Use It Soon surfacing
 Priority: P1
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #75. Add an optional expiration date to pantry items and surface a "Use It Soon" card so users see what's about to go bad.
 Why it matters: Every commercial and AI-pantry competitor (Paprika, Pantry AI, RecipeScan) leads with expiry reminders as the core food-waste-reduction hook. Cookslate's pantry has quantity tracking (AUTO-004) but no time dimension at all.

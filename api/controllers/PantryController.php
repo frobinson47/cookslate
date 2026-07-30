@@ -2,6 +2,7 @@
 // api/controllers/PantryController.php
 
 require_once __DIR__ . '/../models/Pantry.php';
+require_once __DIR__ . '/../models/UserApiKey.php';
 require_once __DIR__ . '/../middleware/Auth.php';
 require_once __DIR__ . '/../services/ValidationHelper.php';
 
@@ -47,6 +48,88 @@ class PantryController {
 
         http_response_code(201);
         return $item;
+    }
+
+    /**
+     * POST /pantry/scan
+     * Accepts a multipart upload (field: "image") — a photo of a fridge,
+     * pantry, or freezer shelf. Uses the user's own OpenAI API key to
+     * identify visible food items. Returns a parsed-but-unsaved list for
+     * the frontend's review/edit screen — never persisted until /pantry/bulk.
+     */
+    public function scan(): array {
+        $userId = Auth::requireAuth();
+
+        $keyModel = new UserApiKey();
+        $apiKey = $keyModel->getDecryptedKey($userId, 'openai');
+        if (!$apiKey) {
+            return [
+                'items' => [],
+                'error_code' => 'no_api_key',
+                'error' => 'Add your OpenAI API key in Settings to use this feature.',
+            ];
+        }
+
+        if (empty($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            return ['error' => 'An image file is required', 'code' => 400];
+        }
+
+        $file = $_FILES['image'];
+        if ($file['size'] > MAX_UPLOAD_SIZE) {
+            http_response_code(400);
+            return ['error' => 'Image exceeds the size limit', 'code' => 400];
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($file['tmp_name']);
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!in_array($mimeType, $allowedTypes, true)) {
+            http_response_code(400);
+            return ['error' => 'Unsupported image type. Use JPEG, PNG, WEBP, or GIF.', 'code' => 400];
+        }
+
+        $imageBase64 = base64_encode(file_get_contents($file['tmp_name']));
+
+        require_once __DIR__ . '/../services/OpenAiPantryScanParser.php';
+        $parser = new \OpenAiPantryScanParser();
+        return $parser->parsePantryScan($imageBase64, $mimeType, $apiKey);
+    }
+
+    /**
+     * POST /pantry/bulk
+     * Confirm a (possibly user-edited) parsed pantry scan. Expects JSON:
+     * { items: [{ name, quantity, unit, expiration_date }] }
+     */
+    public function bulkAdd(): array {
+        $userId = Auth::requireAuth();
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $items = is_array($input['items'] ?? null) ? $input['items'] : [];
+
+        if (empty($items)) {
+            http_response_code(400);
+            return ['error' => 'At least one item is required', 'code' => 400];
+        }
+
+        $pantry = new Pantry();
+        $added = [];
+
+        foreach ($items as $item) {
+            if (empty($item['name'])) continue;
+
+            $name = ValidationHelper::sanitize((string) $item['name'], 255);
+            $quantity = isset($item['quantity']) && is_numeric($item['quantity']) ? (float) $item['quantity'] : null;
+            $unit = !empty($item['unit']) ? ValidationHelper::sanitize((string) $item['unit'], 32) : null;
+            $expirationDate = null;
+            if (!empty($item['expiration_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $item['expiration_date'])) {
+                $expirationDate = $item['expiration_date'];
+            }
+
+            $added[] = $pantry->add($userId, $name, $quantity, $unit, $expirationDate);
+        }
+
+        http_response_code(201);
+        return ['items' => $added];
     }
 
     /**

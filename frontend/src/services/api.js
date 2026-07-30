@@ -537,6 +537,16 @@ export function getExpiringPantryItems(days) {
   return request(`/pantry/expiring${days ? `?days=${days}` : ''}`);
 }
 
+export function scanPantryPhoto(imageFile) {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  return request('/pantry/scan', { method: 'POST', body: formData, isFormData: true });
+}
+
+export function bulkAddPantryItems(items) {
+  return request('/pantry/bulk', { method: 'POST', body: { items } });
+}
+
 // Shopping trips (receipt scanning / spending history)
 export function importReceipt(imageFile) {
   const formData = new FormData();

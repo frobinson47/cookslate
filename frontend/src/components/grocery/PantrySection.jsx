@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, X, Warehouse, Receipt, CalendarClock } from 'lucide-react';
+import { Plus, X, Warehouse, Receipt, CalendarClock, ScanLine } from 'lucide-react';
 import usePantry from '../../hooks/usePantry';
 import Button from '../ui/Button';
 
@@ -42,6 +42,13 @@ export default function PantrySection() {
         >
           <Receipt size={14} />
           Scan Receipt
+        </Link>
+        <Link
+          to="/scan-pantry"
+          className="flex items-center gap-1 text-xs text-terracotta hover:underline"
+        >
+          <ScanLine size={14} />
+          Scan Pantry
         </Link>
       </div>
 

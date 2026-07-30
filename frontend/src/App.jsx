@@ -17,6 +17,7 @@ import AddRecipePage from './pages/AddRecipePage';
 import EditRecipePage from './pages/EditRecipePage';
 import GroceryPage from './pages/GroceryPage';
 import ScanReceiptPage from './pages/ScanReceiptPage';
+import ScanPantryPage from './pages/ScanPantryPage';
 import SpendingHistoryPage from './pages/SpendingHistoryPage';
 import YearInReviewPage from './pages/YearInReviewPage';
 import AdminPage from './pages/AdminPage';
@@ -136,6 +137,16 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <ScanReceiptPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/scan-pantry"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ScanPantryPage />
                 </Layout>
               </ProtectedRoute>
             }

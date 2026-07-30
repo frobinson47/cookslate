@@ -622,6 +622,23 @@ try {
 
             if ($id === 'expiring' && $method === 'GET') {
                 $response = $controller->expiring();
+            } elseif ($id === 'scan' && $method === 'POST') {
+                $rateLimiter = new RateLimiter();
+                $clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+                $rateResult = $rateLimiter->check($clientIp, 'import', 10, 300);
+                if (!$rateResult['allowed']) {
+                    http_response_code(429);
+                    header('Retry-After: ' . $rateResult['retryAfter']);
+                    $response = [
+                        'error' => 'Too many import requests. Try again later.',
+                        'code' => 429,
+                        'retryAfter' => $rateResult['retryAfter'],
+                    ];
+                    break;
+                }
+                $response = $controller->scan();
+            } elseif ($id === 'bulk' && $method === 'POST') {
+                $response = $controller->bulkAdd();
             } elseif ($id === null) {
                 switch ($method) {
                     case 'GET':

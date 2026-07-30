@@ -65,7 +65,29 @@ export function usePantry() {
     return items.some(i => i.ingredient_name.toLowerCase().trim() === normalized);
   }, [items]);
 
-  return { items, isLoading, error, fetchPantry, addItem, removeItem, isInPantry, setExpiration };
+  const scanPantry = useCallback(async (imageFile) => {
+    setError(null);
+    try {
+      return await api.scanPantryPhoto(imageFile);
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  }, []);
+
+  const bulkAddItems = useCallback(async (scannedItems) => {
+    setError(null);
+    try {
+      const data = await api.bulkAddPantryItems(scannedItems);
+      await fetchPantry();
+      return data.items || [];
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  }, [fetchPantry]);
+
+  return { items, isLoading, error, fetchPantry, addItem, removeItem, isInPantry, setExpiration, scanPantry, bulkAddItems };
 }
 
 export default usePantry;

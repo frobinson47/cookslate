@@ -14,7 +14,7 @@ To be documented as the project evolves.
 
 ## Current implementation status
 
-Roadmap v1 is complete. Roadmap v2 (AUTO-023 through AUTO-025) is in progress.
+Roadmap v1 and v2 (AUTO-023 through AUTO-025) are both complete.
 
 ## Technical debt
 
@@ -277,7 +277,7 @@ Notes: Imported from Forgejo issue #76 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-025 — Home Assistant integration (read-only sensors + dashboard card)
 Priority: P1
-Status: TODO
+Status: DONE
 
 Goal: Imported from Forgejo issue #77. Expose a small, stable read-only API surface (today's meal plan, pantry "use it soon" items) for Home Assistant REST sensor consumption, plus documentation with an example Lovelace card config.
 Why it matters: Mealie's official Home Assistant integration has 2,555+ active installs — real evidence the self-hosted recipe-app audience already runs Home Assistant. Reuses the existing read-only external API key infrastructure (COOKSLATE_API_KEY) rather than building new auth.

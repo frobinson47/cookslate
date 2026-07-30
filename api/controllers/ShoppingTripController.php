@@ -99,6 +99,13 @@ class ShoppingTripController {
             $pantry->add($userId, $item['name'], $item['quantity'], $item['unit']);
         }
 
+        try {
+            require_once __DIR__ . '/../services/IngredientDataEnricher.php';
+            (new \IngredientDataEnricher())->enrichFromScan(array_column($normalizedItems, 'name'));
+        } catch (\Throwable $e) {
+            // Best-effort enrichment — never block the trip from saving.
+        }
+
         http_response_code(201);
         return $trip;
     }

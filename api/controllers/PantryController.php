@@ -128,6 +128,13 @@ class PantryController {
             $added[] = $pantry->add($userId, $name, $quantity, $unit, $expirationDate);
         }
 
+        try {
+            require_once __DIR__ . '/../services/IngredientDataEnricher.php';
+            (new \IngredientDataEnricher())->enrichFromScan(array_column($added, 'ingredient_name'));
+        } catch (\Throwable $e) {
+            // Best-effort enrichment — never block the pantry add from succeeding.
+        }
+
         http_response_code(201);
         return ['items' => $added];
     }

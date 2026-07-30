@@ -850,7 +850,10 @@ try {
             require_once __DIR__ . '/controllers/UserController.php';
             $controller = new UserController();
 
-            if ($id === null) {
+            if ($id === 'household-members' && $method === 'GET') {
+                // GET /users/household-members — any authenticated user
+                $response = $controller->householdMembers();
+            } elseif ($id === null) {
                 // /users
                 switch ($method) {
                     case 'GET':

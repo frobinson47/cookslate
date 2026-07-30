@@ -442,6 +442,7 @@ export default function AdminPage() {
               className="w-full px-4 py-2.5 rounded-xl border border-cream-dark text-brown bg-surface focus:outline-none focus:border-terracotta transition-colors duration-200 min-h-[44px]"
             >
               <option value="member">Member</option>
+              <option value="viewer">Viewer (read-only)</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -490,6 +491,7 @@ export default function AdminPage() {
               className="w-full px-4 py-2.5 rounded-xl border border-cream-dark text-brown bg-surface focus:outline-none focus:border-terracotta transition-colors duration-200 min-h-[44px]"
             >
               <option value="member">Member</option>
+              <option value="viewer">Viewer (read-only)</option>
               <option value="admin">Admin</option>
             </select>
           </div>

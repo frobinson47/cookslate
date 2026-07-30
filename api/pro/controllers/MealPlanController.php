@@ -8,7 +8,8 @@ class MealPlanController {
 
     /**
      * GET /meal-plan
-     * Query params: week (date string, defaults to today)
+     * Query params: week (date string, defaults to today), user_id (view another
+     * household member's plan, read-only — defaults to the caller's own plan)
      */
     public function getWeekPlan(): array {
         $userId = Auth::requireAuth();
@@ -19,8 +20,10 @@ class MealPlanController {
             $week = date('Y-m-d');
         }
 
+        $viewUserId = isset($_GET['user_id']) && ctype_digit((string) $_GET['user_id']) ? (int) $_GET['user_id'] : null;
+
         $model = new MealPlan();
-        return $model->getByWeek($userId, $week);
+        return $model->getByWeek($userId, $week, $viewUserId);
     }
 
     /**
@@ -38,7 +41,7 @@ class MealPlanController {
      * Expects JSON: { recipe_id, day_of_week, week_start }
      */
     public function addItem(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true);
 
         if (empty($input['recipe_id']) || !isset($input['day_of_week']) || empty($input['week_start'])) {
@@ -82,11 +85,12 @@ class MealPlanController {
      * Expects JSON with any of: { day_of_week, sort_order, servings_override }
      */
     public function updateItem(int $itemId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true);
+        $isAdmin = ($_SESSION['role'] ?? '') === 'admin';
 
         $model = new MealPlan();
-        $success = $model->updateItem($itemId, $input ?? [], $userId);
+        $success = $model->updateItem($itemId, $input ?? [], $userId, $isAdmin);
 
         if (!$success) {
             http_response_code(404);
@@ -100,10 +104,11 @@ class MealPlanController {
      * DELETE /meal-plan/items/{id}
      */
     public function removeItem(int $itemId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
+        $isAdmin = ($_SESSION['role'] ?? '') === 'admin';
 
         $model = new MealPlan();
-        $success = $model->removeItem($itemId, $userId);
+        $success = $model->removeItem($itemId, $userId, $isAdmin);
 
         if (!$success) {
             http_response_code(404);
@@ -176,7 +181,7 @@ class MealPlanController {
      * Expects JSON: { week_start, list_name? }
      */
     public function generateGrocery(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true);
 
         if (empty($input['week_start'])) {
@@ -228,7 +233,7 @@ class MealPlanController {
      * Saves the given week's current plan as a new named template.
      */
     public function saveTemplate(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
         $weekStart = $input['week_start'] ?? null;
@@ -260,7 +265,7 @@ class MealPlanController {
      * Applies a saved template to the given week, overwriting its current plan.
      */
     public function applyTemplate(int $templateId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
         $weekStart = $input['week_start'] ?? null;
@@ -284,7 +289,7 @@ class MealPlanController {
      * DELETE /meal-plan/templates/{id}
      */
     public function deleteTemplate(int $templateId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $model = new MealPlan();
 
         if (!$model->deleteTemplate($templateId, $userId)) {

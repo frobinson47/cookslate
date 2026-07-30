@@ -14,19 +14,40 @@ class MealPlan {
 
     /**
      * Get or create a meal plan for a given week, returning plan with all items.
+     * Pass $viewUserId to browse another household member's plan (read-only —
+     * their plan is not auto-created if it doesn't exist yet). Defaults to
+     * the caller's own plan, which IS auto-created on first view.
      */
-    public function getByWeek(int $userId, string $weekStart): array {
+    public function getByWeek(int $userId, string $weekStart, ?int $viewUserId = null): array {
+        $viewUserId = $viewUserId ?? $userId;
         // Snap weekStart to Monday
         $snappedDate = date('Y-m-d', strtotime('monday this week', strtotime($weekStart)));
 
-        // Atomic upsert — find or create the plan
-        $stmt = $this->db->prepare('
-            INSERT INTO meal_plans (user_id, week_start)
-            VALUES (?, ?)
-            ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)
-        ');
-        $stmt->execute([$userId, $snappedDate]);
-        $planId = (int) $this->db->lastInsertId();
+        if ($viewUserId === $userId) {
+            // Atomic upsert — find or create the caller's own plan
+            $stmt = $this->db->prepare('
+                INSERT INTO meal_plans (user_id, week_start)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)
+            ');
+            $stmt->execute([$userId, $snappedDate]);
+            $planId = (int) $this->db->lastInsertId();
+        } else {
+            // Read-only view of someone else's plan — never auto-create it.
+            $stmt = $this->db->prepare('SELECT id FROM meal_plans WHERE user_id = ? AND week_start = ?');
+            $stmt->execute([$viewUserId, $snappedDate]);
+            $planId = $stmt->fetchColumn();
+            if ($planId === false) {
+                return [
+                    'id' => null,
+                    'week_start' => $snappedDate,
+                    'owner_id' => $viewUserId,
+                    'is_owner' => false,
+                    'items' => [],
+                ];
+            }
+            $planId = (int) $planId;
+        }
 
         // Fetch all items for this plan with recipe data
         $itemStmt = $this->db->prepare('
@@ -63,6 +84,8 @@ class MealPlan {
         return [
             'id' => $planId,
             'week_start' => $snappedDate,
+            'owner_id' => $viewUserId,
+            'is_owner' => $viewUserId === $userId,
             'items' => $items,
         ];
     }
@@ -189,15 +212,20 @@ class MealPlan {
      * Update a meal plan item. Only updates fields present in $data.
      * Returns true on success, false if not found or unauthorized.
      */
-    public function updateItem(int $itemId, array $data, int $userId): bool {
-        // Verify ownership via JOIN
-        $stmt = $this->db->prepare('
-            SELECT mpi.id
-            FROM meal_plan_items mpi
-            INNER JOIN meal_plans mp ON mpi.plan_id = mp.id
-            WHERE mpi.id = ? AND mp.user_id = ?
-        ');
-        $stmt->execute([$itemId, $userId]);
+    public function updateItem(int $itemId, array $data, int $userId, bool $isAdmin = false): bool {
+        // Verify ownership via JOIN (admins may edit any household member's item)
+        if ($isAdmin) {
+            $stmt = $this->db->prepare('SELECT mpi.id FROM meal_plan_items mpi WHERE mpi.id = ?');
+            $stmt->execute([$itemId]);
+        } else {
+            $stmt = $this->db->prepare('
+                SELECT mpi.id
+                FROM meal_plan_items mpi
+                INNER JOIN meal_plans mp ON mpi.plan_id = mp.id
+                WHERE mpi.id = ? AND mp.user_id = ?
+            ');
+            $stmt->execute([$itemId, $userId]);
+        }
 
         if (!$stmt->fetch()) {
             return false;
@@ -230,14 +258,19 @@ class MealPlan {
     /**
      * Remove a meal plan item. Returns true on success, false if not found or unauthorized.
      */
-    public function removeItem(int $itemId, int $userId): bool {
-        // DELETE with JOIN to verify ownership
-        $stmt = $this->db->prepare('
-            DELETE mpi FROM meal_plan_items mpi
-            INNER JOIN meal_plans mp ON mpi.plan_id = mp.id
-            WHERE mpi.id = ? AND mp.user_id = ?
-        ');
-        $stmt->execute([$itemId, $userId]);
+    public function removeItem(int $itemId, int $userId, bool $isAdmin = false): bool {
+        // DELETE with JOIN to verify ownership (admins may remove any household member's item)
+        if ($isAdmin) {
+            $stmt = $this->db->prepare('DELETE FROM meal_plan_items WHERE id = ?');
+            $stmt->execute([$itemId]);
+        } else {
+            $stmt = $this->db->prepare('
+                DELETE mpi FROM meal_plan_items mpi
+                INNER JOIN meal_plans mp ON mpi.plan_id = mp.id
+                WHERE mpi.id = ? AND mp.user_id = ?
+            ');
+            $stmt->execute([$itemId, $userId]);
+        }
 
         return $stmt->rowCount() > 0;
     }

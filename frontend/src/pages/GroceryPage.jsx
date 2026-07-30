@@ -13,6 +13,7 @@ import { groupByCategory } from '../utils/ingredientCategories';
 import PantrySection from '../components/grocery/PantrySection';
 import usePantry from '../hooks/usePantry';
 import EmptyState from '../components/ui/EmptyState';
+import { useAuth } from '../hooks/useAuth';
 
 export default function GroceryPage() {
   const {
@@ -22,6 +23,8 @@ export default function GroceryPage() {
   } = useGrocery();
 
   const { addItem: addPantryItem } = usePantry();
+  const { isAdmin, isViewer } = useAuth();
+  const canEditCurrentList = Boolean(currentList) && (currentList.is_owner || isAdmin);
 
   useDocumentTitle(currentList ? currentList.name : 'Grocery Lists');
 
@@ -195,7 +198,7 @@ export default function GroceryPage() {
               {groupedView ? <LayoutList size={18} /> : <LayoutGrid size={18} />}
             </button>
           )}
-          {checkedCount > 0 && (
+          {canEditCurrentList && checkedCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -208,6 +211,12 @@ export default function GroceryPage() {
           )}
           </div>
         </div>
+
+        {!currentList.is_owner && currentList.created_by_username && (
+          <p className="text-xs text-warm-gray -mt-4">
+            Shared by {currentList.created_by_username}{!isAdmin && ' · view only'}
+          </p>
+        )}
 
         {/* Items */}
         <div className="bg-surface rounded-2xl shadow-md overflow-hidden">
@@ -236,6 +245,7 @@ export default function GroceryPage() {
                         onToggle={handleToggleItem}
                         onDelete={handleDeleteItem}
                         onPantryToggle={handlePantryToggle}
+                        readOnly={!canEditCurrentList}
                       />
                     ))}
                   </div>
@@ -251,27 +261,30 @@ export default function GroceryPage() {
                   onToggle={handleToggleItem}
                   onDelete={handleDeleteItem}
                   onPantryToggle={handlePantryToggle}
+                  readOnly={!canEditCurrentList}
                 />
               ))}
             </div>
           )}
 
           {/* Add item inline */}
-          <form onSubmit={handleAddItem} className="p-3 border-t border-cream-dark">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
-                onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
-                placeholder="Add an item..."
-                className="flex-1 px-4 py-2.5 rounded-xl border border-cream-dark text-brown placeholder:text-warm-gray focus:outline-none focus:border-terracotta transition-colors duration-200 min-h-[44px]"
-              />
-              <Button type="submit" disabled={!newItemName.trim()} size="sm">
-                <Plus size={16} />
-              </Button>
-            </div>
-          </form>
+          {canEditCurrentList && (
+            <form onSubmit={handleAddItem} className="p-3 border-t border-cream-dark">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
+                  placeholder="Add an item..."
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-cream-dark text-brown placeholder:text-warm-gray focus:outline-none focus:border-terracotta transition-colors duration-200 min-h-[44px]"
+                />
+                <Button type="submit" disabled={!newItemName.trim()} size="sm">
+                  <Plus size={16} />
+                </Button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     );
@@ -282,10 +295,12 @@ export default function GroceryPage() {
     <div className="max-w-xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-brown">Grocery Lists</h1>
-        <Button onClick={() => setShowNewListModal(true)} size="sm">
-          <Plus size={16} />
-          New List
-        </Button>
+        {!isViewer && (
+          <Button onClick={() => setShowNewListModal(true)} size="sm">
+            <Plus size={16} />
+            New List
+          </Button>
+        )}
       </div>
 
       {isLoading && lists.length === 0 ? (
@@ -307,6 +322,7 @@ export default function GroceryPage() {
               list={list}
               onClick={handleOpenList}
               onDelete={handleDeleteList}
+              canDelete={list.is_owner || isAdmin}
             />
           ))}
         </div>

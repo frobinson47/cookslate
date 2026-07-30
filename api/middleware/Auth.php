@@ -47,4 +47,21 @@ class Auth {
         }
         self::requireAuth();
     }
+
+    /**
+     * Require an authenticated session that isn't a read-only viewer.
+     * Use at the top of every create/update/delete endpoint.
+     * Returns user_id on success, sends 401/403 JSON and exits on failure.
+     */
+    public static function requireWriteAccess(): int {
+        $userId = self::requireAuth();
+
+        if (($_SESSION['role'] ?? '') === 'viewer') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Viewer accounts are read-only', 'code' => 403]);
+            exit;
+        }
+
+        return $userId;
+    }
 }

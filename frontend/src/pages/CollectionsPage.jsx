@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, ArrowLeft, Library, Trash2, UtensilsCrossed, Clock } from 'lucide-react';
 import useCollections from '../hooks/useCollections';
+import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
@@ -15,6 +16,7 @@ export default function CollectionsPage() {
     collections, currentCollection, isLoading,
     fetchCollections, fetchCollection, createCollection, removeCollection,
   } = useCollections();
+  const { isAdmin, isViewer } = useAuth();
 
   useDocumentTitle(currentCollection ? currentCollection.name : 'Collections');
 
@@ -79,16 +81,21 @@ export default function CollectionsPage() {
               {currentCollection.description && (
                 <p className="text-sm text-warm-gray mt-0.5">{currentCollection.description}</p>
               )}
+              {!currentCollection.is_owner && currentCollection.created_by_username && (
+                <p className="text-xs text-warm-gray mt-1">Shared by {currentCollection.created_by_username}</p>
+              )}
             </div>
           </div>
-          <button
-            onClick={() => setDeleteConfirm(currentCollection.id)}
-            className="p-2 rounded-xl text-warm-gray hover:text-red-500 hover:bg-red-50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-            aria-label="Delete collection"
-            title="Delete collection"
-          >
-            <Trash2 size={18} />
-          </button>
+          {(currentCollection.is_owner || isAdmin) && (
+            <button
+              onClick={() => setDeleteConfirm(currentCollection.id)}
+              className="p-2 rounded-xl text-warm-gray hover:text-red-500 hover:bg-red-50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label="Delete collection"
+              title="Delete collection"
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
         </div>
 
         {isLoading && recipes.length === 0 ? (
@@ -134,10 +141,12 @@ export default function CollectionsPage() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-brown">Collections</h1>
-        <Button onClick={() => setShowNewModal(true)} size="sm">
-          <Plus size={16} />
-          New Collection
-        </Button>
+        {!isViewer && (
+          <Button onClick={() => setShowNewModal(true)} size="sm">
+            <Plus size={16} />
+            New Collection
+          </Button>
+        )}
       </div>
 
       {isLoading && collections.length === 0 ? (
@@ -158,6 +167,7 @@ export default function CollectionsPage() {
             <CollectionCard
               key={col.id}
               collection={col}
+              canDelete={col.is_owner || isAdmin}
               onClick={() => handleOpenCollection(col.id)}
               onDelete={() => setDeleteConfirm(col.id)}
             />
@@ -229,7 +239,7 @@ export default function CollectionsPage() {
   );
 }
 
-function CollectionCard({ collection, onClick, onDelete }) {
+function CollectionCard({ collection, canDelete, onClick, onDelete }) {
   return (
     <div className="bg-surface rounded-2xl shadow-md border border-cream-dark p-4 flex items-center gap-4 hover:shadow-lg transition-shadow duration-200">
       <button
@@ -246,17 +256,20 @@ function CollectionCard({ collection, onClick, onDelete }) {
           )}
           <p className="text-xs text-warm-gray mt-1">
             {collection.recipe_count ?? 0} {(collection.recipe_count ?? 0) === 1 ? 'recipe' : 'recipes'}
+            {!collection.is_owner && collection.created_by_username && ` · shared by ${collection.created_by_username}`}
           </p>
         </div>
       </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="p-2 rounded-xl text-warm-gray hover:text-red-500 hover:bg-red-50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
-        aria-label="Delete collection"
-        title="Delete"
-      >
-        <Trash2 size={16} />
-      </button>
+      {canDelete && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="p-2 rounded-xl text-warm-gray hover:text-red-500 hover:bg-red-50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
+          aria-label="Delete collection"
+          title="Delete"
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
     </div>
   );
 }

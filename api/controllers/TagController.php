@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../models/Tag.php';
+require_once __DIR__ . '/../middleware/Auth.php';
 
 class TagController {
 
@@ -18,10 +19,7 @@ class TagController {
      * Deletes a tag (requires login).
      */
     public function delete(int $id): array {
-        if (empty($_SESSION['user_id'])) {
-            http_response_code(401);
-            return ['error' => 'Unauthorized', 'code' => 401];
-        }
+        Auth::requireWriteAccess();
 
         $tagModel = new Tag();
         $deleted = $tagModel->delete($id);

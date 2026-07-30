@@ -9,21 +9,37 @@ class Collection {
         $this->db = Database::getInstance();
     }
 
+    /**
+     * All collections visible to the household (every user on this instance),
+     * not just the caller's own. $userId is used to flag which ones the
+     * caller owns (and can therefore edit/delete).
+     */
     public function getAllForUser(int $userId): array {
         $stmt = $this->db->prepare('
-            SELECT c.id, c.name, c.description, c.created_at,
+            SELECT c.id, c.name, c.description, c.created_at, c.created_by,
+                   u.username AS created_by_username,
+                   (c.created_by = ?) AS is_owner,
                    (SELECT COUNT(*) FROM recipe_collections rc WHERE rc.collection_id = c.id) AS recipe_count
             FROM collections c
-            WHERE c.created_by = ?
+            INNER JOIN users u ON u.id = c.created_by
             ORDER BY c.name ASC
             LIMIT 200
         ');
         $stmt->execute([$userId]);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$row) {
+            $row['is_owner'] = (bool) $row['is_owner'];
+        }
+        return $rows;
     }
 
     public function findById(int $id): ?array {
-        $stmt = $this->db->prepare('SELECT * FROM collections WHERE id = ?');
+        $stmt = $this->db->prepare('
+            SELECT c.*, u.username AS created_by_username
+            FROM collections c
+            INNER JOIN users u ON u.id = c.created_by
+            WHERE c.id = ?
+        ');
         $stmt->execute([$id]);
         $row = $stmt->fetch();
         return $row ?: null;

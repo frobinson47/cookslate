@@ -32,7 +32,7 @@ class RecipeShareController {
      * Requires auth. Creates a share link for the recipe.
      */
     public function createShare(int $recipeId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         // Verify recipe exists
         require_once __DIR__ . '/../models/Database.php';
@@ -56,7 +56,7 @@ class RecipeShareController {
      * Requires auth. Revokes the share link for the recipe.
      */
     public function revokeShare(int $recipeId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         $shareModel = new RecipeShare();
         $revoked = $shareModel->revoke($recipeId, $userId);

@@ -43,7 +43,7 @@ class RecipeController {
      * Expects JSON body or multipart form data (when image is attached).
      */
     public function create(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         // Handle multipart (with image) or JSON
         if (!empty($_FILES['image'])) {
@@ -137,7 +137,7 @@ class RecipeController {
      * Create a recipe from pre-parsed data (used by Cooklang import).
      */
     public function createFromData(array $data): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         if (empty($data['title'])) {
             http_response_code(400);
@@ -156,7 +156,7 @@ class RecipeController {
      * Expects JSON body or multipart form data.
      */
     public function update(int $id): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         $recipeModel = new Recipe();
         $existing = $recipeModel->findById($id);
@@ -247,7 +247,7 @@ class RecipeController {
      * DELETE /recipes/{id}
      */
     public function delete(int $id): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         $recipeModel = new Recipe();
         $existing = $recipeModel->findById($id);
@@ -275,7 +275,7 @@ class RecipeController {
      * reported back as skipped rather than failing the whole request.
      */
     public function bulkDelete(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         $ids = array_values(array_unique(array_map('intval', $input['ids'] ?? [])));
 
@@ -308,7 +308,7 @@ class RecipeController {
      * Adds tags additively — existing tags on each recipe are kept.
      */
     public function bulkTag(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         $ids = array_values(array_unique(array_map('intval', $input['ids'] ?? [])));
         $tagNames = array_values(array_filter(array_map('trim', $input['tags'] ?? [])));
@@ -341,7 +341,7 @@ class RecipeController {
      * Returns parsed recipe data for preview (does NOT save).
      */
     public function import(): array {
-        Auth::requireAuth();
+        Auth::requireWriteAccess();
 
         $input = json_decode(file_get_contents('php://input'), true);
 
@@ -368,7 +368,7 @@ class RecipeController {
      * reuse the exact same review/edit flow as URL import.
      */
     public function importImage(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         require_once __DIR__ . '/../models/UserApiKey.php';
         $keyModel = new UserApiKey();
@@ -415,7 +415,7 @@ class RecipeController {
      * Scrapes each URL and returns array of results.
      */
     public function importBatch(): array {
-        Auth::requireAuth();
+        Auth::requireWriteAccess();
 
         $input = json_decode(file_get_contents('php://input'), true);
 
@@ -466,7 +466,7 @@ class RecipeController {
      * Accepts multipart upload of a Mealie export .zip file.
      */
     public function importMealie(): array {
-        Auth::requireAuth();
+        Auth::requireWriteAccess();
 
         if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
             http_response_code(400);
@@ -483,7 +483,7 @@ class RecipeController {
      * Accepts multipart upload of a .paprikarecipes file.
      */
     public function importPaprika(): array {
-        Auth::requireAuth();
+        Auth::requireWriteAccess();
 
         if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
             http_response_code(400);
@@ -500,7 +500,7 @@ class RecipeController {
      * Accepts multipart upload of a Tandoor JSON-LD export .zip file.
      */
     public function importTandoor(): array {
-        Auth::requireAuth();
+        Auth::requireWriteAccess();
 
         if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
             http_response_code(400);
@@ -513,7 +513,7 @@ class RecipeController {
     }
 
     public function importNextcloud(): array {
-        Auth::requireAuth();
+        Auth::requireWriteAccess();
 
         if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
             http_response_code(400);
@@ -526,7 +526,7 @@ class RecipeController {
     }
 
     public function importRecipeSage(): array {
-        Auth::requireAuth();
+        Auth::requireWriteAccess();
 
         if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
             http_response_code(400);
@@ -811,7 +811,7 @@ class RecipeController {
      * Plus/Pro using a copied prompt) and stores it alongside AI-generated art.
      */
     public function uploadCardArt(int $id): array {
-        Auth::requireAuth();
+        Auth::requireWriteAccess();
 
         $recipeModel = new Recipe();
         if (!$recipeModel->findById($id)) {
@@ -857,7 +857,7 @@ class RecipeController {
      * Removes a generated or uploaded card art image and its file.
      */
     public function deleteCardArt(int $id, string $template): array {
-        Auth::requireAuth();
+        Auth::requireWriteAccess();
 
         require_once __DIR__ . '/../models/RecipeCardArt.php';
         $model = new RecipeCardArt();
@@ -882,7 +882,7 @@ class RecipeController {
      * Uses the user's own OpenAI API key (BYOK) — same key as Import from Photo.
      */
     public function generateCardArt(int $id, string $template): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         if (!CardArtTemplates::isValid($template)) {
             http_response_code(400);

@@ -34,7 +34,7 @@ class PantryController {
      * Add an item to the pantry. Expects JSON: { ingredient_name }
      */
     public function add(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true);
 
         $v = new ValidationHelper();
@@ -58,7 +58,7 @@ class PantryController {
      * the frontend's review/edit screen — never persisted until /pantry/bulk.
      */
     public function scan(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         $keyModel = new UserApiKey();
         $apiKey = $keyModel->getDecryptedKey($userId, 'openai');
@@ -102,7 +102,7 @@ class PantryController {
      * { items: [{ name, quantity, unit, expiration_date }] }
      */
     public function bulkAdd(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         $items = is_array($input['items'] ?? null) ? $input['items'] : [];
 
@@ -145,7 +145,7 @@ class PantryController {
      * (YYYY-MM-DD string, or null to clear).
      */
     public function update(int $id): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
         $expirationDate = null;
@@ -157,12 +157,13 @@ class PantryController {
             $expirationDate = $input['expiration_date'];
         }
 
+        $isAdmin = ($_SESSION['role'] ?? '') === 'admin';
         $pantry = new Pantry();
-        $item = $pantry->setExpiration($id, $userId, $expirationDate);
+        $item = $pantry->setExpiration($id, $userId, $expirationDate, $isAdmin);
 
         if (!$item) {
             http_response_code(404);
-            return ['error' => 'Pantry item not found', 'code' => 404];
+            return ['error' => 'Pantry item not found or access denied', 'code' => 404];
         }
 
         return $item;
@@ -170,15 +171,16 @@ class PantryController {
 
     /**
      * DELETE /pantry/{id}
-     * Remove an item from the pantry.
+     * Remove an item from the pantry. Owner or admin only.
      */
     public function remove(int $id): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
+        $isAdmin = ($_SESSION['role'] ?? '') === 'admin';
         $pantry = new Pantry();
 
-        if (!$pantry->remove($id, $userId)) {
+        if (!$pantry->remove($id, $userId, $isAdmin)) {
             http_response_code(404);
-            return ['error' => 'Pantry item not found', 'code' => 404];
+            return ['error' => 'Pantry item not found or access denied', 'code' => 404];
         }
 
         return ['message' => 'Removed from pantry'];

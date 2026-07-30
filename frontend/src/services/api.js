@@ -367,8 +367,14 @@ export function getSharedRecipe(token) {
 }
 
 // Meal Planning
-export function getMealPlan(weekStart) {
-  return request(`/meal-plan?week=${weekStart}`);
+export function getMealPlan(weekStart, viewUserId = null) {
+  const params = new URLSearchParams({ week: weekStart });
+  if (viewUserId) params.set('user_id', viewUserId);
+  return request(`/meal-plan?${params.toString()}`);
+}
+
+export function getHouseholdMembers() {
+  return request('/users/household-members');
 }
 
 export function getTodayMeals() {

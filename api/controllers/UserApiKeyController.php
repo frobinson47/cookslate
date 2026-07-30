@@ -27,7 +27,7 @@ class UserApiKeyController {
      * Expects JSON: { api_key }
      */
     public function save(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         $input = json_decode(file_get_contents('php://input'), true);
         $key = trim((string) ($input['api_key'] ?? ''));
@@ -58,7 +58,7 @@ class UserApiKeyController {
      * DELETE /users/me/openai-key
      */
     public function remove(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         (new UserApiKey())->delete($userId, self::PROVIDER);
         return ['configured' => false];
     }

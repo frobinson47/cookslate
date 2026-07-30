@@ -18,7 +18,7 @@ class ShoppingTripController {
      * the frontend's review/edit screen — never persisted until /shopping-trips.
      */
     public function importReceipt(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
 
         $keyModel = new UserApiKey();
         $apiKey = $keyModel->getDecryptedKey($userId, 'openai');
@@ -62,7 +62,7 @@ class ShoppingTripController {
      * { store_name, trip_date, total_amount, items: [{ name, quantity, unit, price }] }
      */
     public function create(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
         $v = new ValidationHelper();
@@ -139,7 +139,7 @@ class ShoppingTripController {
      * DELETE /shopping-trips/{id}
      */
     public function delete(int $id): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $tripModel = new ShoppingTrip();
 
         if (!$tripModel->delete($id, $userId)) {

@@ -10,28 +10,50 @@ class Pantry {
         $this->db = Database::getInstance();
     }
 
+    /**
+     * All pantry items visible to the household (every user on this
+     * instance). $userId flags which rows the caller owns (and can
+     * therefore edit/delete) — adding a duplicate ingredient still only
+     * updates the caller's own row, it doesn't merge across users.
+     */
     public function getAllForUser(int $userId): array {
-        $stmt = $this->db->prepare('SELECT id, user_id, ingredient_name, quantity, unit, expiration_date, always_stocked, created_at FROM pantry WHERE user_id = ? ORDER BY ingredient_name ASC LIMIT 1000');
+        $stmt = $this->db->prepare('
+            SELECT p.id, p.user_id, u.username AS added_by_username, (p.user_id = ?) AS is_owner,
+                   p.ingredient_name, p.quantity, p.unit, p.expiration_date, p.always_stocked, p.created_at
+            FROM pantry p
+            INNER JOIN users u ON u.id = p.user_id
+            ORDER BY p.ingredient_name ASC
+            LIMIT 1000
+        ');
         $stmt->execute([$userId]);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$row) {
+            $row['is_owner'] = (bool) $row['is_owner'];
+        }
+        return $rows;
     }
 
     /**
-     * Pantry items expiring within $days (inclusive), soonest first.
+     * Household-wide pantry items expiring within $days (inclusive), soonest first.
      * Items with no expiration_date set are never included.
      */
     public function getExpiringSoon(int $userId, int $days = 3): array {
         $stmt = $this->db->prepare('
-            SELECT id, user_id, ingredient_name, quantity, unit, expiration_date, always_stocked, created_at
-            FROM pantry
-            WHERE user_id = ?
-              AND expiration_date IS NOT NULL
-              AND expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
-            ORDER BY expiration_date ASC
+            SELECT p.id, p.user_id, u.username AS added_by_username, (p.user_id = ?) AS is_owner,
+                   p.ingredient_name, p.quantity, p.unit, p.expiration_date, p.always_stocked, p.created_at
+            FROM pantry p
+            INNER JOIN users u ON u.id = p.user_id
+            WHERE p.expiration_date IS NOT NULL
+              AND p.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
+            ORDER BY p.expiration_date ASC
             LIMIT 50
         ');
         $stmt->execute([$userId, $days]);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$row) {
+            $row['is_owner'] = (bool) $row['is_owner'];
+        }
+        return $rows;
     }
 
     public function add(int $userId, string $ingredientName, ?float $quantity = null, ?string $unit = null, ?string $expirationDate = null): array {
@@ -71,9 +93,14 @@ class Pantry {
         return $stmt->fetch();
     }
 
-    public function setExpiration(int $id, int $userId, ?string $expirationDate): ?array {
-        $stmt = $this->db->prepare('UPDATE pantry SET expiration_date = ? WHERE id = ? AND user_id = ?');
-        $stmt->execute([$expirationDate, $id, $userId]);
+    public function setExpiration(int $id, int $userId, ?string $expirationDate, bool $isAdmin = false): ?array {
+        if ($isAdmin) {
+            $stmt = $this->db->prepare('UPDATE pantry SET expiration_date = ? WHERE id = ?');
+            $stmt->execute([$expirationDate, $id]);
+        } else {
+            $stmt = $this->db->prepare('UPDATE pantry SET expiration_date = ? WHERE id = ? AND user_id = ?');
+            $stmt->execute([$expirationDate, $id, $userId]);
+        }
         if ($stmt->rowCount() === 0) {
             return null;
         }
@@ -82,27 +109,40 @@ class Pantry {
         return $stmt->fetch();
     }
 
-    public function remove(int $id, int $userId): bool {
-        $stmt = $this->db->prepare('DELETE FROM pantry WHERE id = ? AND user_id = ?');
-        $stmt->execute([$id, $userId]);
+    public function remove(int $id, int $userId, bool $isAdmin = false): bool {
+        if ($isAdmin) {
+            $stmt = $this->db->prepare('DELETE FROM pantry WHERE id = ?');
+            $stmt->execute([$id]);
+        } else {
+            $stmt = $this->db->prepare('DELETE FROM pantry WHERE id = ? AND user_id = ?');
+            $stmt->execute([$id, $userId]);
+        }
         return $stmt->rowCount() > 0;
     }
 
+    /**
+     * Household-wide check — $userId is unused (kept for call-site
+     * compatibility) since a shared pantry means any member's stocked
+     * ingredient counts for the whole household.
+     */
     public function isInPantry(int $userId, string $ingredientName): bool {
         $normalized = strtolower(trim($ingredientName));
-        $stmt = $this->db->prepare('SELECT 1 FROM pantry WHERE user_id = ? AND LOWER(ingredient_name) = ? AND always_stocked = 1');
-        $stmt->execute([$userId, $normalized]);
+        $stmt = $this->db->prepare('SELECT 1 FROM pantry WHERE LOWER(ingredient_name) = ? AND always_stocked = 1');
+        $stmt->execute([$normalized]);
         return (bool) $stmt->fetch();
     }
 
+    /**
+     * Household-wide match — see isInPantry() note on $userId.
+     */
     public function getPantryMatches(int $userId, array $ingredientNames): array {
         if (empty($ingredientNames)) return [];
 
         $placeholders = implode(',', array_fill(0, count($ingredientNames), '?'));
         $normalized = array_map(fn($n) => strtolower(trim($n)), $ingredientNames);
 
-        $stmt = $this->db->prepare("SELECT LOWER(ingredient_name) AS name FROM pantry WHERE user_id = ? AND LOWER(ingredient_name) IN ($placeholders) AND always_stocked = 1");
-        $stmt->execute(array_merge([$userId], $normalized));
+        $stmt = $this->db->prepare("SELECT DISTINCT LOWER(ingredient_name) AS name FROM pantry WHERE LOWER(ingredient_name) IN ($placeholders) AND always_stocked = 1");
+        $stmt->execute($normalized);
 
         return array_column($stmt->fetchAll(), 'name');
     }

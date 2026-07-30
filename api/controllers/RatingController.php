@@ -5,7 +5,7 @@ require_once __DIR__ . '/../models/Rating.php';
 
 class RatingController {
     public function rate(int $recipeId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true);
         $score = (int) ($input['score'] ?? 0);
 

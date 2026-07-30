@@ -10,30 +10,43 @@ class GroceryList {
     }
 
     /**
-     * Get all grocery lists for a user, with item counts.
+     * All grocery lists visible to the household (every user on this
+     * instance), with item counts. $userId flags which ones the caller
+     * owns (and can therefore edit/delete).
      */
     public function getAllForUser(int $userId): array {
         $sql = '
-            SELECT gl.id, gl.name, gl.created_at,
+            SELECT gl.id, gl.name, gl.created_at, gl.created_by,
+                   u.username AS created_by_username,
+                   (gl.created_by = ?) AS is_owner,
                    COUNT(gi.id) AS item_count,
                    SUM(CASE WHEN gi.checked = 1 THEN 1 ELSE 0 END) AS checked_count
             FROM grocery_lists gl
+            INNER JOIN users u ON u.id = gl.created_by
             LEFT JOIN grocery_items gi ON gl.id = gi.list_id
-            WHERE gl.created_by = ?
             GROUP BY gl.id
             ORDER BY gl.created_at DESC
             LIMIT 200
         ';
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$userId]);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$row) {
+            $row['is_owner'] = (bool) $row['is_owner'];
+        }
+        return $rows;
     }
 
     /**
      * Find a grocery list by ID.
      */
     public function findById(int $id): ?array {
-        $stmt = $this->db->prepare('SELECT id, name, created_by, created_at FROM grocery_lists WHERE id = ?');
+        $stmt = $this->db->prepare('
+            SELECT gl.id, gl.name, gl.created_by, gl.created_at, u.username AS created_by_username
+            FROM grocery_lists gl
+            INNER JOIN users u ON u.id = gl.created_by
+            WHERE gl.id = ?
+        ');
         $stmt->execute([$id]);
         $list = $stmt->fetch();
         return $list ?: null;

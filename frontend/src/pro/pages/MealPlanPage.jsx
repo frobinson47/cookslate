@@ -25,6 +25,7 @@ import Spinner from '../../components/ui/Spinner';
 import * as api from '../../services/api';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { thumbImageUrl } from '../../utils/imageUrl';
+import { useAuth } from '../../hooks/useAuth';
 
 // Date helpers
 function getMonday(date) {
@@ -70,7 +71,7 @@ function getDefaultMobileDay(weekStart) {
 
 // --- Drag & Drop Components ---
 
-function SortableMealItem({ item, onRemove, onMoveToDay, showMoveMenu }) {
+function SortableMealItem({ item, onRemove, onMoveToDay, showMoveMenu, canModify = true }) {
   const {
     attributes,
     listeners,
@@ -78,7 +79,7 @@ function SortableMealItem({ item, onRemove, onMoveToDay, showMoveMenu }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: `item-${item.id}` });
+  } = useSortable({ id: `item-${item.id}`, disabled: !canModify });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -92,16 +93,18 @@ function SortableMealItem({ item, onRemove, onMoveToDay, showMoveMenu }) {
     <div ref={setNodeRef} style={style} className="bg-cream rounded-xl group relative overflow-hidden">
       {/* Drag handle + action buttons bar */}
       <div className="flex items-center justify-between px-1.5 pt-1.5">
-        <button
-          {...attributes}
-          {...listeners}
-          className="p-0.5 rounded text-warm-gray/50 hover:text-warm-gray cursor-grab active:cursor-grabbing touch-none shrink-0"
-          aria-label="Drag to reorder"
-        >
-          <GripVertical size={14} />
-        </button>
+        {canModify ? (
+          <button
+            {...attributes}
+            {...listeners}
+            className="p-0.5 rounded text-warm-gray/50 hover:text-warm-gray cursor-grab active:cursor-grabbing touch-none shrink-0"
+            aria-label="Drag to reorder"
+          >
+            <GripVertical size={14} />
+          </button>
+        ) : <span />}
         <div className="flex items-center gap-0.5 shrink-0">
-        {showMoveMenu && (
+        {showMoveMenu && canModify && (
           <div className="relative">
             <button
               onClick={() => setMoveOpen(!moveOpen)}
@@ -130,13 +133,15 @@ function SortableMealItem({ item, onRemove, onMoveToDay, showMoveMenu }) {
             )}
           </div>
         )}
-        <button
-          onClick={() => onRemove(item.id)}
-          className="p-1 rounded-lg text-warm-gray hover:text-red-500 hover:bg-red-50 transition-colors duration-200 opacity-100 md:opacity-0 md:group-hover:opacity-100 min-w-[28px] min-h-[28px] flex items-center justify-center"
-          aria-label={`Remove ${item.recipe.title}`}
-        >
-          <X size={16} />
-        </button>
+        {canModify && (
+          <button
+            onClick={() => onRemove(item.id)}
+            className="p-1 rounded-lg text-warm-gray hover:text-red-500 hover:bg-red-50 transition-colors duration-200 opacity-100 md:opacity-0 md:group-hover:opacity-100 min-w-[28px] min-h-[28px] flex items-center justify-center"
+            aria-label={`Remove ${item.recipe.title}`}
+          >
+            <X size={16} />
+          </button>
+        )}
         </div>
       </div>
       {/* Stacked image + text */}
@@ -197,9 +202,12 @@ export default function MealPlanPage() {
   useDocumentTitle('Meal Plan');
 
   const navigate = useNavigate();
+  const { user, isAdmin, isViewer } = useAuth();
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [householdMembers, setHouseholdMembers] = useState([]);
+  const [viewUserId, setViewUserId] = useState(null); // null = viewing own plan
   const [selectedDay, setSelectedDay] = useState(0);
   const [showRecipeSearch, setShowRecipeSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -229,22 +237,38 @@ export default function MealPlanPage() {
     useSensor(KeyboardSensor),
   );
 
-  // Fetch plan on weekStart change
+  // Fetch plan on weekStart or viewed-member change
   const fetchPlan = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.getMealPlan(weekStart);
+      const data = await api.getMealPlan(weekStart, viewUserId);
       setPlan(data);
     } catch {
       setPlan(null);
     } finally {
       setLoading(false);
     }
-  }, [weekStart]);
+  }, [weekStart, viewUserId]);
 
   useEffect(() => {
     fetchPlan();
   }, [fetchPlan]);
+
+  // Load household members once, for the "view another member's plan" switcher
+  useEffect(() => {
+    api.getHouseholdMembers()
+      .then(data => setHouseholdMembers((data.members || []).filter(m => m.id !== user?.id)))
+      .catch(() => setHouseholdMembers([]));
+  }, [user?.id]);
+
+  const isOwnWeek = viewUserId === null;
+  // Adding items / templates / grocery generation always act on the
+  // caller's own plan server-side, so they only make sense when viewing
+  // your own week — never when browsing another member's plan.
+  const canAddOrManage = isOwnWeek && !isViewer;
+  // Removing/reordering an existing item is allowed for its owner or an
+  // admin, even while browsing someone else's week.
+  const canModifyItems = (plan?.is_owner !== false || isAdmin) && !isViewer;
 
   // Reset mobile day when week changes
   useEffect(() => {
@@ -307,10 +331,12 @@ export default function MealPlanPage() {
   // --- DnD Handlers ---
 
   const handleDragStart = (event) => {
+    if (!canModifyItems) return;
     setActiveId(event.active.id);
   };
 
   const handleDragOver = (event) => {
+    if (!canModifyItems) return;
     const { active, over } = event;
     if (!over || !plan) return;
 
@@ -344,7 +370,7 @@ export default function MealPlanPage() {
     const { active, over } = event;
     setActiveId(null);
 
-    if (!over || !plan) return;
+    if (!canModifyItems || !over || !plan) return;
 
     const activeItemId = active.id;
     const overId = over.id;
@@ -409,6 +435,7 @@ export default function MealPlanPage() {
 
   // Move item to a different day (mobile menu)
   const handleMoveToDay = async (itemId, newDay) => {
+    if (!canModifyItems) return;
     // Get sort_order for end of target day
     const targetDayItems = getItemsForDay(newDay);
     const newSortOrder = targetDayItems.length > 0
@@ -454,6 +481,7 @@ export default function MealPlanPage() {
 
   // Add recipe to day
   const handleOpenSearch = (dayIndex) => {
+    if (!canAddOrManage) return;
     setSelectedDay(dayIndex);
     setSelectedMealType(null);
     setSearchQuery('');
@@ -462,6 +490,7 @@ export default function MealPlanPage() {
   };
 
   const handleAddRecipe = async (recipeId) => {
+    if (!canAddOrManage) return;
     try {
       await api.addMealPlanItem(recipeId, selectedDay, weekStart, selectedMealType);
       setShowRecipeSearch(false);
@@ -476,6 +505,7 @@ export default function MealPlanPage() {
 
   // Remove recipe
   const handleRemove = async (itemId) => {
+    if (!canModifyItems) return;
     try {
       await api.removeMealPlanItem(itemId);
       await fetchPlan();
@@ -486,6 +516,7 @@ export default function MealPlanPage() {
 
   // Grocery generation
   const handleOpenGrocery = () => {
+    if (!canAddOrManage) return;
     const monday = new Date(weekStart + 'T00:00:00');
     const sunday = new Date(monday);
     sunday.setDate(sunday.getDate() + 6);
@@ -524,6 +555,7 @@ export default function MealPlanPage() {
   };
 
   const handleOpenSaveTemplate = () => {
+    if (!canAddOrManage) return;
     setTemplateName(`${formatDateRange(weekStart)} Plan`);
     setTemplateError(null);
     setShowSaveTemplate(true);
@@ -543,6 +575,7 @@ export default function MealPlanPage() {
   };
 
   const handleApplyTemplate = async (templateId) => {
+    if (!canAddOrManage) return;
     if (plan?.items?.length > 0 && !window.confirm(`Apply this template to ${formatDateRange(weekStart)}? This replaces the current meals for that week.`)) {
       return;
     }
@@ -579,7 +612,19 @@ export default function MealPlanPage() {
           <CalendarDays size={28} className="text-terracotta shrink-0" />
           <h1 className="text-2xl md:text-3xl font-bold text-brown font-serif">Meal Plan</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {householdMembers.length > 0 && (
+            <select
+              value={viewUserId ?? ''}
+              onChange={(e) => setViewUserId(e.target.value ? parseInt(e.target.value, 10) : null)}
+              className="px-3 py-2 text-sm rounded-xl border border-cream-dark bg-surface text-brown focus:outline-none focus:border-terracotta min-h-[44px]"
+            >
+              <option value="">My plan</option>
+              {householdMembers.map(m => (
+                <option key={m.id} value={m.id}>{m.username}'s plan</option>
+              ))}
+            </select>
+          )}
           <a
             href={`/api/meal-plan/ical?week=${weekStart}`}
             className="flex items-center gap-2 px-3 py-2 text-sm text-warm-gray hover:text-brown hover:bg-cream-dark rounded-xl transition-colors min-h-[44px]"
@@ -588,24 +633,34 @@ export default function MealPlanPage() {
             <Calendar size={16} />
             iCal
           </a>
-          <Button variant="secondary" onClick={handleOpenTemplates}>
-            <Bookmark size={18} />
-            Templates
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleOpenSaveTemplate}
-            disabled={!plan || !plan.items || plan.items.length === 0}
-          >
-            <BookmarkPlus size={18} />
-            Save as Template
-          </Button>
-          <Button variant="secondary" onClick={handleOpenGrocery} disabled={!plan || !plan.items || plan.items.length === 0}>
-            <ShoppingCart size={18} />
-            Generate Grocery List
-          </Button>
+          {canAddOrManage && (
+            <>
+              <Button variant="secondary" onClick={handleOpenTemplates}>
+                <Bookmark size={18} />
+                Templates
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleOpenSaveTemplate}
+                disabled={!plan || !plan.items || plan.items.length === 0}
+              >
+                <BookmarkPlus size={18} />
+                Save as Template
+              </Button>
+              <Button variant="secondary" onClick={handleOpenGrocery} disabled={!plan || !plan.items || plan.items.length === 0}>
+                <ShoppingCart size={18} />
+                Generate Grocery List
+              </Button>
+            </>
+          )}
         </div>
       </div>
+
+      {!isOwnWeek && (
+        <p className="text-sm text-warm-gray -mt-4">
+          Viewing {householdMembers.find(m => m.id === viewUserId)?.username}'s plan — view only{isAdmin ? ' (you can still remove or reorder their items as an admin)' : ''}.
+        </p>
+      )}
 
       {/* Week navigation */}
       <div className="flex items-center justify-between bg-surface rounded-2xl shadow-md px-4 py-3">
@@ -680,19 +735,22 @@ export default function MealPlanPage() {
                           onRemove={handleRemove}
                           onMoveToDay={handleMoveToDay}
                           showMoveMenu={false}
+                          canModify={canModifyItems}
                         />
                       ))}
                     </SortableContext>
                   </DroppableDayColumn>
 
                   {/* Add button */}
-                  <button
-                    onClick={() => handleOpenSearch(dayIndex)}
-                    className="mt-2 w-full flex items-center justify-center gap-1 py-2 rounded-xl border-2 border-dashed border-cream-dark text-warm-gray hover:border-terracotta hover:text-terracotta transition-colors duration-200 min-h-[44px]"
-                  >
-                    <Plus size={16} />
-                    <span className="text-sm font-medium">Add</span>
-                  </button>
+                  {canAddOrManage && (
+                    <button
+                      onClick={() => handleOpenSearch(dayIndex)}
+                      className="mt-2 w-full flex items-center justify-center gap-1 py-2 rounded-xl border-2 border-dashed border-cream-dark text-warm-gray hover:border-terracotta hover:text-terracotta transition-colors duration-200 min-h-[44px]"
+                    >
+                      <Plus size={16} />
+                      <span className="text-sm font-medium">Add</span>
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -750,13 +808,15 @@ export default function MealPlanPage() {
                         item={item}
                         onRemove={handleRemove}
                         onMoveToDay={handleMoveToDay}
-                        showMoveMenu={true}
+                        showMoveMenu={canModifyItems}
+                        canModify={canModifyItems}
                       />
                     ))}
                   </SortableContext>
                 </div>
               )}
 
+              {canAddOrManage && (
               <button
                 onClick={() => handleOpenSearch(activeMobileDay)}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-cream-dark text-warm-gray hover:border-terracotta hover:text-terracotta transition-colors duration-200 min-h-[44px]"
@@ -764,6 +824,7 @@ export default function MealPlanPage() {
                 <Plus size={18} />
                 <span className="font-medium">Add Recipe</span>
               </button>
+              )}
             </div>
           </div>
 

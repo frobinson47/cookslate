@@ -61,6 +61,16 @@ class User {
     }
 
     /**
+     * Minimal household member list (id/username only) for any authenticated
+     * user — used to populate "view another member's plan" pickers. Every
+     * user on a self-hosted instance is a household member.
+     */
+    public function getHouseholdMembers(): array {
+        $stmt = $this->db->query('SELECT id, username FROM users ORDER BY username ASC LIMIT 500');
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Create a new user.
      */
     public function create(string $username, string $password, string $role = 'member', ?string $email = null): array {

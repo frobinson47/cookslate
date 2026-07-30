@@ -18,6 +18,17 @@ class UserController {
     }
 
     /**
+     * GET /users/household-members
+     * Any authenticated user. Minimal id/username list of every user on this
+     * instance, used to let a member browse another member's shared meal plan.
+     */
+    public function householdMembers(): array {
+        Auth::requireAuth();
+        $userModel = new User();
+        return ['members' => $userModel->getHouseholdMembers()];
+    }
+
+    /**
      * POST /users
      * Admin only. Create a new user. Expects JSON: { username, password, role? }
      */
@@ -32,7 +43,7 @@ class UserController {
           ->maxLength($input['username'] ?? null, 'username', 50)
           ->required($input['password'] ?? null, 'password')
           ->maxLength($input['password'] ?? null, 'password', 500)
-          ->inList($input['role'] ?? 'member', 'role', ['admin', 'member']);
+          ->inList($input['role'] ?? 'member', 'role', ['admin', 'member', 'viewer']);
 
         if (!empty($input['email'])) {
             $v->email($input['email'], 'email')->maxLength($input['email'], 'email', 255);
@@ -102,7 +113,7 @@ class UserController {
         }
 
         $v = new ValidationHelper();
-        $v->inList($input['role'] ?? $user['role'], 'role', ['admin', 'member']);
+        $v->inList($input['role'] ?? $user['role'], 'role', ['admin', 'member', 'viewer']);
         if (isset($input['email']) && $input['email'] !== '') {
             $v->email($input['email'], 'email')->maxLength($input['email'], 'email', 255);
         }

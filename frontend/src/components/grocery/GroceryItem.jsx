@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, Warehouse } from 'lucide-react';
 
-export default function GroceryItem({ item, onToggle, onDelete, onPantryToggle }) {
+export default function GroceryItem({ item, onToggle, onDelete, onPantryToggle, readOnly = false }) {
   const isChecked = item.checked === true || item.checked === 1;
   const inPantry = item.in_pantry === true || item.in_pantry === 1;
 
@@ -17,8 +17,9 @@ export default function GroceryItem({ item, onToggle, onDelete, onPantryToggle }
       <input
         type="checkbox"
         checked={isChecked}
+        disabled={readOnly}
         onChange={() => onToggle(item.id, !isChecked)}
-        className="w-5 h-5 rounded border-cream-dark text-terracotta focus:ring-terracotta cursor-pointer shrink-0"
+        className="w-5 h-5 rounded border-cream-dark text-terracotta focus:ring-terracotta cursor-pointer shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
       />
 
       <div className={`flex-1 min-w-0 transition-all duration-200 ${isChecked ? 'opacity-50' : ''}`}>
@@ -51,7 +52,7 @@ export default function GroceryItem({ item, onToggle, onDelete, onPantryToggle }
         )}
       </div>
 
-      {onPantryToggle && (
+      {onPantryToggle && !readOnly && (
         <button
           onClick={() => onPantryToggle(item.id, item.name, !inPantry)}
           className={`p-2 transition-all duration-200 min-w-[36px] min-h-[36px] flex items-center justify-center ${
@@ -66,13 +67,15 @@ export default function GroceryItem({ item, onToggle, onDelete, onPantryToggle }
         </button>
       )}
 
-      <button
-        onClick={() => onDelete(item.id)}
-        className="p-2 text-warm-gray opacity-60 hover:text-red-500 transition-all duration-200 min-w-[36px] min-h-[36px] flex items-center justify-center md:opacity-0 md:group-hover:opacity-100"
-        aria-label="Delete item"
-      >
-        <Trash2 size={16} />
-      </button>
+      {!readOnly && (
+        <button
+          onClick={() => onDelete(item.id)}
+          className="p-2 text-warm-gray opacity-60 hover:text-red-500 transition-all duration-200 min-w-[36px] min-h-[36px] flex items-center justify-center md:opacity-0 md:group-hover:opacity-100"
+          aria-label="Delete item"
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
     </div>
   );
 }

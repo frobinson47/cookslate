@@ -5,7 +5,7 @@ require_once __DIR__ . '/../models/Favorite.php';
 
 class FavoriteController {
     public function toggle(int $recipeId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $model = new Favorite();
         return $model->toggle($userId, $recipeId);
     }

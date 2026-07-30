@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShoppingCart, ChevronRight, Calendar, Trash2 } from 'lucide-react';
 
-export default function GroceryList({ list, onClick, onDelete }) {
+export default function GroceryList({ list, onClick, onDelete, canDelete = true }) {
   const itemCount = list.item_count || list.items?.length || 0;
   const checkedCount = list.checked_count || 0;
   const createdDate = list.created_at
@@ -32,10 +32,13 @@ export default function GroceryList({ list, onClick, onDelete }) {
               {createdDate}
             </span>
           )}
+          {!list.is_owner && list.created_by_username && (
+            <span>shared by {list.created_by_username}</span>
+          )}
         </div>
       </div>
 
-      {onDelete && (
+      {onDelete && canDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();

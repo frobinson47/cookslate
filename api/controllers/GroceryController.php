@@ -10,7 +10,7 @@ class GroceryController {
 
     /**
      * GET /grocery
-     * All grocery lists for the current user.
+     * All grocery lists visible to the household (every user on this instance).
      */
     public function listAll(): array {
         $userId = Auth::requireAuth();
@@ -23,7 +23,7 @@ class GroceryController {
      * Create a new grocery list. Expects JSON: { name }
      */
     public function create(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true);
 
         $v = new ValidationHelper();
@@ -47,17 +47,13 @@ class GroceryController {
         $userId = Auth::requireAuth();
         $listModel = new GroceryList();
 
-        if (!$listModel->isOwner($id, $userId)) {
-            http_response_code(403);
-            return ['error' => 'Access denied', 'code' => 403];
-        }
-
         $list = $listModel->findById($id);
         if (!$list) {
             http_response_code(404);
             return ['error' => 'Grocery list not found', 'code' => 404];
         }
 
+        $list['is_owner'] = (int) $list['created_by'] === $userId;
         $itemModel = new GroceryItem();
         $items = $itemModel->getAllForList($id);
         $list['items'] = $itemModel->enrichWithPackageInfo($items);
@@ -69,10 +65,10 @@ class GroceryController {
      * DELETE /grocery/{id}
      */
     public function delete(int $id): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $listModel = new GroceryList();
 
-        if (!$listModel->isOwner($id, $userId)) {
+        if (!$listModel->isOwner($id, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }
@@ -88,10 +84,10 @@ class GroceryController {
      * it will be automatically parsed into structured fields.
      */
     public function addItem(int $listId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $listModel = new GroceryList();
 
-        if (!$listModel->isOwner($listId, $userId)) {
+        if (!$listModel->isOwner($listId, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }
@@ -139,10 +135,10 @@ class GroceryController {
      * Update an item. Expects JSON with any of: { name, amount, unit, checked }
      */
     public function updateItem(int $listId, int $itemId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $listModel = new GroceryList();
 
-        if (!$listModel->isOwner($listId, $userId)) {
+        if (!$listModel->isOwner($listId, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }
@@ -178,10 +174,10 @@ class GroceryController {
      * DELETE /grocery/{listId}/items/{itemId}
      */
     public function deleteItem(int $listId, int $itemId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $listModel = new GroceryList();
 
-        if (!$listModel->isOwner($listId, $userId)) {
+        if (!$listModel->isOwner($listId, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }
@@ -203,10 +199,10 @@ class GroceryController {
      * Remove all checked items from a list.
      */
     public function clearChecked(int $listId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $listModel = new GroceryList();
 
-        if (!$listModel->isOwner($listId, $userId)) {
+        if (!$listModel->isOwner($listId, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }
@@ -222,10 +218,10 @@ class GroceryController {
      * Bulk add all ingredients from a recipe as grocery items.
      */
     public function addRecipe(int $listId, int $recipeId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $listModel = new GroceryList();
 
-        if (!$listModel->isOwner($listId, $userId)) {
+        if (!$listModel->isOwner($listId, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }

@@ -6,7 +6,7 @@ require_once __DIR__ . '/../services/ValidationHelper.php';
 
 class CookLogController {
     public function log(int $recipeId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true);
         $notes = ValidationHelper::sanitize($input['notes'] ?? null, 2000);
 

@@ -8,7 +8,7 @@ class CollectionController {
 
     /**
      * GET /collections
-     * All collections for the current user.
+     * All collections visible to the household (every user on this instance).
      */
     public function list(): array {
         $userId = Auth::requireAuth();
@@ -18,16 +18,11 @@ class CollectionController {
 
     /**
      * GET /collections/{id}
-     * Single collection with its recipes.
+     * Single collection with its recipes. Visible to any authenticated user.
      */
     public function get(int $id): array {
         $userId = Auth::requireAuth();
         $model = new Collection();
-
-        if (!$model->isOwner($id, $userId)) {
-            http_response_code(403);
-            return ['error' => 'Access denied', 'code' => 403];
-        }
 
         $collection = $model->findById($id);
         if (!$collection) {
@@ -35,6 +30,7 @@ class CollectionController {
             return ['error' => 'Collection not found', 'code' => 404];
         }
 
+        $collection['is_owner'] = (int) $collection['created_by'] === $userId;
         $collection['recipes'] = $model->getRecipes($id);
         return $collection;
     }
@@ -44,7 +40,7 @@ class CollectionController {
      * Create a new collection. Expects JSON: { name, description? }
      */
     public function create(): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $input = json_decode(file_get_contents('php://input'), true);
 
         $v = new ValidationHelper();
@@ -69,10 +65,10 @@ class CollectionController {
      * Update a collection. Expects JSON: { name, description? }
      */
     public function update(int $id): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $model = new Collection();
 
-        if (!$model->isOwner($id, $userId)) {
+        if (!$model->isOwner($id, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }
@@ -97,10 +93,10 @@ class CollectionController {
      * DELETE /collections/{id}
      */
     public function delete(int $id): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $model = new Collection();
 
-        if (!$model->isOwner($id, $userId)) {
+        if (!$model->isOwner($id, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }
@@ -114,10 +110,10 @@ class CollectionController {
      * Add a recipe to a collection.
      */
     public function addRecipe(int $id, int $recipeId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $model = new Collection();
 
-        if (!$model->isOwner($id, $userId)) {
+        if (!$model->isOwner($id, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }
@@ -133,10 +129,10 @@ class CollectionController {
      * Add multiple recipes to a collection in one request.
      */
     public function addRecipesBulk(int $id): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $model = new Collection();
 
-        if (!$model->isOwner($id, $userId)) {
+        if (!$model->isOwner($id, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }
@@ -159,10 +155,10 @@ class CollectionController {
      * Remove a recipe from a collection.
      */
     public function removeRecipe(int $id, int $recipeId): array {
-        $userId = Auth::requireAuth();
+        $userId = Auth::requireWriteAccess();
         $model = new Collection();
 
-        if (!$model->isOwner($id, $userId)) {
+        if (!$model->isOwner($id, $userId) && ($_SESSION['role'] ?? '') !== 'admin') {
             http_response_code(403);
             return ['error' => 'Access denied', 'code' => 403];
         }

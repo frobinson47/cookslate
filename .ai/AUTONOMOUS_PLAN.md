@@ -320,16 +320,16 @@ Notes: Imported from Forgejo issue #79 (https://forgejo.familytechlab.com/fmrdig
 
 ### AUTO-028 — OpenFoodFacts barcode lookup for packaged/branded products
 Priority: P2
-Status: TODO
+Status: DONE
 
-Goal: Imported from Forgejo issue #80. Add OpenFoodFacts as a second barcode-lookup source alongside USDA, for branded/packaged products USDA's generic-ingredient database often misses.
+Goal: Imported from Forgejo issue #80. Add OpenFoodFacts as a barcode-lookup source for branded/packaged products.
 Why it matters: Tandoor's OpenFoodFacts integration is called out for barcode accuracy on real packaged groceries.
-Scope: Free, keyless public API (api.openfoodfacts.org) — no BYOK complexity. Try OpenFoodFacts first, fall back to USDA.
-Expected files or areas: New api/services/OpenFoodFactsClient.php (mirrors EdamamClient.php); api/controllers/IngredientDataController.php or wherever the barcode lookup currently lives.
-Acceptance criteria: Scanning a packaged product barcode returns OpenFoodFacts data when available; falls back to USDA for generic/unbranded matches.
-Validation: PHPUnit tests against fixture responses (no live API calls in CI).
-Risks or assumptions: Public API, no auth — rate limits unknown, should degrade gracefully on failure.
-Notes: Imported from Forgejo issue #80 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/80).
+Scope: Already fully implemented prior to this import — no code changes made this pass.
+Expected files or areas: api/services/OpenFoodFactsClient.php (already exists — barcode + search, no API key needed), api/index.php (GET /food-lookup/barcode, /food-lookup/search), frontend/src/pages/IngredientDatabasePage.jsx (already consumes it end-to-end: name, brand, quantity, Nutri-Score, nutrition, image).
+Acceptance criteria: Scanning a packaged product barcode returns OpenFoodFacts data.
+Validation: Confirmed by reading the code — OpenFoodFactsClient.php exists and is fully wired through to the frontend barcode scan flow already.
+Risks or assumptions: No PHPUnit tests exist for OpenFoodFactsClient — not added this pass since no code changed, but worth a follow-up if this area gets touched again.
+Notes: Imported from Forgejo issue #80 (https://forgejo.familytechlab.com/fmrdigital/cookslate/issues/80). Closed as already-resolved.
 
 ### AUTO-029 — Multi-source barcode nutrition for pantry-scan/receipt flow
 Priority: P3

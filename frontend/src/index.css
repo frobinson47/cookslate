@@ -41,6 +41,7 @@
   --color-surface: #FFFFFF;
   --color-surface-raised: #FFFFFF;
   --color-surface-sunken: #F5EDE3;
+  --color-surface-glass: rgba(255, 255, 255, 0.72);   /* frosted glass panels — flips per theme below */
 
   /* Borders (semantic) */
   --color-border: #E8DDD1;
@@ -102,6 +103,7 @@ body {
     --color-surface: #2A221D;
     --color-surface-raised: #342B25;
     --color-surface-sunken: #151210;
+    --color-surface-glass: rgba(42, 34, 29, 0.68);
     --color-brown: #F5EDE3;
     --color-brown-light: #D4C4B5;
     --color-warm-gray: #A89888;
@@ -154,6 +156,7 @@ body {
   --color-surface: #2A221D;
   --color-surface-raised: #342B25;
   --color-surface-sunken: #151210;
+  --color-surface-glass: rgba(42, 34, 29, 0.68);
   --color-brown: #F5EDE3;
   --color-brown-light: #D4C4B5;
   --color-warm-gray: #A89888;
@@ -208,6 +211,7 @@ body {
   --color-surface: #FFFFFF;
   --color-surface-raised: #FFFFFF;
   --color-surface-sunken: #F5EDE3;
+  --color-surface-glass: rgba(255, 255, 255, 0.72);
   --color-brown: #3E2723;
   --color-brown-light: #5D4037;
   --color-warm-gray: #8D7B6E;
@@ -281,4 +285,25 @@ body {
 @keyframes toast-out {
   from { opacity: 1; transform: translateY(0) scale(1); }
   to { opacity: 0; transform: translateY(8px) scale(0.95); }
+}
+
+/* ==========================================================================
+   LOGIN PAGE ATMOSPHERE
+   ========================================================================== */
+@keyframes login-fade-up {
+  from { opacity: 0; transform: translateY(18px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+@keyframes login-pop {
+  0%   { opacity: 0; transform: scale(0.6); }
+  60%  { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes login-blob-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(24px, 30px) scale(1.08); }
+}
+@keyframes login-blob-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-20px, -26px) scale(1.05); }
 }

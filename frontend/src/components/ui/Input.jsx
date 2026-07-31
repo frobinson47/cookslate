@@ -4,6 +4,7 @@ export default function Input({
   label,
   error,
   className = '',
+  labelClassName = '',
   type = 'text',
   id,
   ...props
@@ -15,7 +16,7 @@ export default function Input({
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-sm font-semibold text-brown mb-1"
+          className={`block text-sm font-semibold mb-1 ${labelClassName || 'text-brown'}`}
         >
           {label}
         </label>

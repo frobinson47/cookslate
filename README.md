@@ -21,21 +21,39 @@
 
 **Core (free, MIT licensed):**
 - Import recipes from any URL -- paste a link, structured data is scraped automatically
+- Import recipes from a photo using your own OpenAI key (BYOK vision)
+- Resolve Pinterest pins to their original recipe source automatically
 - Cook Mode -- step-by-step instructions with built-in timers, screen wake lock, and vibration alerts
 - Grocery lists with smart consolidation (combines "1 cup milk" + "2 cups milk" automatically)
 - Full-text search across titles, descriptions, and ingredients
-- Bulk import from Mealie, Paprika, and Tandoor
+- Bulk import from Mealie, Paprika, Tandoor, Nextcloud Cookbook, and RecipeSage
+- Recipe collections for organizing recipes into custom groups
+- Private recipes (visible only to their creator) and shareable public recipe links
+- Multi-select bulk actions -- bulk delete, bulk tag, bulk add-to-collection
+- Barcode scanning with Open Food Facts lookup for packaged/branded products
+- Pantry-based recipe search -- "What can I make with what I have?"
+- Cook log with cooking history and "forgotten favorites" resurfacing
+- Home Assistant integration -- read-only pantry expiration alerts sensor
+- Self-service password reset via email, plus admin-generated reset links
+- Installable PWA with share-target support (share a recipe URL straight from your phone)
 - JSON-LD and Cooklang export for data portability
 - Authentik SSO support (zero-library, header-based)
 - Mobile-first responsive design with 44px+ tap targets
 
 **Pro tier ($29.99 one-time, BSL licensed):**
-- Meal planning with drag-and-drop weekly calendar and iCal export
+- Meal planning with drag-and-drop weekly calendar, iCal export, and saved/reusable weekly templates
 - Shoppable grocery quantities (converts "2 cups milk" to "Milk - 1 gallon")
-- Pantry tracking -- mark always-stocked items, auto-detected on grocery lists
+- Pantry tracking with expiration dates, a "Use It Soon" home page card, and always-stocked auto-detection on grocery lists
+- Receipt scanning -- snap a grocery receipt photo (BYOK vision) to auto-fill a shopping trip and prefill pantry quantities
+- Pantry photo scan -- identify fridge/pantry/freezer contents from a single photo (BYOK vision)
+- Multi-source barcode nutrition -- scanned receipt/pantry items auto-enrich with Open Food Facts nutrition data
+- AI-generated recipe card art from your own OpenAI key, plus custom card image uploads
+- Recipe cost-per-serving estimate shown on recipe cards
 - Recipe annotations (margin notes on ingredients and steps)
 - Ingredient database with USDA nutrition data, package sizes, and substitutions
-- Household tier ($49.99) supports up to 5 users
+- Year in Cooking -- annual cooking stats and recap
+- Home Assistant integration -- read-only "today's planned meal" sensor
+- Household tier ($49.99) supports up to 5 users, with shared collections, meal plans, grocery lists, and pantry across the household, plus a read-only Viewer role for guests
 <!-- auto-docs:preserved:end -->
 
 <!-- auto-docs:start:description -->

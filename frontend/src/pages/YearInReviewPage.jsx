@@ -47,7 +47,7 @@ export default function YearInReviewPage() {
   const hasData = review && review.total_meals > 0;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-brown flex items-center gap-2">
           <Sparkles size={24} className="text-terracotta" />

@@ -184,7 +184,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield size={24} className="text-terracotta" />

@@ -104,7 +104,7 @@ export default function AddRecipePage() {
 
   if (mode === 'choose') {
     return (
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-brown">Add New Recipe</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -159,7 +159,7 @@ export default function AddRecipePage() {
 
   if (mode === 'import' && !importedData) {
     return (
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-brown">Import Recipe</h1>
           <button
@@ -191,7 +191,7 @@ export default function AddRecipePage() {
 
   if (mode === 'import-image' && !importedData) {
     return (
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-brown">Import Recipe from Photo</h1>
           <button
@@ -222,7 +222,7 @@ export default function AddRecipePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-brown">
           {importedData ? 'Review Imported Recipe' : 'New Recipe'}

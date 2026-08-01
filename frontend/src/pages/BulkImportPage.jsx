@@ -176,7 +176,7 @@ export default function BulkImportPage() {
   // Choose mode screen
   if (mode === 'choose' && !results) {
     return (
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-brown">Bulk Import</h1>
         <p className="text-brown-light">
           Import multiple recipes at once from URLs or from another recipe app.
@@ -220,7 +220,7 @@ export default function BulkImportPage() {
   // URL input screen
   if (mode === 'urls' && !results) {
     return (
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-brown">Import from URLs</h1>
           <button
@@ -273,7 +273,7 @@ export default function BulkImportPage() {
   // File upload screen
   if (mode === 'file' && !results) {
     return (
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-brown">Import from App Export</h1>
           <button

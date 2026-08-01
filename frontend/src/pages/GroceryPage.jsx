@@ -166,7 +166,7 @@ export default function GroceryPage() {
   // Detail view
   if (viewMode === 'detail' && currentList) {
     return (
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
@@ -292,7 +292,7 @@ export default function GroceryPage() {
 
   // Lists view
   return (
-    <div className="max-w-xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-brown">Grocery Lists</h1>
         {!isViewer && (

@@ -66,7 +66,7 @@ export default function CollectionsPage() {
   if (viewMode === 'detail' && currentCollection) {
     const recipes = currentCollection.recipes || [];
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
@@ -138,7 +138,7 @@ export default function CollectionsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-brown">Collections</h1>
         {!isViewer && (

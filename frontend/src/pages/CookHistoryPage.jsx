@@ -174,7 +174,7 @@ export default function CookHistoryPage() {
   const stats = useMemo(() => computeStats(history), [history]);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-brown font-serif">Cook History</h1>
         {history.length > 0 && (

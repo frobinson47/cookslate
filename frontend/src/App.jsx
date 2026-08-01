@@ -185,7 +185,7 @@ export default function App() {
             path="/meal-plan"
             element={
               <ProtectedRoute>
-                <Layout>
+                <Layout fullWidth>
                   <ProRoute><MealPlanPage /></ProRoute>
                 </Layout>
               </ProtectedRoute>

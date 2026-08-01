@@ -99,7 +99,7 @@ export default function CollectionsPage() {
         </div>
 
         {isLoading && recipes.length === 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             {[1, 2, 3, 4].map(i => <Skeleton key={i} className="aspect-[4/3] rounded-2xl" />)}
           </div>
         ) : recipes.length === 0 ? (
@@ -112,7 +112,7 @@ export default function CollectionsPage() {
             actionTo="/"
           />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             {recipes.map(recipe => (
               <CollectionRecipeCard key={recipe.id} recipe={recipe} />
             ))}

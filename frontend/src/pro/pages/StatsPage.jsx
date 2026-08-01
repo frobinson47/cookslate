@@ -61,7 +61,7 @@ export default function StatsPage() {
   const maxWeekday = Math.max(...Object.values(weekdayCounts), 1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-brown flex items-center gap-2">
         <TrendingUp size={24} className="text-terracotta" />
         Kitchen Stats

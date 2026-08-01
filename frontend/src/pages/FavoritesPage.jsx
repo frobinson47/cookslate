@@ -24,7 +24,7 @@ export default function FavoritesPage() {
       <h1 className="text-2xl font-bold text-brown font-serif">Favorites</h1>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
           {[1, 2, 3].map(i => (
             <RecipeCardSkeleton key={i} />
           ))}
@@ -38,7 +38,7 @@ export default function FavoritesPage() {
           actionTo="/"
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
           {recipes.map(recipe => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}

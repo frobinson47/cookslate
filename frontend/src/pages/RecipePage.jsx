@@ -272,7 +272,7 @@ export default function RecipePage() {
   );
 
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
       {/* Cook Mode overlay */}
       {cookMode && (
         <CookMode

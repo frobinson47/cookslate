@@ -9,7 +9,7 @@ import EmptyState from '../ui/EmptyState';
 export default function RecipeGrid({ recipes, isLoading, hasMore, onLoadMore, density = 'grid', selectMode = false, selectedIds, onToggleSelect }) {
   if (isLoading && recipes.length === 0) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-6">
         {[1, 2, 3, 4, 5, 6].map(i => (
           <RecipeCardSkeleton key={i} />
         ))}
@@ -70,7 +70,7 @@ export default function RecipeGrid({ recipes, isLoading, hasMore, onLoadMore, de
 
   return (
     <div>
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-6">
         {recipes.map((recipe) => (
           <RecipeCard
             key={recipe.id}

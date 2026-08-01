@@ -3,9 +3,9 @@ define('APP_NAME', 'Cookslate');
 define('APP_VERSION', '1.0.0');
 define('UPLOAD_DIR', __DIR__ . '/../../uploads/');
 define('MAX_UPLOAD_SIZE', 10 * 1024 * 1024); // 10MB
-define('IMAGE_MAX_WIDTH', 800);
+define('IMAGE_MAX_WIDTH', 1536);
 define('THUMB_MAX_WIDTH', 300);
 define('IMAGE_QUALITY', 85);
 define('THUMB_QUALITY', 80);
 define('RECIPES_PER_PAGE', 20);
-define('CARD_ART_UPLOAD_MAX_WIDTH', 1200); // custom card art uploads are typically portrait, larger than the recipe photo
+define('CARD_ART_UPLOAD_MAX_WIDTH', 1200); // custom card art uploads are typically portrait

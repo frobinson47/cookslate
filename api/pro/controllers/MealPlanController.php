@@ -207,7 +207,7 @@ class MealPlanController {
         $plan = $model->getByWeek($userId, $weekStart);
         $planId = $plan['id'];
 
-        $groceryListId = $model->generateGroceryList($planId, $listName, $userId);
+        $groceryListId = $model->generateGroceryList($planId, $listName, $userId, $weekStart);
 
         if ($groceryListId === null) {
             http_response_code(404);
@@ -216,6 +216,27 @@ class MealPlanController {
 
         http_response_code(201);
         return ['grocery_list_id' => $groceryListId];
+    }
+
+    /**
+     * GET /meal-plan/grocery?week_start=YYYY-MM-DD
+     * Returns the grocery list linked to this week, or { list: null } if none exists yet.
+     */
+    public function getGroceryForWeek(): array {
+        $userId = Auth::requireAuth();
+        $weekStart = $_GET['week_start'] ?? '';
+
+        $v = new ValidationHelper();
+        $v->date($weekStart, 'week_start');
+        if ($v->fails()) {
+            http_response_code(400);
+            return ['error' => 'A valid week_start is required', 'code' => 400];
+        }
+
+        $model = new MealPlan();
+        $list = $model->getGroceryListForWeek($userId, $weekStart);
+
+        return ['list' => $list];
     }
 
     /**

@@ -405,6 +405,10 @@ export function generateGroceryFromPlan(weekStart, listName) {
   });
 }
 
+export function getMealPlanGroceryForWeek(weekStart) {
+  return request(`/meal-plan/grocery?week_start=${encodeURIComponent(weekStart)}`);
+}
+
 export function getMealPlanTemplates() {
   return request('/meal-plan/templates');
 }

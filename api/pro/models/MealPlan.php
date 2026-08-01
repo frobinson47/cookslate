@@ -276,11 +276,37 @@ class MealPlan {
     }
 
     /**
+     * Find the grocery list linked to a given week for this user, if any.
+     * Does not create one — callers wanting a guaranteed list should use generateGroceryList().
+     */
+    public function getGroceryListForWeek(int $userId, string $weekStart): ?array {
+        $stmt = $this->db->prepare('SELECT id FROM grocery_lists WHERE created_by = ? AND week_start = ?');
+        $stmt->execute([$userId, $weekStart]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return null;
+        }
+
+        $groceryListModel = new GroceryList();
+        $list = $groceryListModel->findById((int) $row['id']);
+        if (!$list) {
+            return null;
+        }
+
+        $groceryItemModel = new GroceryItem();
+        $list['items'] = $groceryItemModel->getAllForList((int) $list['id']);
+        return $list;
+    }
+
+    /**
      * Generate a grocery list from all items in a meal plan.
      * Consolidates duplicate ingredients (same name) by combining amounts with unit conversion.
-     * Returns the new grocery list ID, or null if unauthorized.
+     * One list per (user, week) — reuses the existing week-linked list if present, so repeat
+     * generation doesn't create duplicates; previously auto-generated rows are refreshed while
+     * manually-added items (recipe_id IS NULL) are left untouched.
+     * Returns the grocery list ID, or null if unauthorized.
      */
-    public function generateGroceryList(int $planId, string $listName, int $userId): ?int {
+    public function generateGroceryList(int $planId, string $listName, int $userId, string $weekStart): ?int {
         // Verify plan ownership
         $stmt = $this->db->prepare('SELECT user_id FROM meal_plans WHERE id = ?');
         $stmt->execute([$planId]);
@@ -303,10 +329,22 @@ class MealPlan {
         $itemStmt->execute([$planId]);
         $ingredients = $itemStmt->fetchAll();
 
-        // Create the grocery list
-        $groceryListModel = new GroceryList();
-        $list = $groceryListModel->create($listName, $userId);
-        $listId = (int) $list['id'];
+        // Find-or-create the list linked to this week
+        $existingStmt = $this->db->prepare('SELECT id FROM grocery_lists WHERE created_by = ? AND week_start = ?');
+        $existingStmt->execute([$userId, $weekStart]);
+        $existingRow = $existingStmt->fetch();
+
+        if ($existingRow) {
+            $listId = (int) $existingRow['id'];
+            // Clear out previously auto-generated rows so this regenerate doesn't double up;
+            // manually-added items (recipe_id IS NULL) are preserved.
+            $clearStmt = $this->db->prepare('DELETE FROM grocery_items WHERE list_id = ? AND recipe_id IS NOT NULL');
+            $clearStmt->execute([$listId]);
+        } else {
+            $insertStmt = $this->db->prepare('INSERT INTO grocery_lists (name, created_by, week_start) VALUES (?, ?, ?)');
+            $insertStmt->execute([$listName, $userId, $weekStart]);
+            $listId = (int) $this->db->lastInsertId();
+        }
 
         // Scale amounts first, then consolidate by normalized name
         $groceryItemModel = new GroceryItem();

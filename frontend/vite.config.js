@@ -87,11 +87,11 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://cookslate.fmr.local',
+        target: 'http://crumble.fmr.local:8888',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://cookslate.fmr.local',
+        target: 'http://crumble.fmr.local:8888',
         changeOrigin: true,
       }
     }

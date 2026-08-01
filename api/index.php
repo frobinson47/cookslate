@@ -812,6 +812,9 @@ try {
             } elseif ($id === 'grocery' && $method === 'POST') {
                 // POST /meal-plan/grocery
                 $response = $controller->generateGrocery();
+            } elseif ($id === 'grocery' && $method === 'GET') {
+                // GET /meal-plan/grocery?week_start=
+                $response = $controller->getGroceryForWeek();
             } elseif ($id === 'templates' && $subResource === null && $method === 'GET') {
                 // GET /meal-plan/templates
                 $response = $controller->listTemplates();

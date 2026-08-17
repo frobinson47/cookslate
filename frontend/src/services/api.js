@@ -214,6 +214,10 @@ export function deleteCardArt(recipeId, template) {
   return request(`/recipes/${recipeId}/card-art/${template}`, { method: 'DELETE' });
 }
 
+export function generateAiRecipePhoto(recipeId) {
+  return request(`/recipes/${recipeId}/ai-photo`, { method: 'POST' });
+}
+
 export function saveOpenAiKey(apiKey) {
   return request('/users/me/openai-key', { method: 'PUT', body: { api_key: apiKey } });
 }

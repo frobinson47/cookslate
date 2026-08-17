@@ -1,0 +1,40 @@
+#!/bin/bash
+# Block commits containing API-key patterns. Learned this the hard way
+# after ~$486 in Google Cloud abuse from a leaked key in a committed
+# third-party bundle that got pushed to a public GitHub mirror.
+
+set -e
+
+PATTERNS=(
+  'AIzaSy[A-Za-z0-9_-]{33}'       # Google API keys
+  'sk-ant-[A-Za-z0-9_-]{20,}'     # Anthropic
+  'sk-proj-[A-Za-z0-9_-]{20,}'    # OpenAI project
+  'sk-svcacct-[A-Za-z0-9_-]{20,}' # OpenAI service
+  'xai-[A-Za-z0-9_-]{20,}'        # xAI
+  'sk-[A-Za-z0-9_-]{40,}'         # generic sk- keys
+  'ghp_[A-Za-z0-9]{36}'           # GitHub personal access tokens
+  'gho_[A-Za-z0-9]{36}'           # GitHub OAuth tokens
+  'AKIA[0-9A-Z]{16}'              # AWS access key
+)
+
+staged=$(git diff --cached --name-only --diff-filter=ACM | grep -vE '^(\.env|.*\.bak-|.*\.gitignore|.githooks/)' || true)
+[ -z "$staged" ] && exit 0
+
+hits=""
+for pattern in "${PATTERNS[@]}"; do
+  match=$(git diff --cached --unified=0 -- $staged 2>/dev/null | grep -E "^\+" | grep -oE "$pattern" | head -3 || true)
+  if [ -n "$match" ]; then
+    hits+="\n  Pattern: $pattern\n  Sample: $(echo "$match" | head -1 | cut -c1-30)…"
+  fi
+done
+
+if [ -n "$hits" ]; then
+  echo "" >&2
+  echo "🛑 pre-commit: API-key patterns detected in staged changes" >&2
+  echo -e "$hits" >&2
+  echo "If intentional (redacted sample, dispute doc, etc.), rerun with:" >&2
+  echo "  git commit --no-verify" >&2
+  exit 1
+fi
+
+exit 0

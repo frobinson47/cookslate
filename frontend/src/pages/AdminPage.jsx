@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Key, Trash2, Pencil, AlertCircle, Download, Users, Link2, Copy, Check } from 'lucide-react';
+import { Shield, Plus, Key, Trash2, Pencil, AlertCircle, Download, Users, Link2, Copy, Check, ImagePlus } from 'lucide-react';
 import * as api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useLicense } from '../hooks/useLicense';
@@ -8,6 +8,7 @@ import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import Spinner from '../components/ui/Spinner';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import { fullImageUrl } from '../utils/imageUrl';
 
 export default function AdminPage() {
   useDocumentTitle('Admin');
@@ -46,6 +47,12 @@ export default function AdminPage() {
   const [resetLink, setResetLink] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
   const [linkLoading, setLinkLoading] = useState(false);
+
+  // AI recipe photo generator
+  const [aiPhotoRecipeId, setAiPhotoRecipeId] = useState('');
+  const [aiPhotoLoading, setAiPhotoLoading] = useState(false);
+  const [aiPhotoError, setAiPhotoError] = useState(null);
+  const [aiPhotoResult, setAiPhotoResult] = useState(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -172,6 +179,30 @@ export default function AdminPage() {
       document.body.removeChild(input);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
+    }
+  };
+
+  const handleGenerateAiPhoto = async (e) => {
+    e.preventDefault();
+    setAiPhotoError(null);
+    setAiPhotoResult(null);
+    const id = parseInt(aiPhotoRecipeId, 10);
+    if (!id || id <= 0) {
+      setAiPhotoError('Enter a valid recipe ID');
+      return;
+    }
+    setAiPhotoLoading(true);
+    try {
+      const result = await api.generateAiRecipePhoto(id);
+      if (result.error) {
+        setAiPhotoError(result.error);
+      } else {
+        setAiPhotoResult(result);
+      }
+    } catch (err) {
+      setAiPhotoError(err.message);
+    } finally {
+      setAiPhotoLoading(false);
     }
   };
 
@@ -351,6 +382,59 @@ export default function AdminPage() {
           )}
         </div>
       )}
+
+      {/* AI recipe photo section */}
+      <div className="bg-surface rounded-2xl shadow-md p-6">
+        <h2 className="text-lg font-bold text-brown mb-2 flex items-center gap-2">
+          <ImagePlus size={18} />
+          AI Recipe Photo
+        </h2>
+        <p className="text-brown-light text-sm mb-4">
+          Generate a hero photo for a recipe by ID using your OpenAI API key (Settings). This replaces the recipe&apos;s current photo. Takes about a minute.
+        </p>
+        <form onSubmit={handleGenerateAiPhoto} className="flex items-end gap-2 flex-wrap">
+          <div className="w-40">
+            <Input
+              label="Recipe ID"
+              type="number"
+              min="1"
+              value={aiPhotoRecipeId}
+              onChange={(e) => setAiPhotoRecipeId(e.target.value)}
+              placeholder="e.g. 42"
+            />
+          </div>
+          <Button type="submit" disabled={aiPhotoLoading}>
+            {aiPhotoLoading ? <Spinner size="sm" /> : <ImagePlus size={16} />}
+            {aiPhotoLoading ? 'Generating…' : 'Generate Photo'}
+          </Button>
+        </form>
+
+        {aiPhotoError && (
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm mt-4">
+            <AlertCircle size={16} />
+            <span>{aiPhotoError}</span>
+          </div>
+        )}
+
+        {aiPhotoResult && (
+          <div className="mt-4 space-y-3">
+            <img
+              src={fullImageUrl(aiPhotoResult.image_path)}
+              alt="Generated recipe photo"
+              className="w-full max-w-md rounded-xl border border-cream-dark"
+            />
+            {aiPhotoResult.recipe?.title && (
+              <p className="text-sm text-brown font-medium">{aiPhotoResult.recipe.title}</p>
+            )}
+            {aiPhotoResult.prompt && (
+              <details className="text-xs text-warm-gray">
+                <summary className="cursor-pointer select-none">Prompt used</summary>
+                <p className="mt-1 whitespace-pre-wrap">{aiPhotoResult.prompt}</p>
+              </details>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Account section */}
       <div className="bg-surface rounded-2xl shadow-md p-6">

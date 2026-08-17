@@ -308,6 +308,23 @@ try {
                 }
             }
 
+            // Rate limit AI photo generation (calls an expensive external image API)
+            if ($subResource === 'ai-photo' && $method === 'POST') {
+                $rateLimiter = new RateLimiter();
+                $clientIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+                $rateResult = $rateLimiter->check($clientIp, 'ai-photo', 10, 300);
+                if (!$rateResult['allowed']) {
+                    http_response_code(429);
+                    header('Retry-After: ' . $rateResult['retryAfter']);
+                    $response = [
+                        'error' => 'Too many AI photo requests. Try again later.',
+                        'code' => 429,
+                        'retryAfter' => $rateResult['retryAfter'],
+                    ];
+                    break;
+                }
+            }
+
             if ($id === 'bulk-delete' && $method === 'POST') {
                 $response = $controller->bulkDelete();
             } elseif ($id === 'bulk-tag' && $method === 'POST') {
@@ -462,6 +479,9 @@ try {
                 } elseif ($subResource === 'card-art' && $subId !== null && $method === 'DELETE') {
                     // DELETE /recipes/{id}/card-art/{template}
                     $response = $controller->deleteCardArt($recipeId, $subId);
+                } elseif ($subResource === 'ai-photo' && $method === 'POST') {
+                    // POST /recipes/{id}/ai-photo — admin-only, generates and sets the main recipe photo
+                    $response = $controller->generateAiPhoto($recipeId);
                 } elseif ($subResource === 'jsonld' && $method === 'GET') {
                     // GET /recipes/{id}/jsonld — schema.org/Recipe JSON-LD export
                     $controller->jsonLd($recipeId);

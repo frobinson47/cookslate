@@ -935,4 +935,57 @@ class RecipeController {
 
         return ['template' => $template, 'image_path' => $imagePath, 'generated' => true];
     }
+
+    /**
+     * POST /recipes/{id}/ai-photo
+     * Admin-only. Generates an AI hero photo for the recipe via OpenAI and
+     * sets it as the recipe's main photo (overwrites full.webp/thumb.webp).
+     * Uses the admin's own OpenAI API key (BYOK) — same key as Card Art.
+     */
+    public function generateAiPhoto(int $id): array {
+        $userId = Auth::requireAdmin();
+
+        $recipeModel = new Recipe();
+        $recipe = $recipeModel->findById($id);
+        if (!$recipe) {
+            http_response_code(404);
+            return ['error' => 'Recipe not found', 'code' => 404];
+        }
+
+        require_once __DIR__ . '/../models/UserApiKey.php';
+        $keyModel = new UserApiKey();
+        $apiKey = $keyModel->getDecryptedKey($userId, 'openai');
+        if (!$apiKey) {
+            return [
+                'error_code' => 'no_api_key',
+                'error' => 'Add your OpenAI API key in Settings to use this feature.',
+            ];
+        }
+
+        require_once __DIR__ . '/../services/AiRecipePhotoGenerator.php';
+        $result = (new AiRecipePhotoGenerator())->generate($recipe, $apiKey);
+        if (!$result['success']) {
+            return ['error_code' => $result['error_code'], 'error' => $result['error']];
+        }
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'cookslate_ai_photo_');
+        file_put_contents($tmpFile, $result['imageData']);
+        $fakeFile = [
+            'tmp_name' => $tmpFile,
+            'error' => UPLOAD_ERR_OK,
+            'size' => filesize($tmpFile),
+        ];
+
+        $imageProcessor = new ImageProcessor();
+        $imagePath = $imageProcessor->process($fakeFile, $id);
+        @unlink($tmpFile);
+
+        if (!$imagePath) {
+            return ['error_code' => 'save_failed', 'error' => 'Generated image could not be saved.'];
+        }
+
+        $recipe = $recipeModel->update($id, ['image_path' => $imagePath]);
+
+        return ['image_path' => $imagePath, 'prompt' => $result['prompt'], 'recipe' => $recipe];
+    }
 }

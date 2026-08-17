@@ -631,7 +631,7 @@ export default function HomePage({ searchQuery = '' }) {
                   <div className="aspect-square rounded-xl overflow-hidden bg-cream-dark mb-1.5 shadow-sm">
                     {r.image_path ? (
                       <img
-                        src={thumbImageUrl(r.image_path)}
+                        src={thumbImageUrl(r.image_path, r.updated_at)}
                         alt={r.title}
                         loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

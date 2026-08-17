@@ -29,9 +29,12 @@ export default defineConfig({
             },
           },
           {
-            // Cache recipe images
+            // Cache recipe images. StaleWhileRevalidate (not CacheFirst) so a
+            // regenerated photo at the same URL (e.g. admin AI photo, which
+            // overwrites full.webp/thumb.webp in place) self-heals on the next
+            // load instead of being stuck behind a 30-day CacheFirst hit.
             urlPattern: /\/uploads\//,
-            handler: 'CacheFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'image-cache',
               expiration: {

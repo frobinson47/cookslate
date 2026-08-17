@@ -18,6 +18,7 @@ export default function useRecentlyViewed() {
       id: recipe.id,
       title: recipe.title,
       image_path: recipe.image_path,
+      updated_at: recipe.updated_at,
     };
     setRecent(prev => {
       const filtered = prev.filter(r => r.id !== recipe.id);

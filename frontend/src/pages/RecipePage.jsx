@@ -258,7 +258,7 @@ export default function RecipePage() {
 
   const canEdit = user && (user.id === recipe.created_by || isAdmin);
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
-  const imageUrl = fullImageUrl(recipe.image_path);
+  const imageUrl = fullImageUrl(recipe.image_path, recipe.updated_at);
   const instructions = Array.isArray(recipe.instructions)
     ? recipe.instructions
     : typeof recipe.instructions === 'string'

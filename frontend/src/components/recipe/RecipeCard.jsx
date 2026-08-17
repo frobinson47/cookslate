@@ -10,7 +10,7 @@ import { estimateDifficulty, DIFFICULTY_COLORS } from '../../utils/recipeDifficu
 
 export default function RecipeCard({ recipe, selectMode = false, selected = false, onToggleSelect }) {
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
-  const imageUrl = thumbImageUrl(recipe.image_path);
+  const imageUrl = thumbImageUrl(recipe.image_path, recipe.updated_at);
 
   const cardProps = selectMode
     ? {

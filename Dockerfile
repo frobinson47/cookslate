@@ -1,8 +1,8 @@
 # Stage 1: Build frontend (Node 22 required for Tailwind CSS 4 oxide bindings)
 FROM node:22.14.0 AS frontend-build
 WORKDIR /app/frontend
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+COPY frontend/package.json ./
+RUN npm install
 COPY frontend/ ./
 RUN npm run build
 

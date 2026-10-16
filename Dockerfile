@@ -2,7 +2,7 @@
 FROM node:22.14.0 AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json ./
-RUN npm install
+RUN npm install -g npm@11.21.1 && npm install
 COPY frontend/ ./
 RUN npm run build
 

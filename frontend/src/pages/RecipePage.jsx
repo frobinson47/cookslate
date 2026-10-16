@@ -24,6 +24,7 @@ import StarRating from '../components/ui/StarRating';
 import FavoriteButton from '../components/recipe/FavoriteButton';
 import CookButton from '../components/recipe/CookButton';
 import AddToMealPlanButton from '../components/recipe/AddToMealPlanButton';
+import AddToCollectionButton from '../components/recipe/AddToCollectionButton';
 import * as api from '../services/api';
 import RelatedRecipes from '../components/recipe/RelatedRecipes';
 import CardArtModal from '../components/recipe/CardArtModal';
@@ -469,6 +470,7 @@ export default function RecipePage() {
           Add to Grocery List
         </Button>
         <AddToMealPlanButton recipeId={recipe.id} variant="button" />
+        <AddToCollectionButton recipeId={recipe.id} />
         <Button
           variant="outline"
           onClick={() => window.print()}

@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: PHP + Apache
-FROM php:8.1.31-apache
+FROM php:8.3.36-apache
 
 # Install PHP extensions and MySQL client
 RUN apt-get update && apt-get install -y \

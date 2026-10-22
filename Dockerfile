@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
+# Cache-Control headers (docker/apache.conf)
+RUN a2enmod headers
+
 # Apache config
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 

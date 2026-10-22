@@ -48,6 +48,124 @@ class MealDbClient
         return $this->normalizeFiltered($data['meals'] ?? []);
     }
 
+    // TheMealDB has no diet data, only categories and sparse free-text tags, so
+    // the diets below are derived from those. 'estimated' diets are heuristics.
+    private const DIETS = [
+        'vegetarian' => ['label' => 'Vegetarian', 'estimated' => false],
+        'vegan'      => ['label' => 'Vegan', 'estimated' => false],
+        'carnivore'  => ['label' => 'Carnivore', 'estimated' => true],
+        'keto'       => ['label' => 'Keto-friendly', 'estimated' => true],
+    ];
+
+    private const DIET_ALIASES = [
+        'vegetarian' => 'vegetarian', 'veggie' => 'vegetarian',
+        'vegan' => 'vegan', 'plant based' => 'vegan', 'plant-based' => 'vegan',
+        'carnivore' => 'carnivore', 'carnivore diet' => 'carnivore',
+        'keto' => 'keto', 'keto friendly' => 'keto', 'keto-friendly' => 'keto',
+        'low carb' => 'keto', 'low-carb' => 'keto', 'lowcarb' => 'keto',
+    ];
+
+    private const MEAT_CATEGORIES = ['Beef', 'Chicken', 'Lamb', 'Pork', 'Seafood', 'Goat'];
+
+    private const HIGH_CARB = '/\b(flour|sugar|rice|potato|yam|pasta|spaghetti|penne|macaroni|lasagne|noodle|bread|crumb|bun|wrap|tortilla|pastry|dough|cracker|biscuit|couscous|oat|corn|bean|lentil|chickpea|pea|tapioca|honey|syrup|maple|jam|ketchup|banana|apple|mango|pineapple)/i';
+
+    private const CATALOG_TTL = 7 * 24 * 3600;
+
+    /**
+     * Map a search query to a diet key, or null if it isn't a diet term.
+     */
+    public static function dietForQuery(string $query): ?string
+    {
+        return self::DIET_ALIASES[strtolower(trim($query))] ?? null;
+    }
+
+    public static function dietInfo(string $diet): ?array
+    {
+        return isset(self::DIETS[$diet]) ? ['key' => $diet] + self::DIETS[$diet] : null;
+    }
+
+    /**
+     * Meals matching a diet, from the cached full catalog.
+     */
+    public function byDiet(string $diet): array
+    {
+        if (!isset(self::DIETS[$diet])) return [];
+
+        $meals = array_filter($this->catalog(), function ($m) use ($diet) {
+            $tags = array_map('strtolower', $m['tags']);
+            $isMeat = in_array($m['category'], self::MEAT_CATEGORIES, true);
+            switch ($diet) {
+                case 'vegan':
+                    return $m['category'] === 'Vegan' || in_array('vegan', $tags, true);
+                case 'vegetarian':
+                    return in_array($m['category'], ['Vegetarian', 'Vegan'], true)
+                        || in_array('vegetarian', $tags, true) || in_array('vegan', $tags, true);
+                case 'carnivore':
+                    return $isMeat;
+                case 'keto':
+                    if (array_intersect($tags, ['keto', 'lowcarbs', 'paleo'])) return true;
+                    if (!$isMeat) return false;
+                    foreach ($m['ingredients'] as $ing) {
+                        if (preg_match(self::HIGH_CARB, $ing)) return false;
+                    }
+                    return true;
+            }
+            return false;
+        });
+
+        return array_values(array_map(fn($m) => [
+            'mealdb_id' => $m['mealdb_id'],
+            'title' => $m['title'],
+            'image' => $m['image'],
+            'area' => $m['area'],
+        ], $meals));
+    }
+
+    /**
+     * Every TheMealDB meal (light records), cached on disk. The API can only
+     * list by first letter, so building it takes ~26 requests; a partial
+     * build is returned but never cached. Requests run in parallel.
+     */
+    private function catalog(): array
+    {
+        $file = sys_get_temp_dir() . '/cookslate_mealdb_catalog.json';
+        if (is_file($file) && time() - filemtime($file) < self::CATALOG_TTL) {
+            $cached = json_decode((string)file_get_contents($file), true);
+            if (is_array($cached) && $cached) return $cached;
+        }
+
+        $catalog = [];
+        $complete = true;
+        $letters = str_split('abcdefghijklmnopqrstuvwxyz');
+        $results = $this->fetchMany(array_map(fn($l) => '/search.php?f=' . $l, $letters));
+        foreach ($results as $data) {
+            if ($data === null || !array_key_exists('meals', $data)) {
+                $complete = false;
+                continue;
+            }
+            foreach ($this->normalizeMeals($data['meals'] ?? []) as $m) {
+                $catalog[$m['mealdb_id']] = [
+                    'mealdb_id' => $m['mealdb_id'],
+                    'title' => $m['title'],
+                    'image' => $m['image'],
+                    'area' => $m['area'],
+                    'category' => $m['category'],
+                    'tags' => $m['tags'],
+                    'ingredients' => array_column($m['ingredients'], 'name'),
+                ];
+            }
+        }
+
+        $catalog = array_values($catalog);
+        if ($complete && $catalog) {
+            $tmp = $file . '.' . getmypid() . '.tmp';
+            if (@file_put_contents($tmp, json_encode($catalog)) !== false) {
+                @rename($tmp, $file);
+            }
+        }
+        return $catalog;
+    }
+
     /**
      * Get full meal details by TheMealDB ID.
      */
@@ -183,6 +301,50 @@ class MealDbClient
     {
         $cleaned = preg_replace('/^[\d\/\.\s]+/', '', $measure);
         return trim($cleaned ?? '');
+    }
+
+    /**
+     * Fetch several endpoints in parallel. Returns decoded JSON per endpoint
+     * (same order), or null for any that failed.
+     */
+    private function fetchMany(array $endpoints): array
+    {
+        $mh = curl_multi_init();
+        $handles = [];
+        $caBundle = function_exists('getCaBundlePath') ? getCaBundlePath() : null;
+        foreach ($endpoints as $i => $endpoint) {
+            $ch = curl_init(self::BASE_URL . $endpoint);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 15,
+                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+            if ($caBundle) curl_setopt($ch, CURLOPT_CAINFO, $caBundle);
+            curl_multi_add_handle($mh, $ch);
+            $handles[$i] = $ch;
+        }
+
+        do {
+            $status = curl_multi_exec($mh, $running);
+            if ($running) curl_multi_select($mh, 1.0);
+        } while ($running && $status === CURLM_OK);
+
+        $out = [];
+        foreach ($handles as $i => $ch) {
+            $body = curl_multi_getcontent($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $decoded = ($code === 200 && $body) ? json_decode($body, true) : null;
+            if (!is_array($decoded)) {
+                LoggerService::channel('mealdb')->error('MealDB API request failed', ['http_code' => $code, 'endpoint' => $endpoints[$i]]);
+                $decoded = null;
+            }
+            $out[$i] = $decoded;
+            curl_multi_remove_handle($mh, $ch);
+            curl_close($ch);
+        }
+        curl_multi_close($mh);
+        return $out;
     }
 
     /**

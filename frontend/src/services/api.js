@@ -486,6 +486,10 @@ export function getDiscoverByCategory(name) {
   return request(`/discover/category?name=${encodeURIComponent(name)}`);
 }
 
+export function getDiscoverByDiet(name) {
+  return request(`/discover/diet?name=${encodeURIComponent(name)}`);
+}
+
 export function getDiscoverMeal(mealdbId) {
   return request(`/discover/${mealdbId}`);
 }

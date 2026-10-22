@@ -978,7 +978,28 @@ try {
             } elseif ($id === 'search' && $method === 'GET') {
                 // GET /discover/search?q=chicken
                 $q = $_GET['q'] ?? '';
-                $response = ['meals' => $mealDb->search($q)];
+                $byName = $mealDb->search($q);
+                $diet = MealDbClient::dietForQuery($q);
+                if ($diet) {
+                    // Diet word: diet matches first, then any recipes with it in the name
+                    $dietMeals = $mealDb->byDiet($diet);
+                    $seen = array_column($dietMeals, 'mealdb_id');
+                    foreach ($byName as $m) {
+                        if (!in_array($m['mealdb_id'], $seen, true)) $dietMeals[] = $m;
+                    }
+                    $response = ['meals' => $dietMeals, 'diet' => MealDbClient::dietInfo($diet)];
+                } else {
+                    $response = ['meals' => $byName];
+                }
+            } elseif ($id === 'diet' && $method === 'GET') {
+                // GET /discover/diet?name=keto
+                $diet = MealDbClient::dietForQuery($_GET['name'] ?? '');
+                if (!$diet) {
+                    http_response_code(400);
+                    $response = ['error' => 'Unknown diet'];
+                } else {
+                    $response = ['meals' => $mealDb->byDiet($diet), 'diet' => MealDbClient::dietInfo($diet)];
+                }
             } elseif ($id === 'categories' && $method === 'GET') {
                 $response = ['categories' => $mealDb->categories()];
             } elseif ($id === 'areas' && $method === 'GET') {

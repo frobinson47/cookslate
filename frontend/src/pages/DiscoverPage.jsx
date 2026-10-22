@@ -7,6 +7,13 @@ import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useNavigate } from 'react-router-dom';
 import EmptyState from '../components/ui/EmptyState';
 
+const DIETS = [
+  { key: 'vegetarian', label: 'Vegetarian' },
+  { key: 'vegan', label: 'Vegan' },
+  { key: 'carnivore', label: 'Carnivore' },
+  { key: 'keto', label: 'Keto-friendly' },
+];
+
 export default function DiscoverPage() {
   useDocumentTitle('Discover Recipes');
   const navigate = useNavigate();
@@ -15,6 +22,7 @@ export default function DiscoverPage() {
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState('');
   const [search, setSearch] = useState('');
+  const [diet, setDiet] = useState(null); // { key, label, estimated } when a diet filter is applied
   const [loading, setLoading] = useState(true);
   const [selectedMeal, setSelectedMeal] = useState(null);
   const [mealDetail, setMealDetail] = useState(null);
@@ -39,11 +47,13 @@ export default function DiscoverPage() {
     setActiveCategory('');
     const data = await api.searchDiscoverMeals(search);
     setMeals(data.meals || []);
+    setDiet(data.diet || null);
     setLoading(false);
   };
 
   const handleCategory = async (cat) => {
     setActiveCategory(cat);
+    setDiet(null);
     setSearch('');
     setLoading(true);
     const data = await api.getDiscoverByCategory(cat);
@@ -51,9 +61,25 @@ export default function DiscoverPage() {
     setLoading(false);
   };
 
+  const handleDiet = async (key) => {
+    setActiveCategory('');
+    setSearch('');
+    setLoading(true);
+    try {
+      const data = await api.getDiscoverByDiet(key);
+      setMeals(data.meals || []);
+      setDiet(data.diet || null);
+    } catch {
+      setMeals([]);
+      setDiet(null);
+    }
+    setLoading(false);
+  };
+
   const handleRefresh = async () => {
     setLoading(true);
     setActiveCategory('');
+    setDiet(null);
     setSearch('');
     const data = await api.getDiscoverMeals();
     setMeals(data.meals || []);
@@ -109,9 +135,23 @@ export default function DiscoverPage() {
         </div>
       </form>
 
-      {/* Category chips */}
+      {/* Diet + category chips */}
       <div className="overflow-x-auto scrollbar-hide pb-2 mb-6">
-        <div className="flex gap-2 min-w-min">
+        <div className="flex gap-2 min-w-min items-center">
+          {DIETS.map(d => (
+            <button
+              key={d.key}
+              onClick={() => handleDiet(d.key)}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors min-h-[36px] ${
+                diet?.key === d.key
+                  ? 'bg-sage-dark text-white'
+                  : 'bg-sage/15 hover:bg-sage/25 text-sage-dark'
+              }`}
+            >
+              {d.label}
+            </button>
+          ))}
+          <span className="shrink-0 w-px h-6 bg-cream-dark mx-1" aria-hidden="true" />
           {categories.map(cat => (
             <button
               key={cat.name}
@@ -127,6 +167,13 @@ export default function DiscoverPage() {
           ))}
         </div>
       </div>
+
+      {diet?.estimated && !loading && (
+        <p className="text-sm text-warm-gray mb-4">
+          {diet.label} matches are estimated from each recipe&rsquo;s category and ingredients, not
+          verified. Check the ingredients before relying on them for a strict diet.
+        </p>
+      )}
 
       {/* Results grid */}
       {loading ? (

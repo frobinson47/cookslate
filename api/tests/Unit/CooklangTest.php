@@ -103,4 +103,34 @@ COOK;
         $this->assertCount(2, $reimported['ingredients']);
         $this->assertCount(2, $reimported['instructions']);
     }
+
+    public function testImportSpecMetadataLinesAndNotes(): void
+    {
+        $cook = ">> title: Shepherd's Pie
+>> servings: 6
+>> prep time: 20 minutes
+>> total time: 1 hour 30 minutes
+"
+            . ">> source: https://example.com/pie
+>> tags: carnivore, casserole, beef
+
+"
+            . "Melt @butter{2%tbsp} in a #skillet{}.
+
+Bake for ~{25%min}.
+
+-- Notes --
+Use bacon fat instead.
+";
+        $r = (new CooklangImporter())->parse($cook);
+
+        $this->assertSame("Shepherd's Pie", $r['title']);
+        $this->assertSame(6, $r['servings']);
+        $this->assertSame(20, $r['prep_time']);
+        $this->assertSame('https://example.com/pie', $r['source_url']);
+        $this->assertSame(['carnivore', 'casserole', 'beef'], $r['tags']);
+        $this->assertCount(2, $r['instructions']);
+        $this->assertStringNotContainsString('>>', implode(' ', $r['instructions']));
+        $this->assertStringContainsString('Use bacon fat instead.', $r['description']);
+    }
 }

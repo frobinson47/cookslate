@@ -36,6 +36,9 @@ class CooklangImporter
         if (isset($metadata['title'])) {
             $recipe['title'] = $metadata['title'];
         }
+        if (isset($metadata['description'])) {
+            $recipe['description'] = $metadata['description'];
+        }
         if (isset($metadata['source'])) {
             $recipe['source_url'] = $metadata['source'];
         }
@@ -59,12 +62,29 @@ class CooklangImporter
         $steps = [];
         $currentStep = '';
         $description = '';
+        $notes = [];
+        $inNotes = false;
 
         foreach ($lines as $line) {
             $trimmed = trim($line);
 
+            // "-- Notes --" starts a notes section; later paragraphs are notes, not steps
+            if (preg_match('/^--\s*notes?\s*--$/i', $trimmed)) {
+                if (!empty($currentStep)) {
+                    $steps[] = $currentStep;
+                    $currentStep = '';
+                }
+                $inNotes = true;
+                continue;
+            }
+
             // Skip comments
             if (str_starts_with($trimmed, '--')) continue;
+
+            if ($inNotes) {
+                if (!empty($trimmed)) $notes[] = $trimmed;
+                continue;
+            }
 
             // Notes become description
             if (str_starts_with($trimmed, '> ')) {
@@ -110,7 +130,13 @@ class CooklangImporter
             $steps[] = $currentStep;
         }
 
-        $recipe['description'] = trim($description);
+        $description = trim($description);
+        if ($description !== '') {
+            $recipe['description'] = trim($recipe['description'] . "\n" . $description);
+        }
+        if ($notes) {
+            $recipe['description'] = trim($recipe['description'] . "\n\nNotes:\n" . implode("\n", $notes));
+        }
         $recipe['ingredients'] = $ingredients;
         $recipe['instructions'] = $steps;
 
@@ -134,7 +160,21 @@ class CooklangImporter
                 ];
             }
         }
-        return ['metadata' => [], 'body' => $content];
+        // Cooklang spec metadata: ">> key: value" lines (keys may contain spaces, e.g. "prep time")
+        $metadata = [];
+        $bodyLines = [];
+        foreach (explode("\n", $content) as $line) {
+            if (preg_match('/^\s*>>\s*([^:]+?)\s*:\s*(.*?)\s*$/', $line, $m)) {
+                $key = str_replace([' ', '-'], '_', strtolower($m[1]));
+                $metadata[$key] = $m[2];
+                continue;
+            }
+            $bodyLines[] = $line;
+        }
+        if (isset($metadata['tags']) && is_string($metadata['tags'])) {
+            $metadata['tags'] = array_values(array_filter(array_map('trim', explode(',', $metadata['tags']))));
+        }
+        return ['metadata' => $metadata, 'body' => implode("\n", $bodyLines)];
     }
 
     /**
@@ -265,11 +305,18 @@ class CooklangImporter
      */
     private function parseMinutes(string $time): ?int
     {
-        if (preg_match('/(\d+)\s*min/', $time, $m)) {
-            return (int) $m[1];
+        $total = 0;
+        $found = false;
+        if (preg_match('/(\d+)\s*(?:h|hr|hrs|hour|hours)\b/i', $time, $m)) {
+            $total += (int) $m[1] * 60;
+            $found = true;
         }
-        if (preg_match('/(\d+)\s*hour/', $time, $m)) {
-            return (int) $m[1] * 60;
+        if (preg_match('/(\d+)\s*min/i', $time, $m)) {
+            $total += (int) $m[1];
+            $found = true;
+        }
+        if ($found) {
+            return $total;
         }
         if (is_numeric(trim($time))) {
             return (int) trim($time);

@@ -86,15 +86,31 @@ export default function BulkImportPage() {
   };
 
   const handleFileImport = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    const file = files[0];
 
     setError(null);
     setIsProcessing(true);
 
     try {
       let data;
-      if (file.name.endsWith('.paprikarecipes')) {
+      if (files.every(f => f.name.toLowerCase().endsWith('.cook'))) {
+        // Cooklang: one recipe per file. The server saves each one directly.
+        const results = [];
+        for (const f of files) {
+          try {
+            const recipe = await api.importCooklang(f);
+            results.push({ status: 'success', recipe, saved: true, saving: false });
+          } catch (err) {
+            results.push({ status: 'error', url: f.name, error_message: err.message });
+          }
+        }
+        setResults(results);
+        setIsProcessing(false);
+        return;
+      } else if (file.name.endsWith('.paprikarecipes')) {
         data = await api.importPaprika(file);
       } else if (file.name.endsWith('.zip')) {
         if (zipFormat === 'tandoor') {
@@ -107,7 +123,7 @@ export default function BulkImportPage() {
           data = await api.importMealie(file);
         }
       } else {
-        setError('Unsupported file format. Use .zip (Mealie, Tandoor, Nextcloud Cookbook, or RecipeSage) or .paprikarecipes (Paprika).');
+        setError('Unsupported file format. Use .zip (Mealie, Tandoor, Nextcloud Cookbook, or RecipeSage), .paprikarecipes (Paprika), or .cook (Cooklang).');
         setIsProcessing(false);
         return;
       }
@@ -208,7 +224,7 @@ export default function BulkImportPage() {
             <div className="text-center">
               <h3 className="font-bold text-brown">From App Export</h3>
               <p className="text-sm text-warm-gray mt-1">
-                Upload a Mealie, Tandoor, Nextcloud Cookbook, RecipeSage (.zip), or Paprika (.paprikarecipes) export
+                Upload a Mealie, Tandoor, Nextcloud Cookbook, RecipeSage (.zip), or Paprika (.paprikarecipes) export, or Cooklang (.cook) files
               </p>
             </div>
           </button>
@@ -286,7 +302,7 @@ export default function BulkImportPage() {
 
         <div className="bg-surface rounded-2xl shadow-md p-6 space-y-4">
           <p className="text-brown-light text-sm">
-            Upload an export file from Mealie, Tandoor, Nextcloud Cookbook, or RecipeSage (.zip), or Paprika (.paprikarecipes).
+            Upload an export file from Mealie, Tandoor, Nextcloud Cookbook, or RecipeSage (.zip), or Paprika (.paprikarecipes), or select one or more Cooklang (.cook) files. Cooklang recipes are saved right away.
           </p>
 
           <div className="space-y-2">
@@ -347,7 +363,8 @@ export default function BulkImportPage() {
             </span>
             <input
               type="file"
-              accept=".zip,.paprikarecipes"
+              multiple
+              accept=".zip,.paprikarecipes,.cook"
               onChange={handleFileImport}
               className="hidden"
               disabled={isProcessing}

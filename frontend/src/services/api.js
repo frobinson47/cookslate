@@ -180,6 +180,12 @@ export function importRecipeSage(file) {
   return request('/recipes/import-recipesage', { method: 'POST', body: formData, isFormData: true });
 }
 
+export function importCooklang(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request('/recipes/import-cooklang', { method: 'POST', body: formData, isFormData: true });
+}
+
 export function importRecipeFromImage(imageFile) {
   const formData = new FormData();
   formData.append('image', imageFile);

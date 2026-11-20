@@ -133,4 +133,26 @@ Use bacon fat instead.
         $this->assertStringNotContainsString('>>', implode(' ', $r['instructions']));
         $this->assertStringContainsString('Use bacon fat instead.', $r['description']);
     }
+
+    public function testRepeatedIngredientsAreCombined(): void
+    {
+        $cook = "Melt @butter{2%tbsp} in the pan, season with @salt{1/2%tsp}.
+
+"
+            . "Stir in @Butter{2%tbsp}(melted) and @salt{1/2%tsp}, then @butter{} again.
+
+"
+            . "Add @flour{1 1/2%cups} then @flour{1/2%cups}, and @milk{1%cup} plus @milk{2%tbsp}.
+";
+        $r = (new CooklangImporter())->parse($cook);
+        $by = [];
+        foreach ($r['ingredients'] as $ing) {
+            $by[strtolower($ing['name'])][] = $ing['amount'] . ' ' . $ing['unit'];
+        }
+
+        $this->assertSame(['4 tbsp'], $by['butter']);          // same unit: summed
+        $this->assertSame(['1 tsp'], $by['salt']);             // 1/2 + 1/2
+        $this->assertSame(['2 cups'], $by['flour']);           // mixed number + fraction
+        $this->assertSame(['1 cup', '2 tbsp'], $by['milk']);   // different units stay separate
+    }
 }

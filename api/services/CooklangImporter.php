@@ -58,7 +58,6 @@ class CooklangImporter
         // Parse body
         $lines = explode("\n", $body);
         $ingredients = [];
-        $ingredientNames = []; // Track unique ingredients
         $steps = [];
         $currentStep = '';
         $description = '';
@@ -114,11 +113,7 @@ class CooklangImporter
             // Parse ingredients, cookware, and timers from the line
             $parsed = $this->parseLine($trimmed);
             foreach ($parsed['ingredients'] as $ing) {
-                $key = strtolower($ing['name']);
-                if (!isset($ingredientNames[$key])) {
-                    $ingredients[] = $ing;
-                    $ingredientNames[$key] = true;
-                }
+                $this->addIngredient($ingredients, $ing);
             }
 
             // Build clean instruction text (remove Cooklang syntax)
@@ -141,6 +136,79 @@ class CooklangImporter
         $recipe['instructions'] = $steps;
 
         return $recipe;
+    }
+
+    /**
+     * Add an ingredient mention to the list. A repeat of the same ingredient
+     * (case-insensitive name) with the same unit has its amount added to the
+     * existing line; a bare re-mention with no amount is ignored; anything
+     * that can't be combined safely (different unit, non-numeric amount)
+     * stays as its own line.
+     */
+    private function addIngredient(array &$ingredients, array $ing): void
+    {
+        $name = strtolower($ing['name']);
+        $unit = strtolower($ing['unit']);
+
+        foreach ($ingredients as $i => $existing) {
+            if (strtolower($existing['name']) !== $name) {
+                continue;
+            }
+            // Bare re-mention ("@butter{}") adds nothing
+            if ($ing['amount'] === '') {
+                return;
+            }
+            // Earlier mention had no amount: take this one's
+            if ($existing['amount'] === '') {
+                $ingredients[$i]['amount'] = $ing['amount'];
+                $ingredients[$i]['unit'] = $ing['unit'];
+                return;
+            }
+            if (strtolower($existing['unit']) === $unit) {
+                $a = $this->parseAmount($existing['amount']);
+                $b = $this->parseAmount($ing['amount']);
+                if ($a !== null && $b !== null) {
+                    $ingredients[$i]['amount'] = $this->formatAmount($a + $b);
+                    return;
+                }
+            }
+        }
+
+        // First mention, or a mention that can't be merged (e.g. different unit)
+        $ingredients[] = $ing;
+    }
+
+    /** Parse "2", "0.5", "1/2" or "1 1/2" to a float; null if not numeric. */
+    private function parseAmount(string $s): ?float
+    {
+        $s = trim($s);
+        if (preg_match('/^(\d+)\s+(\d+)\/(\d+)$/', $s, $m) && (int)$m[3] > 0) {
+            return (float)$m[1] + (int)$m[2] / (int)$m[3];
+        }
+        if (preg_match('/^(\d+)\/(\d+)$/', $s, $m) && (int)$m[2] > 0) {
+            return (int)$m[1] / (int)$m[2];
+        }
+        if (preg_match('/^\d+(\.\d+)?$/', $s)) {
+            return (float)$s;
+        }
+        return null;
+    }
+
+    /** Format a summed amount: whole number, simple fraction ("1 1/2"), or trimmed decimal. */
+    private function formatAmount(float $v): string
+    {
+        $whole = (int)floor($v + 1e-9);
+        $frac = $v - $whole;
+        if ($frac < 0.001) {
+            return (string)$whole;
+        }
+        foreach ([2, 3, 4, 8] as $den) {
+            $num = (int)round($frac * $den);
+            if ($num > 0 && $num < $den && abs($frac - $num / $den) < 0.001) {
+                return ($whole > 0 ? $whole . ' ' : '') . $num . '/' . $den;
+            }
+        }
+        return rtrim(rtrim(number_format($v, 2, '.', ''), '0'), '.');
     }
 
     /**
